@@ -18,6 +18,11 @@ useSeoMeta({
       description="Interactive showcase of all UI components built with Reka UI primitives"
     />
 
+    <!-- Eyebrow Component -->
+    <div id="eyebrows">
+      <DevEyebrowShowcase />
+    </div>
+
     <!-- Button Components -->
     <div id="buttons">
       <DevButtonShowcase />

@@ -54,9 +54,9 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
   const variants = {
     primary: 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg',
-    secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400',
+    secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400 dark:bg-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-600 dark:active:bg-neutral-500 dark:border-neutral-600 dark:hover:border-neutral-500',
     'primary-outline': 'bg-transparent text-blue-500 hover:bg-blue-50 active:bg-blue-100 border-2 border-blue-500 hover:border-blue-600',
-    'secondary-outline': 'bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 border-2 border-neutral-400 hover:border-neutral-500'
+    'secondary-outline': 'bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 border-2 border-neutral-400 hover:border-neutral-500 dark:text-neutral-200 dark:hover:bg-neutral-800 dark:active:bg-neutral-700 dark:border-neutral-500 dark:hover:border-neutral-400'
   }
   return variants[props.variant]
 })

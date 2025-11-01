@@ -31,6 +31,39 @@ export interface ComponentDoc {
 
 export const useComponentDocs = () => {
   const docs: Record<string, ComponentDoc> = {
+    Eyebrow: {
+      props: [
+        {
+          name: 'text',
+          type: 'string',
+          required: true,
+          description: 'The text to display in the eyebrow'
+        },
+        {
+          name: 'variant',
+          type: "'white-blue' | 'blue-blue'",
+          default: "'white-blue'",
+          description: 'The visual variant of the eyebrow'
+        },
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg'",
+          default: "'md'",
+          description: 'The size of the eyebrow'
+        }
+      ],
+      examples: [
+        {
+          title: 'White-Blue Variant',
+          code: `<Eyebrow text="Homeowners Guide to Concrete" variant="white-blue" size="md" />`
+        },
+        {
+          title: 'Blue-Blue Variant',
+          code: `<Eyebrow text="How It Works" variant="blue-blue" size="lg" />`
+        }
+      ]
+    },
+
     Button: {
       props: [
         {
@@ -365,6 +398,56 @@ export const useComponentDocs = () => {
   variant="primary"
   sample-text="For Contractors"
 />`
+        }
+      ]
+    },
+
+    DevEyebrowVariantCard: {
+      props: [
+        {
+          name: 'variantTitle',
+          type: 'string',
+          required: true,
+          description: 'The display name for the eyebrow variant (e.g., "White-Blue Variant")'
+        },
+        {
+          name: 'variant',
+          type: "'white-blue' | 'blue-blue'",
+          required: true,
+          description: 'The eyebrow variant type to demonstrate'
+        },
+        {
+          name: 'sampleText',
+          type: 'string',
+          required: true,
+          description: 'The text to display on the sample eyebrows'
+        },
+        {
+          name: 'background',
+          type: "'white' | 'light-blue'",
+          default: "'white'",
+          description: 'The background color of the card to showcase the eyebrow contrast'
+        }
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevEyebrowVariantCard
+  variant-title="White-Blue Variant"
+  variant="white-blue"
+  sample-text="Homeowners Guide to Concrete"
+  background="light-blue"
+/>`
+        }
+      ]
+    },
+
+    DevEyebrowShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevEyebrowShowcase />`
         }
       ]
     },

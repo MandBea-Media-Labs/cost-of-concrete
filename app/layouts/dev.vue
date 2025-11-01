@@ -3,6 +3,7 @@
 // Features a fixed header navigation for quick component section access
 
 const navItems = [
+  { name: 'Eyebrows', href: '#eyebrows' },
   { name: 'Buttons', href: '#buttons' },
   { name: 'Popovers', href: '#popovers' },
   { name: 'Dialogs', href: '#dialogs' },
