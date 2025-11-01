@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     '@nuxtjs/seo',
     '@vueuse/nuxt',
     '@formkit/auto-animate',
-    'reka-ui',
+    'reka-ui/nuxt',
   ],
 
   $development: {

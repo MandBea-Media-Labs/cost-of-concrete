@@ -19,6 +19,9 @@ export default {
       maxWidth: {
         '8xl': '1580px',
       },
+      borderRadius: {
+        '4xl': '2rem',
+      },
       colors: {
         neutral: {
           50: '#ffffff',
