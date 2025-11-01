@@ -26,7 +26,7 @@ const toggleColorMode = () => {
           <div class="flex items-center gap-6">
             <NuxtLink to="/" class="transition-opacity hover:opacity-80">
               <img
-                src="/images/logo-light.webp"
+                :src="colorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp'"
                 alt="Cost of Concrete"
                 class="h-8 w-auto"
               />
