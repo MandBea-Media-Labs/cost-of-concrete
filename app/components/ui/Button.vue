@@ -23,7 +23,7 @@ interface Props {
    * The visual variant of the button
    * @default 'primary'
    */
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'
 
   /**
    * Whether the button is disabled
@@ -42,10 +42,10 @@ const props = withDefaults(defineProps<Props>(), {
 // Size classes for different button sizes
 const sizeClasses = computed(() => {
   const sizes = {
-    sm: 'px-4 py-2 text-sm rounded-3xl',
-    md: 'px-6 py-3 text-base rounded-3xl',
-    lg: 'px-8 py-4 text-lg rounded-3xl',
-    xl: 'px-10 py-5 text-xl rounded-4xl'
+    sm: 'px-4 py-2 text-sm rounded-4xl',
+    md: 'px-6 py-3 text-base rounded-4xl',
+    lg: 'px-8 py-3 text-lg rounded-4xl',
+    xl: 'px-10 py-4 text-xl rounded-4xl'
   }
   return sizes[props.size]
 })
@@ -54,7 +54,9 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
   const variants = {
     primary: 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg',
-    secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400'
+    secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400',
+    'primary-outline': 'bg-transparent text-blue-500 hover:bg-blue-50 active:bg-blue-100 border-2 border-blue-500 hover:border-blue-600',
+    'secondary-outline': 'bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 border-2 border-neutral-400 hover:border-neutral-500'
   }
   return variants[props.variant]
 })
@@ -62,10 +64,11 @@ const variantClasses = computed(() => {
 // Combined button classes
 const buttonClasses = computed(() => {
   return [
-    'font-heading font-semibold transition-all duration-200',
+    'font-bold transition-all duration-200',
     'focus:outline-none focus:ring-4 focus:ring-blue-300',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md',
     'inline-flex items-center justify-center text-center no-underline',
+    'leading-none',
     sizeClasses.value,
     variantClasses.value
   ].join(' ')
