@@ -33,35 +33,35 @@ export const useComponentDocs = () => {
   const docs: Record<string, ComponentDoc> = {
     Button: {
       props: [
-        { 
-          name: 'text', 
-          type: 'string', 
-          required: true, 
-          description: 'The text to display on the button' 
+        {
+          name: 'text',
+          type: 'string',
+          required: true,
+          description: 'The text to display on the button'
         },
-        { 
-          name: 'variant', 
-          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'", 
-          default: "'primary'", 
-          description: 'The visual variant of the button' 
+        {
+          name: 'variant',
+          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'",
+          default: "'primary'",
+          description: 'The visual variant of the button'
         },
-        { 
-          name: 'size', 
-          type: "'sm' | 'md' | 'lg' | 'xl'", 
-          default: "'md'", 
-          description: 'The size of the button' 
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg' | 'xl'",
+          default: "'md'",
+          description: 'The size of the button'
         },
-        { 
-          name: 'location', 
-          type: 'string | null', 
-          default: 'null', 
-          description: 'The route to navigate to when clicked. If null, button does nothing on click.' 
+        {
+          name: 'location',
+          type: 'string | null',
+          default: 'null',
+          description: 'The route to navigate to when clicked. If null, button does nothing on click.'
         },
-        { 
-          name: 'disabled', 
-          type: 'boolean', 
-          default: 'false', 
-          description: 'Whether the button is disabled' 
+        {
+          name: 'disabled',
+          type: 'boolean',
+          default: 'false',
+          description: 'Whether the button is disabled'
         },
       ],
       examples: [
@@ -82,44 +82,44 @@ export const useComponentDocs = () => {
 
     Dialog: {
       props: [
-        { 
-          name: 'triggerText', 
-          type: 'string', 
-          description: 'The trigger text for the default button' 
+        {
+          name: 'triggerText',
+          type: 'string',
+          description: 'The trigger text for the default button'
         },
-        { 
-          name: 'title', 
-          type: 'string', 
-          description: 'The dialog title (can also use #title slot)' 
+        {
+          name: 'title',
+          type: 'string',
+          description: 'The dialog title (can also use #title slot)'
         },
-        { 
-          name: 'description', 
-          type: 'string', 
-          description: 'The dialog description (can also use #description slot)' 
+        {
+          name: 'description',
+          type: 'string',
+          description: 'The dialog description (can also use #description slot)'
         },
-        { 
-          name: 'showOverlay', 
-          type: 'boolean', 
-          default: 'true', 
-          description: 'Whether to show the overlay backdrop' 
+        {
+          name: 'showOverlay',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether to show the overlay backdrop'
         },
-        { 
-          name: 'closeOnOverlayClick', 
-          type: 'boolean', 
-          default: 'true', 
-          description: 'Whether clicking the overlay closes the dialog' 
+        {
+          name: 'closeOnOverlayClick',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether clicking the overlay closes the dialog'
         },
-        { 
-          name: 'showCloseButton', 
-          type: 'boolean', 
-          default: 'true', 
-          description: 'Whether to show the close button (X)' 
+        {
+          name: 'showCloseButton',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether to show the close button (X)'
         },
-        { 
-          name: 'size', 
-          type: "'sm' | 'md' | 'lg' | 'xl' | 'full'", 
-          default: "'md'", 
-          description: 'The size of the dialog' 
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg' | 'xl' | 'full'",
+          default: "'md'",
+          description: 'The size of the dialog'
         },
       ],
       slots: [
@@ -131,18 +131,18 @@ export const useComponentDocs = () => {
         { name: 'close', description: 'Custom close button' },
       ],
       events: [
-        { 
-          name: 'update:open', 
-          payload: 'boolean', 
-          description: 'Emitted when dialog open state changes' 
+        {
+          name: 'update:open',
+          payload: 'boolean',
+          description: 'Emitted when dialog open state changes'
         },
       ],
       examples: [
         {
           title: 'Basic Usage',
-          code: `<Dialog 
-  trigger-text="Open Dialog" 
-  title="Welcome" 
+          code: `<Dialog
+  trigger-text="Open Dialog"
+  title="Welcome"
   description="This is a dialog"
 >
   <p>Dialog content here</p>
@@ -174,41 +174,41 @@ export const useComponentDocs = () => {
 
     Popover: {
       props: [
-        { 
-          name: 'triggerText', 
-          type: 'string', 
+        {
+          name: 'triggerText',
+          type: 'string',
           default: "'Open'",
-          description: 'The trigger text or content' 
+          description: 'The trigger text or content'
         },
-        { 
-          name: 'side', 
-          type: "'top' | 'right' | 'bottom' | 'left'", 
-          default: "'bottom'", 
-          description: 'The side where the popover should appear' 
+        {
+          name: 'side',
+          type: "'top' | 'right' | 'bottom' | 'left'",
+          default: "'bottom'",
+          description: 'The side where the popover should appear'
         },
-        { 
-          name: 'align', 
-          type: "'start' | 'center' | 'end'", 
-          default: "'center'", 
-          description: 'The alignment of the popover relative to the trigger' 
+        {
+          name: 'align',
+          type: "'start' | 'center' | 'end'",
+          default: "'center'",
+          description: 'The alignment of the popover relative to the trigger'
         },
-        { 
-          name: 'sideOffset', 
-          type: 'number', 
-          default: '5', 
-          description: 'The distance in pixels from the trigger' 
+        {
+          name: 'sideOffset',
+          type: 'number',
+          default: '5',
+          description: 'The distance in pixels from the trigger'
         },
-        { 
-          name: 'showArrow', 
-          type: 'boolean', 
-          default: 'true', 
-          description: 'Whether to show the arrow' 
+        {
+          name: 'showArrow',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether to show the arrow'
         },
-        { 
-          name: 'width', 
-          type: 'string', 
-          default: "'260px'", 
-          description: 'Custom width for the popover content' 
+        {
+          name: 'width',
+          type: 'string',
+          default: "'260px'",
+          description: 'Custom width for the popover content'
         },
       ],
       slots: [
@@ -216,10 +216,10 @@ export const useComponentDocs = () => {
         { name: 'default', description: 'Popover content' },
       ],
       events: [
-        { 
-          name: 'update:open', 
-          payload: 'boolean', 
-          description: 'Emitted when popover open state changes' 
+        {
+          name: 'update:open',
+          payload: 'boolean',
+          description: 'Emitted when popover open state changes'
         },
       ],
       examples: [
@@ -231,9 +231,9 @@ export const useComponentDocs = () => {
         },
         {
           title: 'Custom Position',
-          code: `<Popover 
-  trigger-text="Hover Me" 
-  side="right" 
+          code: `<Popover
+  trigger-text="Hover Me"
+  side="right"
   align="start"
 >
   <p>Positioned to the right</p>
@@ -247,6 +247,65 @@ export const useComponentDocs = () => {
   </template>
   <p>Additional information</p>
 </Popover>`
+        }
+      ]
+    },
+
+    Card: {
+      props: [
+        {
+          name: 'variant',
+          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'",
+          default: "'primary'",
+          description: 'The visual variant of the card'
+        },
+        {
+          name: 'borderWidth',
+          type: "'thin' | 'thick'",
+          default: "'thin'",
+          description: 'The border width of the card (thin = 1px, thick = 2px)'
+        },
+        {
+          name: 'padding',
+          type: 'string',
+          default: "'p-6'",
+          description: 'The padding class for the card (Tailwind class override)'
+        },
+        {
+          name: 'shadow',
+          type: 'boolean',
+          default: 'false',
+          description: 'Whether to apply shadow and transition effects'
+        },
+      ],
+      slots: [
+        { name: 'default', description: 'Card content' },
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<Card variant="primary">
+  <h3>Card Title</h3>
+  <p>Card content goes here</p>
+</Card>`
+        },
+        {
+          title: 'Different Variants',
+          code: `<Card variant="secondary" border-width="thick">
+  <p>Secondary card with thick border</p>
+</Card>`
+        },
+        {
+          title: 'With Shadow',
+          code: `<Card variant="primary-outline" :shadow="true">
+  <p>Card with shadow effect</p>
+</Card>`
+        },
+        {
+          title: 'Custom Padding',
+          code: `<Card variant="primary-outline" padding="p-10">
+  <p>Card with custom padding</p>
+</Card>`
         }
       ]
     },
