@@ -8,6 +8,12 @@ const navItems = [
   { name: 'Dialogs', href: '#dialogs' },
   { name: 'Cards', href: '#cards' }
 ]
+
+const colorMode = useColorMode()
+
+const toggleColorMode = () => {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
 </script>
 
 <template>
@@ -18,24 +24,43 @@ const navItems = [
         <div class="flex items-center justify-between">
           <!-- Logo/Title -->
           <div class="flex items-center gap-6">
-            <NuxtLink to="/" class="font-heading text-xl font-bold text-neutral-700 transition-colors hover:text-blue-500 dark:text-neutral-200 dark:hover:text-blue-400">
-              Cost of Concrete
+            <NuxtLink to="/" class="transition-opacity hover:opacity-80">
+              <img
+                src="/images/logo-light.webp"
+                alt="Cost of Concrete"
+                class="h-8 w-auto"
+              />
             </NuxtLink>
-            <span class="hidden text-neutral-400 sm:inline dark:text-neutral-600">|</span>
-            <span class="hidden text-sm font-medium text-neutral-500 sm:inline dark:text-neutral-400">Dev UI Showcase</span>
+            <span class="hidden text-neutral-400 dark:text-neutral-600 sm:inline">|</span>
+            <span class="hidden text-sm font-medium text-neutral-500 dark:text-neutral-400 sm:inline">Dev UI Showcase</span>
           </div>
 
-          <!-- Component Navigation -->
-          <nav class="flex items-center gap-1">
-            <a
-              v-for="item in navItems"
-              :key="item.href"
-              :href="item.href"
-              class="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-all hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+          <!-- Right Side: Color Mode Toggle + Component Navigation -->
+          <div class="flex items-center gap-4">
+            <!-- Component Navigation -->
+            <nav class="flex items-center gap-1">
+              <a
+                v-for="item in navItems"
+                :key="item.href"
+                :href="item.href"
+                class="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-all hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+              >
+                {{ item.name }}
+              </a>
+            </nav>
+
+            <!-- Color Mode Toggle -->
+            <button
+              @click="toggleColorMode"
+              class="rounded-lg p-2 text-neutral-600 transition-all hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+              :aria-label="colorMode.value === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
             >
-              {{ item.name }}
-            </a>
-          </nav>
+              <Icon
+                :name="colorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon'"
+                class="h-5 w-5"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </header>

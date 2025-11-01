@@ -14,7 +14,14 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@formkit/auto-animate',
     'reka-ui/nuxt',
+    '@nuxtjs/color-mode',
   ],
+
+  colorMode: {
+    classSuffix: '',
+    preference: 'light',
+    fallback: 'light',
+  },
 
   $development: {
     scripts: {
