@@ -18,20 +18,26 @@ useSeoMeta({
       </p>
     </div>
 
-    <!-- Button Components in 2-Column Grid -->
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-      <!-- Primary Variant - All Sizes -->
-      <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Primary Variant
-      </h2>
+    <!-- Button Components -->
+    <ComponentSection
+      title="Button Component"
+      component-name="Button"
+      description="Versatile button component with multiple variants and sizes for all your UI needs"
+    >
+      <!-- Button Components in 2-Column Grid -->
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <!-- Primary Variant - All Sizes -->
+        <div class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800">
+        <h3 class="mb-6 font-heading text-xl font-bold text-neutral-700 dark:text-neutral-200">
+          Primary Variant
+        </h3>
 
       <div class="space-y-6">
         <!-- Small -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Small (sm)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="For Contractors" size="sm" variant="primary" />
             <Button text="With Route" size="sm" variant="primary" location="/" />
@@ -41,9 +47,9 @@ useSeoMeta({
 
         <!-- Medium -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Medium (md) - Default
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="For Contractors" size="md" variant="primary" />
             <Button text="With Route" size="md" variant="primary" location="/" />
@@ -53,9 +59,9 @@ useSeoMeta({
 
         <!-- Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Large (lg)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="For Contractors" size="lg" variant="primary" />
             <Button text="With Route" size="lg" variant="primary" location="/" />
@@ -65,9 +71,9 @@ useSeoMeta({
 
         <!-- Extra Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Extra Large (xl)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="For Contractors" size="xl" variant="primary" />
             <Button text="With Route" size="xl" variant="primary" location="/" />
@@ -75,20 +81,20 @@ useSeoMeta({
           </div>
         </div>
       </div>
-      </section>
+      </div>
 
       <!-- Primary Outline Variant - All Sizes -->
-      <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
+      <div class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800">
+      <h3 class="mb-6 font-heading text-xl font-bold text-neutral-700 dark:text-neutral-200">
         Primary Outline Variant
-      </h2>
+      </h3>
 
       <div class="space-y-6">
         <!-- Small -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Small (sm)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="View Contractors" size="sm" variant="primary-outline" />
             <Button text="With Route" size="sm" variant="primary-outline" location="/" />
@@ -98,9 +104,9 @@ useSeoMeta({
 
         <!-- Medium -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Medium (md) - Default
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="View Contractors" size="md" variant="primary-outline" />
             <Button text="With Route" size="md" variant="primary-outline" location="/" />
@@ -110,9 +116,9 @@ useSeoMeta({
 
         <!-- Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Large (lg)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="View Contractors" size="lg" variant="primary-outline" />
             <Button text="With Route" size="lg" variant="primary-outline" location="/" />
@@ -122,9 +128,9 @@ useSeoMeta({
 
         <!-- Extra Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Extra Large (xl)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="View Contractors" size="xl" variant="primary-outline" />
             <Button text="With Route" size="xl" variant="primary-outline" location="/" />
@@ -132,20 +138,20 @@ useSeoMeta({
           </div>
         </div>
       </div>
-      </section>
+      </div>
 
       <!-- Secondary Variant - All Sizes -->
-      <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
+      <div class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800">
+      <h3 class="mb-6 font-heading text-xl font-bold text-neutral-700 dark:text-neutral-200">
         Secondary Variant
-      </h2>
+      </h3>
 
       <div class="space-y-6">
         <!-- Small -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Small (sm)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="sm" variant="secondary" />
             <Button text="With Route" size="sm" variant="secondary" location="/" />
@@ -155,9 +161,9 @@ useSeoMeta({
 
         <!-- Medium -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Medium (md) - Default
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="md" variant="secondary" />
             <Button text="With Route" size="md" variant="secondary" location="/" />
@@ -167,9 +173,9 @@ useSeoMeta({
 
         <!-- Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Large (lg)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="lg" variant="secondary" />
             <Button text="With Route" size="lg" variant="secondary" location="/" />
@@ -179,9 +185,9 @@ useSeoMeta({
 
         <!-- Extra Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Extra Large (xl)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="xl" variant="secondary" />
             <Button text="With Route" size="xl" variant="secondary" location="/" />
@@ -189,20 +195,20 @@ useSeoMeta({
           </div>
         </div>
       </div>
-      </section>
+      </div>
 
       <!-- Secondary Outline Variant - All Sizes -->
-      <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
+      <div class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800">
+      <h3 class="mb-6 font-heading text-xl font-bold text-neutral-700 dark:text-neutral-200">
         Secondary Outline Variant
-      </h2>
+      </h3>
 
       <div class="space-y-6">
         <!-- Small -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Small (sm)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="sm" variant="secondary-outline" />
             <Button text="With Route" size="sm" variant="secondary-outline" location="/" />
@@ -212,9 +218,9 @@ useSeoMeta({
 
         <!-- Medium -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Medium (md) - Default
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="md" variant="secondary-outline" />
             <Button text="With Route" size="md" variant="secondary-outline" location="/" />
@@ -224,9 +230,9 @@ useSeoMeta({
 
         <!-- Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Large (lg)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="lg" variant="secondary-outline" />
             <Button text="With Route" size="lg" variant="secondary-outline" location="/" />
@@ -236,9 +242,9 @@ useSeoMeta({
 
         <!-- Extra Large -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h4 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Extra Large (xl)
-          </h3>
+          </h4>
           <div class="flex flex-wrap gap-4">
             <Button text="Learn More" size="xl" variant="secondary-outline" />
             <Button text="With Route" size="xl" variant="secondary-outline" location="/" />
@@ -246,71 +252,29 @@ useSeoMeta({
           </div>
         </div>
       </div>
-      </section>
-    </div>
-
-    <!-- Usage Examples -->
-    <section class="rounded-xl border-2 border-blue-200 bg-blue-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Real-World Examples
-      </h2>
-
-      <div class="space-y-8">
-        <!-- Hero CTA -->
-        <div class="rounded-lg bg-neutral-50 p-6">
-          <h3 class="mb-4 font-heading text-lg font-semibold text-neutral-700">
-            Hero Call-to-Action
-          </h3>
-          <div class="flex flex-wrap gap-4">
-            <Button text="For Contractors" size="xl" variant="primary" location="/" />
-            <Button text="View Contractors" size="xl" variant="primary-outline" location="/" />
-          </div>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="rounded-lg bg-neutral-50 p-6">
-          <h3 class="mb-4 font-heading text-lg font-semibold text-neutral-700">
-            Form Actions
-          </h3>
-          <div class="flex flex-wrap gap-4">
-            <Button text="Submit" size="md" variant="primary" />
-            <Button text="Cancel" size="md" variant="secondary-outline" />
-          </div>
-        </div>
-
-        <!-- Navigation -->
-        <div class="rounded-lg bg-neutral-50 p-6">
-          <h3 class="mb-4 font-heading text-lg font-semibold text-neutral-700">
-            Navigation Buttons
-          </h3>
-          <div class="flex flex-wrap gap-4">
-            <Button text="Home" size="sm" variant="secondary-outline" location="/" />
-            <Button text="About" size="sm" variant="secondary-outline" location="/" />
-            <Button text="Contact" size="sm" variant="primary" location="/" />
-          </div>
-        </div>
       </div>
-    </section>
+      </div>
+    </ComponentSection>
 
     <!-- Popover Component -->
-    <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Popover Component
-      </h2>
-
+    <ComponentSection
+      title="Popover Component"
+      component-name="Popover"
+      description="Floating content panel that appears on trigger interaction"
+    >
       <div class="space-y-8">
         <!-- Basic Popover -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Basic Popover
           </h3>
           <div class="flex flex-wrap gap-4">
             <Popover trigger-text="Open Popover">
               <div class="space-y-3">
-                <h4 class="font-heading text-lg font-bold text-neutral-700">
+                <h4 class="font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
                   Popover Title
                 </h4>
-                <p class="text-sm text-neutral-600">
+                <p class="text-sm text-neutral-600 dark:text-neutral-300">
                   This is a basic popover with some content inside. You can put any content here.
                 </p>
               </div>
@@ -320,67 +284,67 @@ useSeoMeta({
 
         <!-- Different Sides -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Different Sides
           </h3>
           <div class="flex flex-wrap gap-4">
             <Popover trigger-text="Top" side="top">
-              <p class="text-sm text-neutral-600">Popover on top</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Popover on top</p>
             </Popover>
             <Popover trigger-text="Right" side="right">
-              <p class="text-sm text-neutral-600">Popover on right</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Popover on right</p>
             </Popover>
             <Popover trigger-text="Bottom" side="bottom">
-              <p class="text-sm text-neutral-600">Popover on bottom</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Popover on bottom</p>
             </Popover>
             <Popover trigger-text="Left" side="left">
-              <p class="text-sm text-neutral-600">Popover on left</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Popover on left</p>
             </Popover>
           </div>
         </div>
 
         <!-- Different Alignments -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Different Alignments
           </h3>
           <div class="flex flex-wrap gap-4">
             <Popover trigger-text="Start Align" align="start">
-              <p class="text-sm text-neutral-600">Aligned to start</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Aligned to start</p>
             </Popover>
             <Popover trigger-text="Center Align" align="center">
-              <p class="text-sm text-neutral-600">Aligned to center</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Aligned to center</p>
             </Popover>
             <Popover trigger-text="End Align" align="end">
-              <p class="text-sm text-neutral-600">Aligned to end</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">Aligned to end</p>
             </Popover>
           </div>
         </div>
 
         <!-- Without Arrow -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Without Arrow
           </h3>
           <div class="flex flex-wrap gap-4">
             <Popover trigger-text="No Arrow" :show-arrow="false">
-              <p class="text-sm text-neutral-600">This popover has no arrow</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">This popover has no arrow</p>
             </Popover>
           </div>
         </div>
 
         <!-- Custom Width -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Custom Width
           </h3>
           <div class="flex flex-wrap gap-4">
             <Popover trigger-text="Wide Popover" width="400px">
               <div class="space-y-3">
-                <h4 class="font-heading text-lg font-bold text-neutral-700">
+                <h4 class="font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
                   Wide Popover
                 </h4>
-                <p class="text-sm text-neutral-600">
+                <p class="text-sm text-neutral-600 dark:text-neutral-300">
                   This popover has a custom width of 400px. You can set any width you need for your content.
                 </p>
               </div>
@@ -390,7 +354,7 @@ useSeoMeta({
 
         <!-- Custom Trigger -->
         <div>
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Custom Trigger
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -399,10 +363,10 @@ useSeoMeta({
                 <Button text="Custom Trigger Button" variant="secondary" />
               </template>
               <div class="space-y-3">
-                <h4 class="font-heading text-lg font-bold text-neutral-700">
+                <h4 class="font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
                   Custom Trigger
                 </h4>
-                <p class="text-sm text-neutral-600">
+                <p class="text-sm text-neutral-600 dark:text-neutral-300">
                   You can use any component as a trigger by using the trigger slot.
                 </p>
               </div>
@@ -410,144 +374,19 @@ useSeoMeta({
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- Component Props -->
-    <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Button Component Props
-      </h2>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b-2 border-neutral-300">
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Prop</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Type</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Default</th>
-              <th class="pb-3 font-heading font-semibold text-neutral-700">Description</th>
-            </tr>
-          </thead>
-          <tbody class="text-neutral-600">
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">text</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">-</td>
-              <td class="py-3">The text to display on the button (required)</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">size</td>
-              <td class="font-mono py-3 pr-4 text-sm">'sm' | 'md' | 'lg' | 'xl'</td>
-              <td class="font-mono py-3 pr-4 text-sm">'md'</td>
-              <td class="py-3">The size of the button</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">variant</td>
-              <td class="font-mono py-3 pr-4 text-sm">'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'</td>
-              <td class="font-mono py-3 pr-4 text-sm">'primary'</td>
-              <td class="py-3">The visual variant of the button</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">location</td>
-              <td class="font-mono py-3 pr-4 text-sm">string | null</td>
-              <td class="font-mono py-3 pr-4 text-sm">null</td>
-              <td class="py-3">Route to navigate to. If null, button does nothing on click</td>
-            </tr>
-            <tr>
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">disabled</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">false</td>
-              <td class="py-3">Whether the button is disabled</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Popover Component Props -->
-    <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Popover Component Props
-      </h2>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b-2 border-neutral-300">
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Prop</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Type</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Default</th>
-              <th class="pb-3 font-heading font-semibold text-neutral-700">Description</th>
-            </tr>
-          </thead>
-          <tbody class="text-neutral-600">
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">triggerText</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">'Open'</td>
-              <td class="py-3">The text to display on the trigger button</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">side</td>
-              <td class="font-mono py-3 pr-4 text-sm">'top' | 'right' | 'bottom' | 'left'</td>
-              <td class="font-mono py-3 pr-4 text-sm">'bottom'</td>
-              <td class="py-3">The side where the popover should appear</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">align</td>
-              <td class="font-mono py-3 pr-4 text-sm">'start' | 'center' | 'end'</td>
-              <td class="font-mono py-3 pr-4 text-sm">'center'</td>
-              <td class="py-3">The alignment of the popover relative to the trigger</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">sideOffset</td>
-              <td class="font-mono py-3 pr-4 text-sm">number</td>
-              <td class="font-mono py-3 pr-4 text-sm">5</td>
-              <td class="py-3">The distance in pixels from the trigger</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">showArrow</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">true</td>
-              <td class="py-3">Whether to show the arrow</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">width</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">'260px'</td>
-              <td class="py-3">Custom width for the popover content</td>
-            </tr>
-            <tr>
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">open</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">undefined</td>
-              <td class="py-3">Whether the popover is controlled externally (v-model:open)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="mt-6 rounded-lg bg-blue-50 p-4">
-        <h3 class="mb-2 font-heading text-sm font-semibold text-neutral-700">
-          Slots
-        </h3>
-        <ul class="space-y-2 text-sm text-neutral-600">
-          <li><span class="font-mono text-blue-600">default</span> - The content to display inside the popover</li>
-          <li><span class="font-mono text-blue-600">trigger</span> - Custom trigger element (replaces default button)</li>
-        </ul>
-      </div>
-    </section>
+    </ComponentSection>
 
     <!-- Dialog Component -->
-    <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Dialog Component
-      </h2>
+    <ComponentSection
+      title="Dialog Component"
+      component-name="Dialog"
+      description="Modal dialog with customizable content, sizes, and behavior"
+    >
 
       <div class="space-y-8">
         <!-- Basic Dialog -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Basic Dialog
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -570,7 +409,7 @@ useSeoMeta({
 
         <!-- Different Sizes -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Different Sizes
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -633,7 +472,7 @@ useSeoMeta({
 
         <!-- Custom Trigger -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Custom Trigger
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -672,7 +511,7 @@ useSeoMeta({
 
         <!-- With Footer Actions -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             With Footer Actions
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -701,7 +540,7 @@ useSeoMeta({
 
         <!-- Custom Slots -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Custom Title & Description Slots
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -743,7 +582,7 @@ useSeoMeta({
 
         <!-- Without Overlay Click to Close -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Prevent Close on Overlay Click
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -763,7 +602,7 @@ useSeoMeta({
 
         <!-- Without Close Button -->
         <div>
-          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
             Without Close Button
           </h3>
           <div class="flex flex-wrap gap-4">
@@ -785,100 +624,7 @@ useSeoMeta({
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- Dialog Component Props -->
-    <section class="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-8">
-      <h2 class="mb-6 font-heading text-2xl font-bold text-neutral-700">
-        Dialog Component Props
-      </h2>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b-2 border-neutral-300">
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Prop</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Type</th>
-              <th class="pb-3 pr-4 font-heading font-semibold text-neutral-700">Default</th>
-              <th class="pb-3 font-heading font-semibold text-neutral-700">Description</th>
-            </tr>
-          </thead>
-          <tbody class="text-neutral-600">
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">triggerText</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">-</td>
-              <td class="py-3">The text for the default trigger button</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">title</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">-</td>
-              <td class="py-3">The dialog title (can also use #title slot)</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">description</td>
-              <td class="font-mono py-3 pr-4 text-sm">string</td>
-              <td class="font-mono py-3 pr-4 text-sm">-</td>
-              <td class="py-3">The dialog description (can also use #description slot)</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">open</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">undefined</td>
-              <td class="py-3">Controlled open state (use v-model:open for two-way binding)</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">showOverlay</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">true</td>
-              <td class="py-3">Whether to show the backdrop overlay</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">closeOnOverlayClick</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">true</td>
-              <td class="py-3">Whether clicking the overlay closes the dialog</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">showCloseButton</td>
-              <td class="font-mono py-3 pr-4 text-sm">boolean</td>
-              <td class="font-mono py-3 pr-4 text-sm">true</td>
-              <td class="py-3">Whether to show the X close button</td>
-            </tr>
-            <tr class="border-b border-neutral-200">
-              <td class="font-mono py-3 pr-4 text-sm text-blue-600">size</td>
-              <td class="font-mono py-3 pr-4 text-sm">'sm' | 'md' | 'lg' | 'xl' | 'full'</td>
-              <td class="font-mono py-3 pr-4 text-sm">'md'</td>
-              <td class="py-3">The size/max-width of the dialog</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="mt-6 rounded-lg bg-blue-50 p-4">
-        <h3 class="mb-2 font-heading text-sm font-semibold text-neutral-700">
-          Events
-        </h3>
-        <ul class="space-y-2 text-sm text-neutral-600">
-          <li><span class="font-mono text-blue-600">update:open</span> - Emitted when the dialog open state changes (use with v-model:open)</li>
-        </ul>
-      </div>
-
-      <div class="mt-6 rounded-lg bg-blue-50 p-4">
-        <h3 class="mb-2 font-heading text-sm font-semibold text-neutral-700">
-          Slots
-        </h3>
-        <ul class="space-y-2 text-sm text-neutral-600">
-          <li><span class="font-mono text-blue-600">trigger</span> - Custom trigger element (replaces default button)</li>
-          <li><span class="font-mono text-blue-600">title</span> - Custom title content (replaces title prop)</li>
-          <li><span class="font-mono text-blue-600">description</span> - Custom description content (replaces description prop)</li>
-          <li><span class="font-mono text-blue-600">default</span> - The main content of the dialog</li>
-          <li><span class="font-mono text-blue-600">footer</span> - Footer content (typically action buttons)</li>
-          <li><span class="font-mono text-blue-600">close</span> - Custom close button (replaces default X button)</li>
-        </ul>
-      </div>
-    </section>
+    </ComponentSection>
   </div>
 </template>
 
