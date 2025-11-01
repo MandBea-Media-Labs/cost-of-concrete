@@ -5,8 +5,23 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxtjs/tailwindcss',
-    '@nuxtjs/google-fonts'
+    '@nuxtjs/google-fonts',
+    '@nuxt/eslint',
+    '@nuxt/icon',
+    '@nuxt/image',
+    '@nuxt/scripts',
+    '@nuxtjs/seo',
+    '@vueuse/nuxt',
+    '@formkit/auto-animate',
   ],
+
+  $development: {
+    scripts: {
+      registry: {
+        googleTagManager: 'mock',
+      },
+    },
+  },
 
   googleFonts: {
     families: {
@@ -21,4 +36,44 @@ export default defineNuxtConfig({
     },
     display: 'swap',
   },
+
+  components: [
+    {
+      path: '~/components/ui',
+      pathPrefix: false,
+    },
+    {
+      path: '~/components',
+      pathPrefix: false,
+    },
+  ],
+
+  site: {
+    url: process.env.NUXT_SITE_URL,
+    name: process.env.NUXT_SITE_NAME,
+  },
+
+  nitro: {
+    experimental: {
+      openAPI: true,
+    },
+  },
+
+  robots: {
+    // allow: [
+    //   '*',
+    // ],
+    disallow: [
+      '*',
+      '/privacy',
+      '/terms',
+    ],
+  },
+
+  // sitemap: {
+  //   exclude: [
+  //     '/privacy',
+  //     '/terms',
+  //   ],
+  // },
 })
