@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
+
+// Reka UI components are auto-imported by the reka-ui/nuxt module
 
 interface Props {
   /**
@@ -35,11 +37,6 @@ interface Props {
    * Custom width for the popover content
    */
   width?: string
-
-  /**
-   * Whether the popover is controlled externally
-   */
-  open?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -55,10 +52,18 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const slots = useSlots()
+
+// Check if custom trigger slot is provided
+const hasCustomTrigger = computed(() => !!slots.trigger)
+
+
+
 // Computed classes for the popover content
 const contentClasses = computed(() => {
   return [
     'rounded-xl bg-neutral-50 p-6 shadow-lg',
+    'dark:bg-neutral-800 dark:border-neutral-700',
     'border-2 border-neutral-200',
     'animate-in fade-in-0 zoom-in-95',
     'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
@@ -76,6 +81,7 @@ const triggerClasses = computed(() => {
     'px-4 py-2 rounded-lg',
     'bg-blue-500 text-neutral-50 font-semibold',
     'hover:bg-blue-600 active:bg-blue-700',
+    'dark:bg-blue-600 dark:hover:bg-blue-700',
     'focus:outline-none focus:ring-4 focus:ring-blue-300',
     'transition-all duration-200'
   ].join(' ')
@@ -89,40 +95,42 @@ const contentStyle = computed(() => ({
 
 <template>
   <PopoverRoot
-    :open="open"
-    @update:open="emit('update:open', $event)"
+    @update:open="(value) => emit('update:open', value)"
   >
-    <PopoverTrigger as-child>
-      <button
-        type="button"
-        :class="triggerClasses"
-      >
-        <slot name="trigger">
-          {{ triggerText }}
-        </slot>
-      </button>
+    <!-- Custom trigger slot with as-child -->
+    <PopoverTrigger
+      v-if="hasCustomTrigger"
+      as-child
+    >
+      <slot name="trigger" />
     </PopoverTrigger>
 
-    <ClientOnly>
-      <PopoverPortal>
-        <PopoverContent
-          :class="contentClasses"
-          :style="contentStyle"
-          :side="side"
-          :align="align"
-          :side-offset="sideOffset"
-        >
-          <slot />
+    <!-- Default trigger button -->
+    <PopoverTrigger
+      v-else
+      :class="triggerClasses"
+    >
+      {{ triggerText }}
+    </PopoverTrigger>
 
-          <PopoverArrow
-            v-if="showArrow"
-            class="fill-neutral-200"
-            :width="12"
-            :height="6"
-          />
-        </PopoverContent>
-      </PopoverPortal>
-    </ClientOnly>
+    <PopoverPortal>
+      <PopoverContent
+        :class="contentClasses"
+        :style="contentStyle"
+        :side="side"
+        :align="align"
+        :side-offset="sideOffset"
+      >
+        <slot />
+
+        <PopoverArrow
+          v-if="showArrow"
+          class="fill-neutral-200 dark:fill-neutral-700"
+          :width="12"
+          :height="6"
+        />
+      </PopoverContent>
+    </PopoverPortal>
   </PopoverRoot>
 </template>
 
