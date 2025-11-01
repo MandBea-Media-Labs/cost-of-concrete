@@ -84,7 +84,7 @@
         </li>
         <li class="flex items-start">
           <span class="text-blue-500 mr-3 text-xl">✓</span>
-          <span class="text-neutral-600">Custom font families (ObjectSans, Inter, Inter Tight)</span>
+          <span class="text-neutral-600">Custom font families - ObjectSans (local .otf files), Inter & Inter Tight (Google Fonts)</span>
         </li>
         <li class="flex items-start">
           <span class="text-blue-500 mr-3 text-xl">✓</span>
