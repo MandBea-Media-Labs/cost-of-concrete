@@ -14,7 +14,7 @@ const hasExamples = computed(() => componentDoc.value?.examples && componentDoc.
 </script>
 
 <template>
-  <Popover side="left" :width="'900px'">
+  <Popover side="left" :width="'1000px'">
     <template #trigger>
       <button
         class="rounded-lg bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"

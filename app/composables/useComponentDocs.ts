@@ -309,6 +309,105 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    DevPageHeader: {
+      props: [
+        {
+          name: 'title',
+          type: 'string',
+          required: true,
+          description: 'The main heading text for the page header'
+        },
+        {
+          name: 'description',
+          type: 'string',
+          required: true,
+          description: 'The descriptive text displayed below the title'
+        },
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevPageHeader
+  title="UI Components Display"
+  description="Interactive showcase of all UI components"
+/>`
+        }
+      ]
+    },
+
+    DevButtonVariantCard: {
+      props: [
+        {
+          name: 'variantTitle',
+          type: 'string',
+          required: true,
+          description: 'The display name for the button variant (e.g., "Primary Variant")'
+        },
+        {
+          name: 'variant',
+          type: "'primary' | 'primary-outline' | 'secondary' | 'secondary-outline'",
+          required: true,
+          description: 'The button variant type to demonstrate'
+        },
+        {
+          name: 'sampleText',
+          type: 'string',
+          required: true,
+          description: 'The text to display on the sample buttons'
+        },
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevButtonVariantCard
+  variant-title="Primary Variant"
+  variant="primary"
+  sample-text="For Contractors"
+/>`
+        }
+      ]
+    },
+
+    DevButtonShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevButtonShowcase />`
+        }
+      ]
+    },
+
+    DevPopoverShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevPopoverShowcase />`
+        }
+      ]
+    },
+
+    DevDialogShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevDialogShowcase />`
+        }
+      ]
+    },
+
+    DevCardShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevCardShowcase />`
+        }
+      ]
+    },
   }
 
   return { docs }

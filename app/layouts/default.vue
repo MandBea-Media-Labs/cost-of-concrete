@@ -15,8 +15,8 @@
             <NuxtLink to="/" class="font-medium text-neutral-500 transition-colors hover:text-neutral-700">
               Home
             </NuxtLink>
-            <NuxtLink to="/dev/ui-display" class="font-medium text-neutral-500 transition-colors hover:text-neutral-700">
-              UI Display
+            <NuxtLink to="/dev/ui-showcase" class="font-medium text-neutral-500 transition-colors hover:text-neutral-700">
+              UI Showcase
             </NuxtLink>
           </nav>
         </div>
