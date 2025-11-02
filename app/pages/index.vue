@@ -19,6 +19,9 @@ useSeoMeta({
 
     <!-- Top Contractors Section -->
     <TopContractors />
+
+    <!-- Homeowner Tips Section -->
+    <HomeownerTips />
   </div>
 </template>
 

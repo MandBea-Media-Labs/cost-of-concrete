@@ -997,6 +997,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    HomeownerTips: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<HomeownerTips />`
+        }
+      ]
+    },
   }
 
   return { docs }
