@@ -23,6 +23,11 @@ useSeoMeta({
       <DevEyebrowShowcase />
     </div>
 
+    <!-- Badge Component -->
+    <div id="badges">
+      <DevBadgeShowcase />
+    </div>
+
     <!-- Button Components -->
     <div id="buttons">
       <DevButtonShowcase />

@@ -64,6 +64,43 @@ export const useComponentDocs = () => {
       ]
     },
 
+    Badge: {
+      props: [
+        {
+          name: 'text',
+          type: 'string',
+          required: true,
+          description: 'The text to display in the badge'
+        },
+        {
+          name: 'variant',
+          type: "'primary-outline' | 'secondary-outline'",
+          default: "'primary-outline'",
+          description: 'The visual variant of the badge (outline only)'
+        },
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg'",
+          default: "'md'",
+          description: 'The size of the badge'
+        }
+      ],
+      examples: [
+        {
+          title: 'Primary Outline Variant',
+          code: `<Badge text="Featured" variant="primary-outline" size="md" />`
+        },
+        {
+          title: 'Secondary Outline Variant',
+          code: `<Badge text="New" variant="secondary-outline" size="sm" />`
+        },
+        {
+          title: 'Large Badge',
+          code: `<Badge text="Premium" variant="primary-outline" size="lg" />`
+        }
+      ]
+    },
+
     Button: {
       props: [
         {
@@ -487,6 +524,49 @@ export const useComponentDocs = () => {
         {
           title: 'Basic Usage',
           code: `<DevEyebrowShowcase />`
+        }
+      ]
+    },
+
+    DevBadgeVariantCard: {
+      props: [
+        {
+          name: 'variantTitle',
+          type: 'string',
+          required: true,
+          description: 'The display name for the badge variant (e.g., "Primary Outline Variant")'
+        },
+        {
+          name: 'variant',
+          type: "'primary-outline' | 'secondary-outline'",
+          required: true,
+          description: 'The badge variant type to demonstrate'
+        },
+        {
+          name: 'sampleText',
+          type: 'string',
+          required: true,
+          description: 'The text to display on the sample badges'
+        }
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevBadgeVariantCard
+  variant-title="Primary Outline Variant"
+  variant="primary-outline"
+  sample-text="Featured"
+/>`
+        }
+      ]
+    },
+
+    DevBadgeShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevBadgeShowcase />`
         }
       ]
     },

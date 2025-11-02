@@ -4,6 +4,7 @@
 
 const navItems = [
   { name: 'Eyebrows', href: '#eyebrows' },
+  { name: 'Badges', href: '#badges' },
   { name: 'Buttons', href: '#buttons' },
   { name: 'Popovers', href: '#popovers' },
   { name: 'Dialogs', href: '#dialogs' },
