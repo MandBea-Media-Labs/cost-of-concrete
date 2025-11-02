@@ -10,12 +10,17 @@ interface Props {
   /**
    * The badge variant type to demonstrate
    */
-  variant: 'primary-outline' | 'secondary-outline'
+  variant: 'primary-outline' | 'secondary-outline' | 'ghost'
 
   /**
    * Sample text to display in the badge
    */
   sampleText: string
+
+  /**
+   * Optional icon to display in the badge
+   */
+  icon?: string | null
 }
 
 defineProps<Props>()
@@ -33,19 +38,19 @@ defineProps<Props>()
       <!-- Small -->
       <div class="flex items-center gap-4">
         <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
-        <Badge :text="sampleText" :variant="variant" size="sm" />
+        <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" />
       </div>
 
       <!-- Medium -->
       <div class="flex items-center gap-4">
         <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
-        <Badge :text="sampleText" :variant="variant" size="md" />
+        <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" />
       </div>
 
       <!-- Large -->
       <div class="flex items-center gap-4">
         <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
-        <Badge :text="sampleText" :variant="variant" size="lg" />
+        <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" />
       </div>
     </div>
   </div>

@@ -74,15 +74,21 @@ export const useComponentDocs = () => {
         },
         {
           name: 'variant',
-          type: "'primary-outline' | 'secondary-outline'",
+          type: "'primary-outline' | 'secondary-outline' | 'ghost'",
           default: "'primary-outline'",
-          description: 'The visual variant of the badge (outline only)'
+          description: 'The visual variant of the badge. Ghost variant has 2px border with no background - black in light mode, white in dark mode.'
         },
         {
           name: 'size',
           type: "'sm' | 'md' | 'lg'",
           default: "'md'",
           description: 'The size of the badge'
+        },
+        {
+          name: 'icon',
+          type: 'string | null',
+          default: 'null',
+          description: 'Optional icon name (uses Nuxt Icon). When provided, displays on the left side of the badge text. Example: "heroicons:check-circle"'
         }
       ],
       examples: [
@@ -97,6 +103,18 @@ export const useComponentDocs = () => {
         {
           title: 'Large Badge',
           code: `<Badge text="Premium" variant="primary-outline" size="lg" />`
+        },
+        {
+          title: 'Ghost Variant',
+          code: `<Badge text="Top Rated" variant="ghost" size="md" />`
+        },
+        {
+          title: 'Badge with Icon',
+          code: `<Badge text="Verified" variant="primary-outline" icon="heroicons:check-circle" />`
+        },
+        {
+          title: 'Ghost Variant with Icon',
+          code: `<Badge text="Top Rated" variant="ghost" icon="heroicons:check-circle" size="md" />`
         }
       ]
     },
