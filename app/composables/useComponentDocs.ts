@@ -653,7 +653,7 @@ export const useComponentDocs = () => {
           name: 'button',
           type: 'string | null',
           default: 'null',
-          description: 'Button text. If provided, component shows button instead of autocomplete'
+          description: 'Button text. If provided, component shows button instead of autocomplete. On mobile, button shows icon only; on desktop, shows text.'
         }
       ],
       events: [

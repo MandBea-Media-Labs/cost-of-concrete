@@ -112,7 +112,7 @@ const showClearButton = computed(() => {
 // Size classes
 const sizeClasses = computed(() => {
   const sizes = {
-    sm: 'h-10 text-sm',
+    sm: 'h-11 text-sm',
     md: 'h-12 text-base',
     lg: 'h-14 text-lg'
   }
@@ -131,8 +131,13 @@ const variantClasses = computed(() => {
 
 // Container classes
 const containerClasses = computed(() => {
+  // In button mode: very tight right padding (just 4px) to fit button inside
+  // In autocomplete mode: standard padding
+  const paddingClasses = isButtonMode.value ? 'pl-4 pr-1' : 'pl-4 pr-4'
+
   return [
-    'relative flex items-center gap-2 rounded-full border-2 bg-white px-4 transition-all dark:bg-neutral-900',
+    'relative flex items-center gap-3 rounded-full border bg-white transition-all dark:bg-neutral-900',
+    paddingClasses,
     sizeClasses.value,
     variantClasses.value
   ].join(' ')
@@ -147,15 +152,24 @@ const inputClasses = computed(() => {
 
 // Button classes (for button mode)
 const buttonClasses = computed(() => {
-  const baseClasses = 'rounded-full bg-blue-500 px-6 font-bold text-white transition-all hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500'
+  // Mobile: Round button with icon only (no padding, fixed w/h)
+  // Desktop: Pill button with text (padding, auto width)
+  // Button must fit within container with padding (container - 2*padding)
+  // sm: h-11 container -> h-7 button (2px top/bottom margin)
+  // md: h-12 container -> h-8 button (2px top/bottom margin)
+  // lg: h-14 container -> h-10 button (2px top/bottom margin)
+  const baseClasses = 'flex flex-shrink-0 items-center justify-center rounded-full bg-blue-500 font-bold text-white transition-all hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500'
+
+  // Mobile: No padding (icon centered in fixed w/h), Desktop: Horizontal padding for text
+  const responsiveClasses = '@md:px-5'
 
   const sizes = {
-    sm: 'h-8 text-sm',
-    md: 'h-10 text-base',
-    lg: 'h-12 text-lg'
+    sm: 'h-7 w-7 @md:h-auto @md:w-auto text-sm',
+    md: 'h-8 w-8 @md:h-auto @md:w-auto text-base',
+    lg: 'h-10 w-10 @md:h-auto @md:w-auto text-lg'
   }
 
-  return [baseClasses, sizes[props.size]].join(' ')
+  return [baseClasses, responsiveClasses, sizes[props.size]].join(' ')
 })
 
 // Dropdown classes
@@ -244,8 +258,11 @@ const handleKeydown = (event: KeyboardEvent) => {
       break
     case 'Enter':
       event.preventDefault()
-      if (selectedIndex.value >= 0 && filteredResults.value[selectedIndex.value]) {
-        selectResult(filteredResults.value[selectedIndex.value])
+      if (selectedIndex.value >= 0) {
+        const result = filteredResults.value[selectedIndex.value]
+        if (result) {
+          selectResult(result)
+        }
       }
       break
     case 'Escape':
@@ -276,7 +293,7 @@ watch(selectedIndex, (newIndex) => {
 </script>
 
 <template>
-  <div ref="containerRef" class="relative w-full">
+  <div ref="containerRef" class="@container relative w-full">
     <!-- Input Container -->
     <div :class="containerClasses">
       <!-- Search Icon -->
@@ -318,8 +335,13 @@ watch(selectedIndex, (newIndex) => {
         :class="buttonClasses"
         :disabled="searchQuery.trim().length === 0"
         @click="handleButtonClick"
+        aria-label="Search"
       >
-        {{ button }}
+        <!-- Mobile: Icon Only -->
+        <Icon name="heroicons:magnifying-glass" class="@md:hidden h-5 w-5" />
+
+        <!-- Desktop: Button Text -->
+        <span class="@md:inline hidden">{{ button }}</span>
       </button>
     </div>
 

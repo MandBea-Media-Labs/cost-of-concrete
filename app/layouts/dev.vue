@@ -14,6 +14,21 @@ const navItems = [
 
 const colorMode = useColorMode()
 
+// Track if component is mounted to avoid hydration mismatch
+// Server always renders light mode, client updates after mount
+const isMounted = ref(false)
+
+onMounted(() => {
+  isMounted.value = true
+})
+
+// Computed properties for color mode dependent values
+// Use fallback values during SSR to match server render
+const currentColorMode = computed(() => isMounted.value ? colorMode.value : 'light')
+const logoSrc = computed(() => currentColorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp')
+const themeIcon = computed(() => currentColorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon')
+const themeToggleLabel = computed(() => currentColorMode.value === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')
+
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
@@ -60,7 +75,7 @@ const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
           <div class="flex items-center gap-6">
             <NuxtLink to="/" class="transition-opacity hover:opacity-80">
               <img
-                :src="colorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp'"
+                :src="logoSrc"
                 alt="Cost of Concrete"
                 class="h-8 w-auto"
               />
@@ -140,10 +155,10 @@ const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
             <button
               @click="toggleColorMode"
               class="rounded-lg p-2 text-neutral-600 transition-all hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
-              :aria-label="colorMode.value === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+              :aria-label="themeToggleLabel"
             >
               <Icon
-                :name="colorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon'"
+                :name="themeIcon"
                 class="h-5 w-5"
               />
             </button>
