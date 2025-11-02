@@ -41,15 +41,15 @@ defineProps<Props>()
         <div class="space-y-3">
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
-            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" border="thick" />
+            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" borderWidth="thick" />
           </div>
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
-            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" border="thick" />
+            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" borderWidth="thick" />
           </div>
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
-            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" border="thick" />
+            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" borderWidth="thick" />
           </div>
         </div>
       </div>
@@ -60,15 +60,15 @@ defineProps<Props>()
         <div class="space-y-3">
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
-            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" border="thin" />
+            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" borderWidth="thin" />
           </div>
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
-            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" border="thin" />
+            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" borderWidth="thin" />
           </div>
           <div class="flex items-center gap-4">
             <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
-            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" border="thin" />
+            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" borderWidth="thin" />
           </div>
         </div>
       </div>

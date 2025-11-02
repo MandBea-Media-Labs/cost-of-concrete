@@ -101,7 +101,7 @@ export const useComponentDocs = () => {
           description: 'Optional custom colors as [lightModeColor, darkModeColor] hex values. When provided, overrides all variant colors for border and text. Example: ["#FF0000", "#FF6666"]'
         },
         {
-          name: 'border',
+          name: 'borderWidth',
           type: "'thin' | 'thick'",
           default: "'thick'",
           description: 'The border thickness of the badge. "thin" applies 1px border, "thick" applies 2px border.'
@@ -142,15 +142,15 @@ export const useComponentDocs = () => {
         },
         {
           title: 'Thin Border',
-          code: `<Badge text="Thin" variant="primary-outline" border="thin" />`
+          code: `<Badge text="Thin" variant="primary-outline" borderWidth="thin" />`
         },
         {
           title: 'Thick Border (Default)',
-          code: `<Badge text="Thick" variant="primary-outline" border="thick" />`
+          code: `<Badge text="Thick" variant="primary-outline" borderWidth="thick" />`
         },
         {
           title: 'Custom Colors with Thin Border',
-          code: `<Badge text="Custom Thin" :color="['#DC2626', '#EF4444']" border="thin" />`
+          code: `<Badge text="Custom Thin" :color="['#DC2626', '#EF4444']" borderWidth="thin" />`
         }
       ]
     },
@@ -199,6 +199,12 @@ export const useComponentDocs = () => {
           default: 'null',
           description: 'Optional custom colors as [normalColor, hoverColor] hex values. When provided, overrides all variant colors. Example: ["#FFFFFF", "#C0C0C0"]'
         },
+        {
+          name: 'borderWidth',
+          type: "'thin' | 'thick'",
+          default: "'thick'",
+          description: 'The border width for outline variants. "thin" applies 1px border, "thick" applies 2px border. Only applies to primary-outline, secondary-outline, and secondary variants.'
+        }
       ],
       examples: [
         {
@@ -232,6 +238,14 @@ export const useComponentDocs = () => {
         {
           title: 'Ghost with Custom Colors',
           code: `<Button text="View Profile" variant="ghost" :colors="['#FFFFFF', '#C0C0C0']" icon="heroicons:arrow-right" />`
+        },
+        {
+          title: 'Thin Border Outline',
+          code: `<Button text="View Contractors" variant="primary-outline" borderWidth="thin" />`
+        },
+        {
+          title: 'Thick Border Outline (Default)',
+          code: `<Button text="Learn More" variant="secondary-outline" borderWidth="thick" />`
         }
       ]
     },

@@ -45,6 +45,13 @@ interface Props {
    * @default null
    */
   colors?: [string, string] | null
+
+  /**
+   * The border width for outline variants
+   * Only applies to primary-outline and secondary-outline variants
+   * @default 'thick'
+   */
+  borderWidth?: 'thin' | 'thick'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,7 +60,8 @@ const props = withDefaults(defineProps<Props>(), {
   variant: 'primary',
   disabled: false,
   icon: null,
-  colors: null
+  colors: null,
+  borderWidth: 'thick'
 })
 
 // Size classes for different button sizes
@@ -89,6 +97,11 @@ const iconSizeClasses = computed(() => {
   return sizes[props.size]
 })
 
+// Border width classes for outline variants
+const borderWidthClasses = computed(() => {
+  return props.borderWidth === 'thin' ? 'border' : 'border-2'
+})
+
 // Variant classes for primary and secondary styles
 const variantClasses = computed(() => {
   // If custom colors are provided, use CSS custom properties
@@ -98,9 +111,9 @@ const variantClasses = computed(() => {
 
   const variants = {
     primary: 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg',
-    secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400 dark:bg-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-600 dark:active:bg-neutral-500 dark:border-neutral-600 dark:hover:border-neutral-500',
-    'primary-outline': 'bg-transparent text-blue-500 hover:bg-blue-50 active:bg-blue-100 border-2 border-blue-500 hover:border-blue-600',
-    'secondary-outline': 'bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 border-2 border-neutral-400 hover:border-neutral-500 dark:text-neutral-200 dark:hover:bg-neutral-800 dark:active:bg-neutral-700 dark:border-neutral-500 dark:hover:border-neutral-400',
+    secondary: `bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 ${borderWidthClasses.value} border-neutral-300 hover:border-neutral-400 dark:bg-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-600 dark:active:bg-neutral-500 dark:border-neutral-600 dark:hover:border-neutral-500`,
+    'primary-outline': `bg-transparent text-blue-500 hover:bg-blue-50 active:bg-blue-100 ${borderWidthClasses.value} border-blue-500 hover:border-blue-600`,
+    'secondary-outline': `bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 ${borderWidthClasses.value} border-neutral-400 hover:border-neutral-500 dark:text-neutral-200 dark:hover:bg-neutral-800 dark:active:bg-neutral-700 dark:border-neutral-500 dark:hover:border-neutral-400`,
     'ghost': 'bg-transparent text-blue-500 hover:text-blue-600 active:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
   }
   return variants[props.variant]

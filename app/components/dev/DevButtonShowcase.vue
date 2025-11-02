@@ -84,6 +84,42 @@
         </div>
       </div>
 
+      <!-- Border Width Options -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Border Width Options
+        </h3>
+        <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
+          <div class="space-y-6">
+            <div>
+              <h4 class="mb-3 text-sm font-semibold text-neutral-600 dark:text-neutral-400">Primary Outline</h4>
+              <div class="flex flex-wrap gap-4">
+                <Button text="Thick (Default)" variant="primary-outline" borderWidth="thick" size="md" />
+                <Button text="Thin" variant="primary-outline" borderWidth="thin" size="md" />
+                <Button text="Thick with Icon" variant="primary-outline" borderWidth="thick" icon="heroicons:arrow-right" size="md" />
+                <Button text="Thin with Icon" variant="primary-outline" borderWidth="thin" icon="heroicons:arrow-right" size="md" />
+              </div>
+            </div>
+            <div>
+              <h4 class="mb-3 text-sm font-semibold text-neutral-600 dark:text-neutral-400">Secondary Outline</h4>
+              <div class="flex flex-wrap gap-4">
+                <Button text="Thick (Default)" variant="secondary-outline" borderWidth="thick" size="md" />
+                <Button text="Thin" variant="secondary-outline" borderWidth="thin" size="md" />
+                <Button text="Thick with Icon" variant="secondary-outline" borderWidth="thick" icon="heroicons:arrow-right" size="md" />
+                <Button text="Thin with Icon" variant="secondary-outline" borderWidth="thin" icon="heroicons:arrow-right" size="md" />
+              </div>
+            </div>
+            <div>
+              <h4 class="mb-3 text-sm font-semibold text-neutral-600 dark:text-neutral-400">Secondary Variant</h4>
+              <div class="flex flex-wrap gap-4">
+                <Button text="Thick (Default)" variant="secondary" borderWidth="thick" size="md" />
+                <Button text="Thin" variant="secondary" borderWidth="thin" size="md" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Custom Colors -->
       <div>
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
@@ -177,7 +213,8 @@
             <Button text="Learn More" variant="secondary" size="md" />
             <Button text="Get Started" variant="primary-outline" size="md" icon="heroicons:arrow-right" />
             <Button text="View Details" variant="ghost" size="md" icon="heroicons:arrow-right" />
-            <Button text="Contact Us" variant="secondary-outline" size="sm" />
+            <Button text="Contact Us" variant="secondary-outline" size="sm" borderWidth="thin" />
+            <Button text="Thin Border" variant="primary-outline" borderWidth="thin" size="md" />
             <Button text="Custom" variant="ghost" :colors="['#FF5733', '#C70039']" size="md" />
           </div>
         </div>

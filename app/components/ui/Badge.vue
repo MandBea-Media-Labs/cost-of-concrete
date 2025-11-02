@@ -38,7 +38,7 @@ interface Props {
    * The border thickness of the badge
    * @default 'thick'
    */
-  border?: 'thin' | 'thick'
+  borderWidth?: 'thin' | 'thick'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -46,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   icon: null,
   color: null,
-  border: 'thick'
+  borderWidth: 'thick'
 })
 
 // Size classes for different badge sizes
@@ -81,7 +81,7 @@ const iconSizeClasses = computed(() => {
 
 // Border width classes
 const borderClasses = computed(() => {
-  return props.border === 'thin' ? 'border' : 'border-2'
+  return props.borderWidth === 'thin' ? 'border' : 'border-2'
 })
 
 // Variant classes for different badge styles with light and dark mode

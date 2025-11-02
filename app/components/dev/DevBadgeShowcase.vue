@@ -84,24 +84,24 @@
               <div>
                 <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thick Border (Default - 2px)</h4>
                 <div class="flex flex-wrap gap-3">
-                  <Badge text="Primary" variant="primary-outline" border="thick" size="sm" />
-                  <Badge text="Secondary" variant="secondary-outline" border="thick" size="md" />
-                  <Badge text="Ghost" variant="ghost" border="thick" size="lg" />
+                  <Badge text="Primary" variant="primary-outline" borderWidth="thick" size="sm" />
+                  <Badge text="Secondary" variant="secondary-outline" borderWidth="thick" size="md" />
+                  <Badge text="Ghost" variant="ghost" borderWidth="thick" size="lg" />
                 </div>
               </div>
               <div>
                 <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thin Border (1px)</h4>
                 <div class="flex flex-wrap gap-3">
-                  <Badge text="Primary" variant="primary-outline" border="thin" size="sm" />
-                  <Badge text="Secondary" variant="secondary-outline" border="thin" size="md" />
-                  <Badge text="Ghost" variant="ghost" border="thin" size="lg" />
+                  <Badge text="Primary" variant="primary-outline" borderWidth="thin" size="sm" />
+                  <Badge text="Secondary" variant="secondary-outline" borderWidth="thin" size="md" />
+                  <Badge text="Ghost" variant="ghost" borderWidth="thin" size="lg" />
                 </div>
               </div>
               <div>
                 <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Border Comparison with Icons</h4>
                 <div class="flex flex-wrap gap-3">
-                  <Badge text="Thick" variant="primary-outline" border="thick" icon="heroicons:check-circle" />
-                  <Badge text="Thin" variant="primary-outline" border="thin" icon="heroicons:check-circle" />
+                  <Badge text="Thick" variant="primary-outline" borderWidth="thick" icon="heroicons:check-circle" />
+                  <Badge text="Thin" variant="primary-outline" borderWidth="thin" icon="heroicons:check-circle" />
                 </div>
               </div>
             </div>
@@ -142,10 +142,10 @@
               <div>
                 <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Colors with Border Options</h4>
                 <div class="flex flex-wrap gap-3">
-                  <Badge text="Thick" :color="['#F59E0B', '#FBBF24']" border="thick" />
-                  <Badge text="Thin" :color="['#F59E0B', '#FBBF24']" border="thin" />
-                  <Badge text="Thick Icon" :color="['#8B5CF6', '#A78BFA']" border="thick" icon="heroicons:star" />
-                  <Badge text="Thin Icon" :color="['#8B5CF6', '#A78BFA']" border="thin" icon="heroicons:star" />
+                  <Badge text="Thick" :color="['#F59E0B', '#FBBF24']" borderWidth="thick" />
+                  <Badge text="Thin" :color="['#F59E0B', '#FBBF24']" borderWidth="thin" />
+                  <Badge text="Thick Icon" :color="['#8B5CF6', '#A78BFA']" borderWidth="thick" icon="heroicons:star" />
+                  <Badge text="Thin Icon" :color="['#8B5CF6', '#A78BFA']" borderWidth="thin" icon="heroicons:star" />
                 </div>
               </div>
             </div>
@@ -161,13 +161,13 @@
         <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
           <div class="flex flex-wrap gap-3">
             <Badge text="Featured" variant="primary-outline" size="md" />
-            <Badge text="New" variant="secondary-outline" size="md" border="thin" />
+            <Badge text="New" variant="secondary-outline" size="md" borderWidth="thin" />
             <Badge text="Top Rated" variant="ghost" size="md" icon="heroicons:check-circle" />
-            <Badge text="Verified" variant="primary-outline" size="md" icon="heroicons:shield-check" border="thin" />
+            <Badge text="Verified" variant="primary-outline" size="md" icon="heroicons:shield-check" borderWidth="thin" />
             <Badge text="Premium" variant="secondary-outline" size="sm" icon="heroicons:star" />
-            <Badge text="Best Seller" variant="ghost" size="lg" icon="heroicons:fire" border="thin" />
+            <Badge text="Best Seller" variant="ghost" size="lg" icon="heroicons:fire" borderWidth="thin" />
             <Badge text="Custom" :color="['#F59E0B', '#FBBF24']" size="md" icon="heroicons:lightning-bolt" />
-            <Badge text="Custom Thin" :color="['#EC4899', '#F472B6']" size="md" border="thin" />
+            <Badge text="Custom Thin" :color="['#EC4899', '#F472B6']" size="md" borderWidth="thin" />
           </div>
         </div>
       </div>

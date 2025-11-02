@@ -118,7 +118,7 @@ const contractors: Contractor[] = [
                 variant="ghost"
                 :color="['#ffffff', '#ffffff']"
                 size="md"
-                border="thin"
+                borderWidth="thin"
                 icon="heroicons:check-circle"
               />
             </div>
