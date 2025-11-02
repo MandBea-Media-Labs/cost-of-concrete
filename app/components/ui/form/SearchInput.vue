@@ -138,7 +138,7 @@ const containerClasses = computed(() => {
   const paddingClasses = isButtonMode.value ? 'pl-4 pr-2 @md:pr-1' : 'pl-4 pr-4'
 
   return [
-    'relative flex items-center gap-3 rounded-full border bg-white transition-all dark:bg-neutral-900',
+    'relative flex items-center gap-3 rounded-full border bg-gray-100 transition-all dark:bg-neutral-900',
     paddingClasses,
     sizeClasses.value,
     variantClasses.value

@@ -29,8 +29,8 @@ const props = withDefaults(defineProps<Props>(), {
 const sizeClasses = computed(() => {
   const sizes = {
     sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-2 text-lg'
+    md: 'px-4 py-1 text-base',
+    lg: 'px-6 py-1 text-lg'
   }
   return sizes[props.size]
 })

@@ -13,6 +13,9 @@ useSeoMeta({
 
     <!-- How It Works Section -->
     <HowItWorks />
+
+    <!-- Explore Categories Section -->
+    <ExploreCategories />
   </div>
 </template>
 

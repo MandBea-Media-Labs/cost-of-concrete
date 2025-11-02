@@ -825,6 +825,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    ExploreCategories: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<ExploreCategories />`
+        }
+      ]
+    },
   }
 
   return { docs }
