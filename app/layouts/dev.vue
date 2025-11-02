@@ -170,16 +170,14 @@ const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
     <!-- Main Content with top padding to account for fixed header -->
     <main class="flex-1 pt-20">
       <!-- Container query wrapper -->
-      <div class="@container">
-        <div
-          :class="[
-            contentMaxWidth,
-            'mx-auto px-1 py-8 transition-all duration-300 sm:px-1 lg:px-2',
-            isConstrainedViewport ? 'border-x-2 border-blue-400 bg-white shadow-xl dark:border-blue-500 dark:bg-neutral-900' : ''
-          ]"
-        >
-          <slot />
-        </div>
+      <div
+        :class="[
+          contentMaxWidth,
+          '@container mx-auto px-1 py-8 transition-all duration-300 sm:px-1 lg:px-2',
+          isConstrainedViewport ? 'border-x-2 border-blue-400 bg-white shadow-xl dark:border-blue-500 dark:bg-neutral-900' : ''
+        ]"
+      >
+        <slot />
       </div>
     </main>
 

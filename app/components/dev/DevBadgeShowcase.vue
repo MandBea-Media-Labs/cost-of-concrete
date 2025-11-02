@@ -8,7 +8,7 @@
     component-name="Badge"
     description="Pill-shaped label component with outline variants for tags and status indicators"
   >
-    <div class="grid grid-cols-1 gap-8 @lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
       <DevBadgeVariantCard
         variant-title="Primary Outline Variant"
         variant="primary-outline"

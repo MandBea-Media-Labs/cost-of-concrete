@@ -8,7 +8,7 @@
     component-name="Button"
     description="Versatile button component with multiple variants and sizes for all your UI needs"
   >
-    <div class="grid grid-cols-1 gap-8 @lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
       <DevButtonVariantCard
         variant-title="Primary Variant"
         variant="primary"

@@ -52,7 +52,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           With Icon and Heading (Vertical Layout)
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <!-- Icon + Heading + Content -->
           <Card
             variant="primary-outline"
@@ -88,7 +88,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Primary Variant (Traditional)
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <!-- Thin Border -->
           <Card variant="primary" border-width="thin">
             <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
@@ -116,7 +116,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Secondary Variant
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <!-- Thin Border -->
           <Card variant="secondary" border-width="thin">
             <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
@@ -144,7 +144,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Primary Outline Variant
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <!-- Thin Border -->
           <Card variant="primary-outline" border-width="thin">
             <h4 class="mb-2 font-heading text-lg font-bold text-blue-600 dark:text-blue-400">
@@ -172,7 +172,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Secondary Outline Variant
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @3xl:grid-cols-2">
           <!-- Thin Border -->
           <Card variant="secondary-outline" border-width="thin">
             <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
@@ -200,7 +200,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Custom Padding
         </h3>
-        <div class="@lg:grid-cols-3 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-3">
           <!-- Small Padding -->
           <Card variant="primary" padding="p-3">
             <h4 class="mb-1 font-heading text-sm font-bold text-neutral-700 dark:text-neutral-200">
@@ -238,7 +238,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Shadow Effect (Off by Default)
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <!-- Without Shadow (Default) -->
           <Card variant="primary" border-width="thick">
             <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
@@ -266,7 +266,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Complex Content Example
         </h3>
-        <div class="@lg:grid-cols-2 grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
           <Card variant="primary" border-width="thick" :shadow="true">
             <div class="mb-4 flex items-start justify-between">
               <h4 class="font-heading text-xl font-bold text-neutral-700 dark:text-neutral-200">
