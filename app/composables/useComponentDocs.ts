@@ -41,9 +41,9 @@ export const useComponentDocs = () => {
         },
         {
           name: 'variant',
-          type: "'white-blue' | 'blue-blue'",
+          type: "'white-blue' | 'blue-blue' | 'white-white'",
           default: "'white-blue'",
-          description: 'The visual variant of the eyebrow'
+          description: 'The visual variant of the eyebrow. White-white variant has #334570 background with white text in both light and dark modes (for use on dark backgrounds).'
         },
         {
           name: 'size',
@@ -60,6 +60,10 @@ export const useComponentDocs = () => {
         {
           title: 'Blue-Blue Variant',
           code: `<Eyebrow text="How It Works" variant="blue-blue" size="lg" />`
+        },
+        {
+          title: 'White-White Variant (for dark backgrounds)',
+          code: `<Eyebrow text="Featured Content" variant="white-white" size="md" />`
         }
       ]
     },
@@ -934,6 +938,16 @@ export const useComponentDocs = () => {
         {
           title: 'Basic Usage',
           code: `<ExploreCategories />`
+        }
+      ]
+    },
+
+    TopContractors: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<TopContractors />`
         }
       ]
     },
