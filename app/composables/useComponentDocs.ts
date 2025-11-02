@@ -129,9 +129,9 @@ export const useComponentDocs = () => {
         },
         {
           name: 'variant',
-          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'",
+          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline' | 'ghost'",
           default: "'primary'",
-          description: 'The visual variant of the button'
+          description: 'The visual variant of the button. Ghost variant has no background or border, just text and icon.'
         },
         {
           name: 'size',
@@ -151,6 +151,12 @@ export const useComponentDocs = () => {
           default: 'false',
           description: 'Whether the button is disabled'
         },
+        {
+          name: 'icon',
+          type: 'string | null',
+          default: 'null',
+          description: 'Optional icon name (uses Nuxt Icon). When provided, displays on the right side of the button text. Example: "heroicons:arrow-right"'
+        },
       ],
       examples: [
         {
@@ -164,6 +170,18 @@ export const useComponentDocs = () => {
         {
           title: 'Disabled State',
           code: `<Button text="Disabled" :disabled="true" />`
+        },
+        {
+          title: 'Ghost Variant',
+          code: `<Button text="Learn More" variant="ghost" size="md" />`
+        },
+        {
+          title: 'Button with Icon',
+          code: `<Button text="View Profile" variant="primary" icon="heroicons:arrow-right" />`
+        },
+        {
+          title: 'Ghost Variant with Icon',
+          code: `<Button text="View Profile" variant="ghost" icon="heroicons:arrow-right" size="md" />`
         }
       ]
     },

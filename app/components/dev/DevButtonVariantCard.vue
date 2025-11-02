@@ -1,8 +1,9 @@
 <script setup lang="ts">
 interface Props {
   variantTitle: string
-  variant: 'primary' | 'primary-outline' | 'secondary' | 'secondary-outline'
+  variant: 'primary' | 'primary-outline' | 'secondary' | 'secondary-outline' | 'ghost'
   sampleText: string
+  icon?: string | null
 }
 
 defineProps<Props>()
@@ -27,8 +28,8 @@ const sizes = [
           {{ size.name }}
         </h4>
         <div class="flex flex-wrap gap-4">
-          <Button :text="sampleText" :size="size.value" :variant="variant" />
-          <Button text="Disabled" :size="size.value" :variant="variant" :disabled="true" />
+          <Button :text="sampleText" :size="size.value" :variant="variant" :icon="icon" />
+          <Button text="Disabled" :size="size.value" :variant="variant" :disabled="true" :icon="icon" />
         </div>
       </div>
     </div>
