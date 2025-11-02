@@ -754,6 +754,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    Header: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<Header />`
+        }
+      ]
+    },
   }
 
   return { docs }
