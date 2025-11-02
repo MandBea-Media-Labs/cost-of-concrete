@@ -32,8 +32,8 @@ const currentYear = new Date().getFullYear()
 <template>
   <footer class="w-full" style="background-color: #00174c;">
     <div class="mx-auto max-w-8xl px-4 py-12 sm:px-6 lg:px-8">
-      <!-- Top Section: Logo, Quick Links, Social -->
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
+      <!-- Top Section: Logo on left, Quick Links + Social on right -->
+      <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
         <!-- Logo Section -->
         <div class="flex flex-col items-start">
           <NuxtLink to="/" class="transition-opacity hover:opacity-80">
@@ -46,40 +46,43 @@ const currentYear = new Date().getFullYear()
           </NuxtLink>
         </div>
 
-        <!-- Quick Links Section -->
-        <div>
-          <h3 class="mb-4 font-heading text-lg font-semibold text-white">
-            Quick Links
-          </h3>
-          <nav>
-            <ul class="space-y-3">
-              <li v-for="link in quickLinks" :key="link.text">
-                <NuxtLink
-                  :to="link.to"
-                  class="text-neutral-300 transition-colors hover:text-white"
-                >
-                  {{ link.text }}
-                </NuxtLink>
-              </li>
-            </ul>
-          </nav>
-        </div>
+        <!-- Right Side: Quick Links + Social -->
+        <div class="flex flex-col gap-8 sm:flex-row sm:gap-16 md:gap-20 lg:gap-24">
+          <!-- Quick Links Section -->
+          <div>
+            <h3 class="mb-4 font-heading text-lg font-semibold text-white">
+              Quick Links
+            </h3>
+            <nav>
+              <ul class="space-y-3">
+                <li v-for="link in quickLinks" :key="link.text">
+                  <NuxtLink
+                    :to="link.to"
+                    class="text-neutral-300 transition-colors hover:text-white"
+                  >
+                    {{ link.text }}
+                  </NuxtLink>
+                </li>
+              </ul>
+            </nav>
+          </div>
 
-        <!-- Social Section -->
-        <div>
-          <h3 class="mb-4 font-heading text-lg font-semibold text-white">
-            Social
-          </h3>
-          <div class="flex gap-4">
-            <NuxtLink
-              v-for="social in socialLinks"
-              :key="social.name"
-              :to="social.to"
-              :aria-label="social.ariaLabel"
-              class="text-neutral-300 transition-colors hover:text-white"
-            >
-              <Icon :name="social.icon" class="h-6 w-6" />
-            </NuxtLink>
+          <!-- Social Section -->
+          <div>
+            <h3 class="mb-4 font-heading text-lg font-semibold text-white">
+              Social
+            </h3>
+            <div class="flex gap-4">
+              <NuxtLink
+                v-for="social in socialLinks"
+                :key="social.name"
+                :to="social.to"
+                :aria-label="social.ariaLabel"
+                class="text-neutral-300 transition-colors hover:text-white"
+              >
+                <Icon :name="social.icon" class="h-6 w-6" />
+              </NuxtLink>
+            </div>
           </div>
         </div>
       </div>
