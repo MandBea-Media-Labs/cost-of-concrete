@@ -58,6 +58,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Size classes for different button sizes
 const sizeClasses = computed(() => {
+  // Ghost variant has no horizontal padding
+  if (props.variant === 'ghost') {
+    const sizes = {
+      sm: 'py-2 text-sm rounded-4xl',
+      md: 'py-3 text-base rounded-4xl',
+      lg: 'py-3 text-lg rounded-4xl',
+      xl: 'py-4 text-xl rounded-4xl'
+    }
+    return sizes[props.size]
+  }
+
   const sizes = {
     sm: 'px-4 py-2 text-sm rounded-4xl',
     md: 'px-6 py-3 text-base rounded-4xl',

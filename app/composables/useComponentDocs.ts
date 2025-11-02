@@ -167,7 +167,7 @@ export const useComponentDocs = () => {
           name: 'variant',
           type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline' | 'ghost'",
           default: "'primary'",
-          description: 'The visual variant of the button. Ghost variant has no background or border, just text and icon.'
+          description: 'The visual variant of the button. Ghost variant has no background, border, or horizontal padding - just text and icon.'
         },
         {
           name: 'size',

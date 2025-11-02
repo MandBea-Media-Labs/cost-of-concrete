@@ -31,7 +31,7 @@ const contractors: Contractor[] = [
 </script>
 
 <template>
-  <section class="rounded-lg py-20 md:py-24 lg:py-28" style="background-color: #00174c;">
+  <section class="rounded-3xl py-20 md:py-24 lg:py-28" style="background-color: #00174c;">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <!-- Eyebrow -->
       <div class="mb-6">
@@ -118,6 +118,7 @@ const contractors: Contractor[] = [
                 variant="ghost"
                 :color="['#ffffff', '#ffffff']"
                 size="md"
+                border="thin"
                 icon="heroicons:check-circle"
               />
             </div>
