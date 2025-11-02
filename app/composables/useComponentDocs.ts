@@ -93,6 +93,12 @@ export const useComponentDocs = () => {
           type: 'string | null',
           default: 'null',
           description: 'Optional icon name (uses Nuxt Icon). When provided, displays on the left side of the badge text. Example: "heroicons:check-circle"'
+        },
+        {
+          name: 'color',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Optional custom colors as [lightModeColor, darkModeColor] hex values. When provided, overrides all variant colors for border and text. Example: ["#FF0000", "#FF6666"]'
         }
       ],
       examples: [
@@ -119,6 +125,14 @@ export const useComponentDocs = () => {
         {
           title: 'Ghost Variant with Icon',
           code: `<Badge text="Top Rated" variant="ghost" icon="heroicons:check-circle" size="md" />`
+        },
+        {
+          title: 'Custom Colors',
+          code: `<Badge text="Custom" :color="['#FF0000', '#FF6666']" size="md" />`
+        },
+        {
+          title: 'Custom Colors with Icon',
+          code: `<Badge text="Special" :color="['#00AA00', '#66DD66']" icon="heroicons:star" size="md" />`
         }
       ]
     },

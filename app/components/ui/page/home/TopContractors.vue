@@ -116,6 +116,7 @@ const contractors: Contractor[] = [
               <Badge
                 text="Top Rated"
                 variant="ghost"
+                :color="['#ffffff', '#ffffff']"
                 size="md"
                 icon="heroicons:check-circle"
               />

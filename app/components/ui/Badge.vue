@@ -25,12 +25,21 @@ interface Props {
    * Example: 'heroicons:check-circle'
    */
   icon?: string | null
+
+  /**
+   * Optional custom colors as [lightModeColor, darkModeColor] hex values
+   * When provided, overrides all variant colors for border and text
+   * Example: ['#FF0000', '#FF6666']
+   * @default null
+   */
+  color?: [string, string] | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'primary-outline',
   size: 'md',
-  icon: null
+  icon: null,
+  color: null
 })
 
 // Size classes for different badge sizes
@@ -38,9 +47,9 @@ const sizeClasses = computed(() => {
   // Reduce left padding when icon is present
   if (props.icon) {
     const sizes = {
-      sm: 'pl-0.5 pr-2.5 py-1 text-sm',
-      md: 'pl-0.5 pr-3.5 py-1 text-base',
-      lg: 'pl-0.5 pr-4 py-1 text-lg'
+      sm: 'pl-0.5 pr-2.5 py-0.5 text-sm',
+      md: 'pl-0.5 pr-3.5 py-0.5 text-base',
+      lg: 'pl-0.5 pr-4 py-0.5 text-lg'
     }
     return sizes[props.size]
   }
@@ -65,12 +74,27 @@ const iconSizeClasses = computed(() => {
 
 // Variant classes for different badge styles with light and dark mode
 const variantClasses = computed(() => {
+  // If custom colors are provided, use CSS custom properties
+  if (props.color) {
+    return 'border-2 bg-transparent text-[var(--badge-color-light)] border-[var(--badge-color-light)] dark:text-[var(--badge-color-dark)] dark:border-[var(--badge-color-dark)]'
+  }
+
   const variants = {
     'primary-outline': 'border-2 border-blue-400 bg-transparent text-blue-500 dark:border-blue-500 dark:text-blue-400',
     'secondary-outline': 'border-2 border-neutral-500 bg-transparent text-neutral-700 dark:border-neutral-600 dark:text-neutral-300',
     'ghost': 'border-2 border-black bg-transparent text-black dark:border-white dark:text-white'
   }
   return variants[props.variant]
+})
+
+// Custom styles for color overrides
+const customStyles = computed(() => {
+  if (!props.color) return {}
+
+  return {
+    '--badge-color-light': props.color[0],
+    '--badge-color-dark': props.color[1]
+  }
 })
 
 // Combined badge classes
@@ -84,7 +108,7 @@ const badgeClasses = computed(() => {
 </script>
 
 <template>
-  <span :class="badgeClasses">
+  <span :class="badgeClasses" :style="customStyles">
     <Icon v-if="icon" :name="icon" :class="iconSizeClasses" />
     {{ text }}
   </span>
