@@ -8,7 +8,8 @@ const navItems = [
   { name: 'Buttons', href: '#buttons' },
   { name: 'Popovers', href: '#popovers' },
   { name: 'Dialogs', href: '#dialogs' },
-  { name: 'Cards', href: '#cards' }
+  { name: 'Cards', href: '#cards' },
+  { name: 'Search Inputs', href: '#search-inputs' }
 ]
 
 const colorMode = useColorMode()

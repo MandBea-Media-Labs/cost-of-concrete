@@ -47,6 +47,11 @@ useSeoMeta({
     <div id="cards">
       <DevCardShowcase />
     </div>
+
+    <!-- SearchInput Component -->
+    <div id="search-inputs">
+      <DevSearchInputShowcase />
+    </div>
   </div>
 </template>
 

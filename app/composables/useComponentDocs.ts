@@ -610,6 +610,150 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    SearchInput: {
+      props: [
+        {
+          name: 'placeholder',
+          type: 'string',
+          default: "'Search Contractors by ZIP Code'",
+          description: 'Placeholder text for the input'
+        },
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg'",
+          default: "'md'",
+          description: 'The size of the input'
+        },
+        {
+          name: 'variant',
+          type: "'primary-outline' | 'secondary-outline' | 'secondary-light-outline'",
+          default: "'primary-outline'",
+          description: 'The visual variant (border-based)'
+        },
+        {
+          name: 'maxResults',
+          type: 'number',
+          default: '5',
+          description: 'Maximum autocomplete results to show (autocomplete mode only)'
+        },
+        {
+          name: 'minCharacters',
+          type: 'number',
+          default: '2',
+          description: 'Minimum characters before autocomplete triggers (autocomplete mode only)'
+        },
+        {
+          name: 'loading',
+          type: 'boolean',
+          default: 'false',
+          description: 'Loading state for future API integration'
+        },
+        {
+          name: 'button',
+          type: 'string | null',
+          default: 'null',
+          description: 'Button text. If provided, component shows button instead of autocomplete'
+        }
+      ],
+      events: [
+        {
+          name: 'submit',
+          payload: 'ZipCodeData | string',
+          description: 'Emitted when user selects autocomplete result (ZipCodeData) or clicks button (string)'
+        },
+        {
+          name: 'input',
+          payload: 'string',
+          description: 'Emitted on input change with current search query'
+        }
+      ],
+      examples: [
+        {
+          title: 'Autocomplete Mode',
+          code: `<SearchInput
+  placeholder="Search Contractors by ZIP Code"
+  variant="primary-outline"
+  size="md"
+  @submit="handleZipSelect"
+/>`
+        },
+        {
+          title: 'Button Mode',
+          code: `<SearchInput
+  placeholder="ZIP Code"
+  variant="primary-outline"
+  size="lg"
+  button="Find Contractors"
+  @submit="handleSearch"
+/>`
+        },
+        {
+          title: 'With Loading State',
+          code: `<SearchInput
+  :loading="true"
+  placeholder="Searching..."
+/>`
+        }
+      ]
+    },
+
+    DevSearchInputVariantCard: {
+      props: [
+        {
+          name: 'variantTitle',
+          type: 'string',
+          required: true,
+          description: 'The display name for the variant'
+        },
+        {
+          name: 'variant',
+          type: "'primary-outline' | 'secondary-outline' | 'secondary-light-outline'",
+          required: true,
+          description: 'The variant type to demonstrate'
+        },
+        {
+          name: 'buttonMode',
+          type: 'boolean',
+          default: 'false',
+          description: 'Whether to show button mode'
+        },
+        {
+          name: 'buttonText',
+          type: 'string',
+          default: "'Find Contractors'",
+          description: 'Button text for button mode'
+        }
+      ],
+      examples: [
+        {
+          title: 'Autocomplete Mode',
+          code: `<DevSearchInputVariantCard
+  variant-title="Primary Outline Variant"
+  variant="primary-outline"
+/>`
+        },
+        {
+          title: 'Button Mode',
+          code: `<DevSearchInputVariantCard
+  variant-title="Primary Outline Variant"
+  variant="primary-outline"
+  :button-mode="true"
+  button-text="Find Contractors"
+/>`
+        }
+      ]
+    },
+
+    DevSearchInputShowcase: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<DevSearchInputShowcase />`
+        }
+      ]
+    },
   }
 
   return { docs }
