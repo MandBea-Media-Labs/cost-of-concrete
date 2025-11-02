@@ -288,7 +288,7 @@ export const useComponentDocs = () => {
       props: [
         {
           name: 'variant',
-          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline'",
+          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline' | 'secondary-light-outline'",
           default: "'primary'",
           description: 'The visual variant of the card'
         },
@@ -321,6 +321,12 @@ export const useComponentDocs = () => {
           type: 'string',
           required: false,
           description: 'Optional heading text (displays as H2 below the icon)'
+        },
+        {
+          name: 'step',
+          type: 'number | null',
+          default: 'null',
+          description: 'Optional step number. When provided, displays in 2-column layout with step number in blue circle'
         },
       ],
       slots: [
@@ -360,6 +366,17 @@ export const useComponentDocs = () => {
           title: 'With Shadow',
           code: `<Card variant="primary-outline" :shadow="true">
   <p>Card with shadow effect</p>
+</Card>`
+        },
+        {
+          title: 'Step-based Layout',
+          code: `<Card
+  variant="secondary-light-outline"
+  icon="heroicons:map"
+  heading="Search by ZIP"
+  :step="1"
+>
+  Find local concrete contractors by entering your ZIP code, giving you fast access to nearby service options that match your specific project needs.
 </Card>`
         }
       ]

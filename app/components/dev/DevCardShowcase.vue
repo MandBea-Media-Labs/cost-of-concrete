@@ -9,10 +9,48 @@
     description="Flexible card container with multiple variants, optional icon and heading"
   >
     <div class="space-y-8">
+      <!-- Step-based Layout Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Step-based Layout (2-Column)
+        </h3>
+        <div class="grid grid-cols-1 gap-6">
+          <!-- Step 1 -->
+          <Card
+            variant="secondary-light-outline"
+            icon="heroicons:map"
+            heading="Search by ZIP"
+            :step="1"
+          >
+            Find local concrete contractors by entering your ZIP code, giving you fast access to nearby service options that match your specific project needs.
+          </Card>
+
+          <!-- Step 2 -->
+          <Card
+            variant="secondary-light-outline"
+            icon="heroicons:phone"
+            heading="Contact Contractors"
+            :step="2"
+          >
+            Reach out to multiple contractors to compare quotes, services, and availability for your concrete project.
+          </Card>
+
+          <!-- Step 3 -->
+          <Card
+            variant="secondary-light-outline"
+            icon="heroicons:check-circle"
+            heading="Schedule Installation"
+            :step="3"
+          >
+            Choose your preferred contractor and schedule the concrete installation at a time that works best for your project timeline.
+          </Card>
+        </div>
+      </div>
+
       <!-- Icon and Heading Examples -->
       <div>
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-          With Icon and Heading
+          With Icon and Heading (Vertical Layout)
         </h3>
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <!-- Icon + Heading + Content -->
