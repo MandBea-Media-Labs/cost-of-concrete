@@ -8,7 +8,7 @@ import { consola } from 'consola'
 interface Props {
   /**
    * Placeholder text for the input
-   * @default "Search Contractors by ZIP Code"
+   * @default "Search by ZIP Code"
    */
   placeholder?: string
 
@@ -50,7 +50,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Search Contractors by ZIP Code',
+  placeholder: 'Search by ZIP Code',
   size: 'md',
   variant: 'primary-outline',
   maxResults: 5,
@@ -131,9 +131,10 @@ const variantClasses = computed(() => {
 
 // Container classes
 const containerClasses = computed(() => {
-  // In button mode: very tight right padding (just 4px) to fit button inside
+  // In button mode: responsive right padding to contain button properly
+  // Mobile: pr-2 (8px) for circular button, Desktop: pr-1 (4px) for pill button
   // In autocomplete mode: standard padding
-  const paddingClasses = isButtonMode.value ? 'pl-4 pr-1' : 'pl-4 pr-4'
+  const paddingClasses = isButtonMode.value ? 'pl-4 pr-2 @md:pr-1' : 'pl-4 pr-4'
 
   return [
     'relative flex items-center gap-3 rounded-full border bg-white transition-all dark:bg-neutral-900',
@@ -146,7 +147,7 @@ const containerClasses = computed(() => {
 // Input classes
 const inputClasses = computed(() => {
   return [
-    'flex-1 bg-transparent text-neutral-900 placeholder-neutral-400 outline-none dark:text-neutral-100 dark:placeholder-neutral-500'
+    'flex-1 min-w-0 bg-transparent text-neutral-900 placeholder-neutral-400 outline-none dark:text-neutral-100 dark:placeholder-neutral-500'
   ].join(' ')
 })
 
