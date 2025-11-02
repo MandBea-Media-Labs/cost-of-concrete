@@ -5,7 +5,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'UI Components Showcase - Cost of Concrete',
+  title: 'UI Components Showcase',
   description: 'Interactive demonstration of all UI components with variants and sizes.'
 })
 </script>

@@ -425,13 +425,13 @@ export const useComponentDocs = () => {
           name: 'title',
           type: 'string',
           required: true,
-          description: 'The main heading text for the page header'
+          description: 'The main heading text for the page header (responsive: text-2xl on mobile, text-4xl on tablet+)'
         },
         {
           name: 'description',
           type: 'string',
           required: true,
-          description: 'The descriptive text displayed below the title'
+          description: 'The descriptive text displayed below the title (responsive: text-base on mobile, text-lg on tablet+)'
         },
       ],
       examples: [
