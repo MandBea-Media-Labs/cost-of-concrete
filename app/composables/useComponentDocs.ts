@@ -197,7 +197,13 @@ export const useComponentDocs = () => {
           name: 'colors',
           type: '[string, string] | null',
           default: 'null',
-          description: 'Optional custom colors as [normalColor, hoverColor] hex values. When provided, overrides all variant colors. Example: ["#FFFFFF", "#C0C0C0"]'
+          description: 'Optional custom colors as [normalColor, hoverColor] hex values. Behavior depends on variant: primary/secondary uses colors as background (pill style with shadow), ghost uses colors as text colors (transparent background), outline variants use colors for border and text. Example: ["#FFFFFF", "#C0C0C0"]'
+        },
+        {
+          name: 'textColors',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Optional custom text colors as [normalColor, hoverColor] hex values. When provided, overrides the default text color for the button. Works with all variants, especially useful with custom background colors. Example: ["#000000", "#333333"]'
         },
         {
           name: 'borderWidth',
@@ -232,12 +238,24 @@ export const useComponentDocs = () => {
           code: `<Button text="View Profile" variant="ghost" icon="heroicons:arrow-right" size="md" />`
         },
         {
-          title: 'Custom Colors',
-          code: `<Button text="Custom Button" :colors="['#FF5733', '#C70039']" />`
+          title: 'Primary with Custom Colors (Pill Style)',
+          code: `<Button text="Get Listed Now" variant="primary" :colors="['#FFFFFF', '#C0C0C0']" size="lg" />`
         },
         {
-          title: 'Ghost with Custom Colors',
+          title: 'Primary with Custom Colors and Text Colors',
+          code: `<Button text="Get Listed Now" variant="primary" :colors="['#FFFFFF', '#C0C0C0']" :textColors="['#000000', '#333333']" size="lg" />`
+        },
+        {
+          title: 'Secondary with Custom Colors',
+          code: `<Button text="Custom Button" variant="secondary" :colors="['#FF5733', '#C70039']" />`
+        },
+        {
+          title: 'Ghost with Custom Colors (Text Only)',
           code: `<Button text="View Profile" variant="ghost" :colors="['#FFFFFF', '#C0C0C0']" icon="heroicons:arrow-right" />`
+        },
+        {
+          title: 'Primary with Custom Text Colors Only',
+          code: `<Button text="Custom Text" variant="primary" :textColors="['#FFFFFF', '#E0E0E0']" />`
         },
         {
           title: 'Thin Border Outline',
@@ -1004,6 +1022,16 @@ export const useComponentDocs = () => {
         {
           title: 'Basic Usage',
           code: `<HomeownerTips />`
+        }
+      ]
+    },
+
+    BottomCta: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<BottomCta />`
         }
       ]
     },

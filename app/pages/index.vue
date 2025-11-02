@@ -22,6 +22,12 @@ useSeoMeta({
 
     <!-- Homeowner Tips Section -->
     <HomeownerTips />
+
+    <!-- Concrete Guides & Tips Section -->
+    <ConcreteGuideTips />
+
+    <!-- Bottom CTA Section -->
+    <BottomCta />
   </div>
 </template>
 

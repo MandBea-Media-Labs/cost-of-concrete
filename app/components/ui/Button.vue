@@ -40,11 +40,23 @@ interface Props {
 
   /**
    * Optional custom colors as [normalColor, hoverColor] hex values
-   * When provided, overrides all variant colors
+   * Behavior depends on variant:
+   * - primary/secondary: Uses colors as background (pill style with shadow)
+   * - ghost: Uses colors as text colors (transparent background)
+   * - outline variants: Uses colors for border and text
    * Example: ['#FFFFFF', '#C0C0C0']
    * @default null
    */
   colors?: [string, string] | null
+
+  /**
+   * Optional custom text colors as [normalColor, hoverColor] hex values
+   * When provided, overrides the default text color for the button
+   * Works with all variants, especially useful with custom background colors
+   * Example: ['#000000', '#333333']
+   * @default null
+   */
+  textColors?: [string, string] | null
 
   /**
    * The border width for outline variants
@@ -61,6 +73,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   icon: null,
   colors: null,
+  textColors: null,
   borderWidth: 'thick'
 })
 
@@ -104,9 +117,31 @@ const borderWidthClasses = computed(() => {
 
 // Variant classes for primary and secondary styles
 const variantClasses = computed(() => {
-  // If custom colors are provided, use CSS custom properties
-  if (props.colors) {
+  // If custom colors are provided with primary or secondary variants, use pill style with custom colors
+  if (props.colors && (props.variant === 'primary' || props.variant === 'secondary')) {
+    return 'bg-[var(--btn-bg-color)] text-[var(--btn-text-color)] hover:bg-[var(--btn-hover-color)] hover:text-[var(--btn-text-hover-color)] transition-all shadow-md hover:shadow-lg'
+  }
+
+  // If custom colors are provided with ghost variant, use text-only style
+  if (props.colors && props.variant === 'ghost') {
     return 'bg-transparent text-[var(--btn-color)] hover:text-[var(--btn-hover-color)] transition-colors'
+  }
+
+  // If custom colors are provided with outline variants, use custom border/text colors
+  if (props.colors && (props.variant === 'primary-outline' || props.variant === 'secondary-outline')) {
+    return `bg-transparent text-[var(--btn-color)] hover:bg-[var(--btn-hover-bg)] ${borderWidthClasses.value} border-[var(--btn-color)] hover:border-[var(--btn-hover-color)] transition-all`
+  }
+
+  // If only textColors is provided (no custom background colors), apply custom text colors to default variants
+  if (props.textColors && !props.colors) {
+    const baseVariants = {
+      primary: `bg-blue-500 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg text-[var(--btn-text-color)] hover:text-[var(--btn-text-hover-color)]`,
+      secondary: `bg-neutral-200 hover:bg-neutral-300 active:bg-neutral-400 ${borderWidthClasses.value} border-neutral-300 hover:border-neutral-400 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:active:bg-neutral-500 dark:border-neutral-600 dark:hover:border-neutral-500 text-[var(--btn-text-color)] hover:text-[var(--btn-text-hover-color)]`,
+      'primary-outline': `bg-transparent hover:bg-blue-50 active:bg-blue-100 ${borderWidthClasses.value} border-blue-500 hover:border-blue-600 text-[var(--btn-text-color)] hover:text-[var(--btn-text-hover-color)]`,
+      'secondary-outline': `bg-transparent hover:bg-neutral-100 active:bg-neutral-200 ${borderWidthClasses.value} border-neutral-400 hover:border-neutral-500 dark:hover:bg-neutral-800 dark:active:bg-neutral-700 dark:border-neutral-500 dark:hover:border-neutral-400 text-[var(--btn-text-color)] hover:text-[var(--btn-text-hover-color)]`,
+      'ghost': `bg-transparent text-[var(--btn-text-color)] hover:text-[var(--btn-text-hover-color)] transition-colors`
+    }
+    return baseVariants[props.variant]
   }
 
   const variants = {
@@ -121,12 +156,40 @@ const variantClasses = computed(() => {
 
 // Custom styles for color overrides
 const customStyles = computed(() => {
-  if (!props.colors) return {}
+  const styles: Record<string, string> = {}
 
-  return {
-    '--btn-color': props.colors[0],
-    '--btn-hover-color': props.colors[1]
+  // Handle custom background colors
+  if (props.colors) {
+    // For primary/secondary variants with custom colors: use colors as background
+    if (props.variant === 'primary' || props.variant === 'secondary') {
+      styles['--btn-bg-color'] = props.colors[0]
+      styles['--btn-hover-color'] = props.colors[1]
+      // Default text color (will be overridden by textColor if provided)
+      styles['--btn-text-color'] = '#000000'
+      styles['--btn-text-hover-color'] = '#000000'
+    }
+
+    // For ghost variant: use colors as text colors
+    if (props.variant === 'ghost') {
+      styles['--btn-color'] = props.colors[0]
+      styles['--btn-hover-color'] = props.colors[1]
+    }
+
+    // For outline variants: use colors for border and text
+    if (props.variant === 'primary-outline' || props.variant === 'secondary-outline') {
+      styles['--btn-color'] = props.colors[0]
+      styles['--btn-hover-color'] = props.colors[1]
+      styles['--btn-hover-bg'] = `${props.colors[0]}10` // 10% opacity of the color
+    }
   }
+
+  // Handle custom text colors (overrides default text colors)
+  if (props.textColors) {
+    styles['--btn-text-color'] = props.textColors[0]
+    styles['--btn-text-hover-color'] = props.textColors[1]
+  }
+
+  return styles
 })
 
 // Combined button classes
