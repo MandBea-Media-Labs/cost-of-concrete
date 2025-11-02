@@ -16,6 +16,9 @@ useSeoMeta({
 
     <!-- Explore Categories Section -->
     <ExploreCategories />
+
+    <!-- Top Contractors Section -->
+    <TopContractors />
   </div>
 </template>
 
