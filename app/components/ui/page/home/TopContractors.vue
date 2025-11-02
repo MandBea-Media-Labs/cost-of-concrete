@@ -119,7 +119,7 @@ const contractors: Contractor[] = [
                 :color="['#ffffff', '#ffffff']"
                 size="md"
                 borderWidth="thin"
-                icon="heroicons:check-circle"
+                icon="material-symbols:check-circle"
               />
             </div>
 

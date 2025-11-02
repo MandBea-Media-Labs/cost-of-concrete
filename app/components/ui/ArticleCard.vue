@@ -81,10 +81,10 @@ const variantClasses = computed(() => {
 const eyebrowClasses = computed(() => {
   // For primary variant with colored background, use lighter text
   if (props.variant === 'primary') {
-    return 'text-sm font-semibold uppercase tracking-wide text-blue-100'
+    return 'text-xs font-semibold uppercase tracking-wide text-blue-100'
   }
   // For all other variants, use muted text
-  return 'text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400'
+  return 'text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400'
 })
 
 // Heading text classes
@@ -94,7 +94,7 @@ const headingClasses = computed(() => {
     return 'font-heading text-xl font-bold text-white md:text-2xl'
   }
   // For all other variants, use dark text
-  return 'font-heading text-xl font-bold text-neutral-900 dark:text-neutral-100 md:text-2xl'
+  return 'font-heading text-lg font-bold text-neutral-900 dark:text-neutral-100 md:text-xl'
 })
 
 // Body text classes
@@ -110,7 +110,7 @@ const bodyClasses = computed(() => {
 // Combined card classes
 const cardClasses = computed(() => {
   const baseClasses = [
-    'grid grid-cols-[auto_1fr] gap-4 rounded-lg p-4 md:gap-6 md:p-6',
+    'flex flex-col gap-4 rounded-lg p-4 md:grid md:grid-cols-[auto_1fr] md:gap-6 md:p-6',
     borderWidthClasses.value,
     variantClasses.value
   ]
@@ -128,19 +128,24 @@ const cardClasses = computed(() => {
   <!-- Clickable Link Card -->
   <Primitive v-if="isLink" as-child>
     <NuxtLink :to="to!" :class="cardClasses">
+      <!-- Eyebrow (shown first on mobile) -->
+      <p v-if="eyebrow" :class="eyebrowClasses" class="md:hidden">
+        {{ eyebrow }}
+      </p>
+
       <!-- Image Column -->
       <div v-if="image" class="flex-shrink-0">
         <img
           :src="image"
           :alt="heading || 'Article image'"
-          class="h-32 w-32 rounded-lg object-cover md:h-40 md:w-40"
+          class="h-48 w-full rounded-lg object-cover md:h-40 md:w-56"
         />
       </div>
 
       <!-- Content Column -->
       <div class="flex min-w-0 flex-col justify-center gap-2">
-        <!-- Eyebrow -->
-        <p v-if="eyebrow" :class="eyebrowClasses">
+        <!-- Eyebrow (shown on desktop) -->
+        <p v-if="eyebrow" :class="eyebrowClasses" class="hidden md:block">
           {{ eyebrow }}
         </p>
 
@@ -159,19 +164,24 @@ const cardClasses = computed(() => {
 
   <!-- Non-clickable Card -->
   <div v-else :class="cardClasses">
+    <!-- Eyebrow (shown first on mobile) -->
+    <p v-if="eyebrow" :class="eyebrowClasses" class="md:hidden">
+      {{ eyebrow }}
+    </p>
+
     <!-- Image Column -->
     <div v-if="image" class="flex-shrink-0">
       <img
         :src="image"
         :alt="heading || 'Article image'"
-        class="h-32 w-32 rounded-lg object-cover md:h-40 md:w-40"
+        class="h-48 w-full rounded-lg object-cover md:h-40 md:w-56"
       />
     </div>
 
     <!-- Content Column -->
     <div class="flex min-w-0 flex-col justify-center gap-2">
-      <!-- Eyebrow -->
-      <p v-if="eyebrow" :class="eyebrowClasses">
+      <!-- Eyebrow (shown on desktop) -->
+      <p v-if="eyebrow" :class="eyebrowClasses" class="hidden md:block">
         {{ eyebrow }}
       </p>
 
