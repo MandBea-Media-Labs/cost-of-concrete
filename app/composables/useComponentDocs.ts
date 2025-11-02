@@ -815,6 +815,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    HowItWorks: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<HowItWorks />`
+        }
+      ]
+    },
   }
 
   return { docs }

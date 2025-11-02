@@ -10,6 +10,9 @@ useSeoMeta({
   <div>
     <!-- Hero Section -->
     <Hero />
+
+    <!-- How It Works Section -->
+    <HowItWorks />
   </div>
 </template>
 
