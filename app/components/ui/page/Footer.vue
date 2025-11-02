@@ -31,7 +31,7 @@ const currentYear = new Date().getFullYear()
 
 <template>
   <footer class="w-full" style="background-color: #00174c;">
-    <div class="mx-auto max-w-8xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <!-- Top Section: Logo on left, Quick Links + Social on right -->
       <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
         <!-- Logo Section -->
@@ -40,7 +40,7 @@ const currentYear = new Date().getFullYear()
             <img
               src="/images/logo-light.webp"
               alt="Cost of Concrete"
-              class="h-12 w-auto brightness-0 invert"
+              class="h-18 w-auto brightness-0 invert"
               style="filter: brightness(0) invert(1);"
             />
           </NuxtLink>
@@ -86,12 +86,13 @@ const currentYear = new Date().getFullYear()
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Divider -->
+    <!-- Divider -->
       <div class="my-8 border-t border-white/20"></div>
 
       <!-- Bottom Section: Copyright & Legal Links -->
-      <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 pb-8 sm:flex-row">
         <!-- Copyright -->
         <p class="text-sm text-neutral-300">
           © {{ currentYear }} Cost of Concrete. All rights reserved.
@@ -109,7 +110,6 @@ const currentYear = new Date().getFullYear()
           </NuxtLink>
         </div>
       </div>
-    </div>
   </footer>
 </template>
 
