@@ -764,6 +764,47 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    Divider: {
+      props: [
+        {
+          name: 'orientation',
+          type: "'horizontal' | 'vertical'",
+          default: "'horizontal'",
+          description: 'The orientation of the divider'
+        },
+        {
+          name: 'spacing',
+          type: "'none' | 'sm' | 'md' | 'lg'",
+          default: "'none'",
+          description: 'The spacing around the divider'
+        },
+        {
+          name: 'variant',
+          type: "'solid' | 'dashed' | 'dotted'",
+          default: "'solid'",
+          description: 'The style of the divider line'
+        }
+      ],
+      examples: [
+        {
+          title: 'Horizontal Divider',
+          code: `<Divider />`
+        },
+        {
+          title: 'Horizontal with Spacing',
+          code: `<Divider spacing="md" />`
+        },
+        {
+          title: 'Dashed Divider',
+          code: `<Divider variant="dashed" spacing="md" />`
+        },
+        {
+          title: 'Vertical Divider',
+          code: `<Divider orientation="vertical" spacing="md" />`
+        }
+      ]
+    },
   }
 
   return { docs }

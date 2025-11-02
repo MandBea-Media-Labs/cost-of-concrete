@@ -52,6 +52,11 @@ useSeoMeta({
     <div id="search-inputs">
       <DevSearchInputShowcase />
     </div>
+
+    <!-- Divider Component -->
+    <div id="dividers">
+      <DevDividerShowcase />
+    </div>
   </div>
 </template>
 

@@ -68,7 +68,7 @@ onUnmounted(() => {
           <img
             :src="logoSrc"
             alt="Cost of Concrete"
-            class="h-8 w-auto"
+            class="h-11 w-auto"
           />
         </NuxtLink>
 
@@ -160,9 +160,12 @@ onUnmounted(() => {
             <SearchInput
               placeholder="Type a city, state or zip code.."
               variant="secondary-light-outline"
-              size="lg"
+              size="sm"
             />
           </div>
+
+          <!-- Divider -->
+          <Divider />
 
           <!-- Auth Buttons -->
           <div class="flex flex-col gap-3">
