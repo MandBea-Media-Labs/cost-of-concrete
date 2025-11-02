@@ -33,24 +33,44 @@ defineProps<Props>()
       {{ variantTitle }}
     </h3>
 
-    <!-- Badge Sizes -->
-    <div class="space-y-4">
-      <!-- Small -->
-      <div class="flex items-center gap-4">
-        <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
-        <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" />
+    <!-- Badge Sizes with Border Options -->
+    <div class="space-y-6">
+      <!-- Thick Border (Default) -->
+      <div>
+        <h4 class="mb-3 text-sm font-semibold text-neutral-500 dark:text-neutral-400">Thick Border (2px)</h4>
+        <div class="space-y-3">
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
+            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" border="thick" />
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
+            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" border="thick" />
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
+            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" border="thick" />
+          </div>
+        </div>
       </div>
 
-      <!-- Medium -->
-      <div class="flex items-center gap-4">
-        <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
-        <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" />
-      </div>
-
-      <!-- Large -->
-      <div class="flex items-center gap-4">
-        <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
-        <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" />
+      <!-- Thin Border -->
+      <div>
+        <h4 class="mb-3 text-sm font-semibold text-neutral-500 dark:text-neutral-400">Thin Border (1px)</h4>
+        <div class="space-y-3">
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Small</span>
+            <Badge :text="sampleText" :variant="variant" size="sm" :icon="icon" border="thin" />
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Medium</span>
+            <Badge :text="sampleText" :variant="variant" size="md" :icon="icon" border="thin" />
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="w-16 text-sm font-medium text-neutral-600 dark:text-neutral-400">Large</span>
+            <Badge :text="sampleText" :variant="variant" size="lg" :icon="icon" border="thin" />
+          </div>
+        </div>
       </div>
     </div>
   </div>

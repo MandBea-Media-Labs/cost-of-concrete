@@ -33,13 +33,20 @@ interface Props {
    * @default null
    */
   color?: [string, string] | null
+
+  /**
+   * The border thickness of the badge
+   * @default 'thick'
+   */
+  border?: 'thin' | 'thick'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'primary-outline',
   size: 'md',
   icon: null,
-  color: null
+  color: null,
+  border: 'thick'
 })
 
 // Size classes for different badge sizes
@@ -47,9 +54,9 @@ const sizeClasses = computed(() => {
   // Reduce left padding when icon is present
   if (props.icon) {
     const sizes = {
-      sm: 'pl-0.5 pr-2.5 py-0.5 text-sm',
-      md: 'pl-0.5 pr-3.5 py-0.5 text-base',
-      lg: 'pl-0.5 pr-4 py-0.5 text-lg'
+      sm: 'pl-0.5 pr-2.5 py-1 text-sm',
+      md: 'pl-0.5 pr-3.5 py-1 text-base',
+      lg: 'pl-0.5 pr-4 py-1 text-lg'
     }
     return sizes[props.size]
   }
@@ -72,17 +79,22 @@ const iconSizeClasses = computed(() => {
   return sizes[props.size]
 })
 
+// Border width classes
+const borderClasses = computed(() => {
+  return props.border === 'thin' ? 'border' : 'border-2'
+})
+
 // Variant classes for different badge styles with light and dark mode
 const variantClasses = computed(() => {
   // If custom colors are provided, use CSS custom properties
   if (props.color) {
-    return 'border-2 bg-transparent text-[var(--badge-color-light)] border-[var(--badge-color-light)] dark:text-[var(--badge-color-dark)] dark:border-[var(--badge-color-dark)]'
+    return `${borderClasses.value} bg-transparent text-[var(--badge-color-light)] border-[var(--badge-color-light)] dark:text-[var(--badge-color-dark)] dark:border-[var(--badge-color-dark)]`
   }
 
   const variants = {
-    'primary-outline': 'border-2 border-blue-400 bg-transparent text-blue-500 dark:border-blue-500 dark:text-blue-400',
-    'secondary-outline': 'border-2 border-neutral-500 bg-transparent text-neutral-700 dark:border-neutral-600 dark:text-neutral-300',
-    'ghost': 'border-2 border-black bg-transparent text-black dark:border-white dark:text-white'
+    'primary-outline': `${borderClasses.value} border-blue-400 bg-transparent text-blue-500 dark:border-blue-500 dark:text-blue-400`,
+    'secondary-outline': `${borderClasses.value} border-neutral-500 bg-transparent text-neutral-700 dark:border-neutral-600 dark:text-neutral-300`,
+    'ghost': `${borderClasses.value} border-black bg-transparent text-black dark:border-white dark:text-white`
   }
   return variants[props.variant]
 })

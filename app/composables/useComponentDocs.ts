@@ -99,6 +99,12 @@ export const useComponentDocs = () => {
           type: '[string, string] | null',
           default: 'null',
           description: 'Optional custom colors as [lightModeColor, darkModeColor] hex values. When provided, overrides all variant colors for border and text. Example: ["#FF0000", "#FF6666"]'
+        },
+        {
+          name: 'border',
+          type: "'thin' | 'thick'",
+          default: "'thick'",
+          description: 'The border thickness of the badge. "thin" applies 1px border, "thick" applies 2px border.'
         }
       ],
       examples: [
@@ -133,6 +139,18 @@ export const useComponentDocs = () => {
         {
           title: 'Custom Colors with Icon',
           code: `<Badge text="Special" :color="['#00AA00', '#66DD66']" icon="heroicons:star" size="md" />`
+        },
+        {
+          title: 'Thin Border',
+          code: `<Badge text="Thin" variant="primary-outline" border="thin" />`
+        },
+        {
+          title: 'Thick Border (Default)',
+          code: `<Badge text="Thick" variant="primary-outline" border="thick" />`
+        },
+        {
+          title: 'Custom Colors with Thin Border',
+          code: `<Badge text="Custom Thin" :color="['#DC2626', '#EF4444']" border="thin" />`
         }
       ]
     },
