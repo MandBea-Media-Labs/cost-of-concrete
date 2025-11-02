@@ -72,78 +72,81 @@
         </div>
       </div>
 
-      <!-- Border Thickness -->
-      <div>
-        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-          Border Thickness
-        </h3>
-        <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
-          <div class="space-y-4">
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thick Border (Default - 2px)</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Primary" variant="primary-outline" border="thick" size="sm" />
-                <Badge text="Secondary" variant="secondary-outline" border="thick" size="md" />
-                <Badge text="Ghost" variant="ghost" border="thick" size="lg" />
+      <!-- Border Thickness & Custom Colors - 2 Column Layout on Desktop -->
+      <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
+        <!-- Border Thickness -->
+        <div>
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+            Border Thickness
+          </h3>
+          <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
+            <div class="space-y-4">
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thick Border (Default - 2px)</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Primary" variant="primary-outline" border="thick" size="sm" />
+                  <Badge text="Secondary" variant="secondary-outline" border="thick" size="md" />
+                  <Badge text="Ghost" variant="ghost" border="thick" size="lg" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thin Border (1px)</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Primary" variant="primary-outline" border="thin" size="sm" />
-                <Badge text="Secondary" variant="secondary-outline" border="thin" size="md" />
-                <Badge text="Ghost" variant="ghost" border="thin" size="lg" />
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Thin Border (1px)</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Primary" variant="primary-outline" border="thin" size="sm" />
+                  <Badge text="Secondary" variant="secondary-outline" border="thin" size="md" />
+                  <Badge text="Ghost" variant="ghost" border="thin" size="lg" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Border Comparison with Icons</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Thick" variant="primary-outline" border="thick" icon="heroicons:check-circle" />
-                <Badge text="Thin" variant="primary-outline" border="thin" icon="heroicons:check-circle" />
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Border Comparison with Icons</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Thick" variant="primary-outline" border="thick" icon="heroicons:check-circle" />
+                  <Badge text="Thin" variant="primary-outline" border="thin" icon="heroicons:check-circle" />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Custom Colors -->
-      <div>
-        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-          Custom Colors
-        </h3>
-        <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
-          <div class="space-y-4">
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Red Badge</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Error" :color="['#DC2626', '#EF4444']" size="sm" />
-                <Badge text="Critical" :color="['#DC2626', '#EF4444']" size="md" />
-                <Badge text="Alert" :color="['#DC2626', '#EF4444']" size="lg" icon="heroicons:exclamation-triangle" />
+        <!-- Custom Colors -->
+        <div>
+          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+            Custom Colors
+          </h3>
+          <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
+            <div class="space-y-4">
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Red Badge</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Error" :color="['#DC2626', '#EF4444']" size="sm" />
+                  <Badge text="Critical" :color="['#DC2626', '#EF4444']" size="md" />
+                  <Badge text="Alert" :color="['#DC2626', '#EF4444']" size="lg" icon="heroicons:exclamation-triangle" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Green Badge</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Success" :color="['#059669', '#10B981']" size="sm" />
-                <Badge text="Verified" :color="['#059669', '#10B981']" size="md" icon="heroicons:check-circle" />
-                <Badge text="Approved" :color="['#059669', '#10B981']" size="lg" />
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Green Badge</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Success" :color="['#059669', '#10B981']" size="sm" />
+                  <Badge text="Verified" :color="['#059669', '#10B981']" size="md" icon="heroicons:check-circle" />
+                  <Badge text="Approved" :color="['#059669', '#10B981']" size="lg" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Purple Badge</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Premium" :color="['#7C3AED', '#A855F7']" size="sm" icon="heroicons:star" />
-                <Badge text="VIP" :color="['#7C3AED', '#A855F7']" size="md" />
-                <Badge text="Exclusive" :color="['#7C3AED', '#A855F7']" size="lg" icon="heroicons:sparkles" />
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Purple Badge</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Premium" :color="['#7C3AED', '#A855F7']" size="sm" icon="heroicons:star" />
+                  <Badge text="VIP" :color="['#7C3AED', '#A855F7']" size="md" />
+                  <Badge text="Exclusive" :color="['#7C3AED', '#A855F7']" size="lg" icon="heroicons:sparkles" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Colors with Border Options</h4>
-              <div class="flex flex-wrap gap-3">
-                <Badge text="Thick" :color="['#F59E0B', '#FBBF24']" border="thick" />
-                <Badge text="Thin" :color="['#F59E0B', '#FBBF24']" border="thin" />
-                <Badge text="Thick Icon" :color="['#8B5CF6', '#A78BFA']" border="thick" icon="heroicons:star" />
-                <Badge text="Thin Icon" :color="['#8B5CF6', '#A78BFA']" border="thin" icon="heroicons:star" />
+              <div>
+                <h4 class="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">Custom Colors with Border Options</h4>
+                <div class="flex flex-wrap gap-3">
+                  <Badge text="Thick" :color="['#F59E0B', '#FBBF24']" border="thick" />
+                  <Badge text="Thin" :color="['#F59E0B', '#FBBF24']" border="thin" />
+                  <Badge text="Thick Icon" :color="['#8B5CF6', '#A78BFA']" border="thick" icon="heroicons:star" />
+                  <Badge text="Thin Icon" :color="['#8B5CF6', '#A78BFA']" border="thin" icon="heroicons:star" />
+                </div>
               </div>
             </div>
           </div>
