@@ -805,6 +805,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    Hero: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<Hero />`
+        }
+      ]
+    },
   }
 
   return { docs }
