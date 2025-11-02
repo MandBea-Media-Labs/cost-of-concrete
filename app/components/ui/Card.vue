@@ -132,9 +132,9 @@ const cardClasses = computed(() => {
     <template v-else>
       <!-- Header section with icon and/or heading -->
       <div v-if="hasHeader" class="mb-6 flex flex-col gap-4">
-        <!-- Icon -->
-        <div v-if="icon" class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500">
-          <Icon :name="icon" class="h-8 w-8 text-white" />
+        <!-- Icon - Smaller on mobile, larger on tablet+ -->
+        <div v-if="icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500 @md:h-16 @md:w-16">
+          <Icon :name="icon" class="h-6 w-6 text-white @md:h-8 @md:w-8" />
         </div>
 
         <!-- Heading -->
