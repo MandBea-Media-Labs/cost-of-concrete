@@ -8,7 +8,7 @@
     component-name="Eyebrow"
     description="Pill-shaped label component for section headers and category tags"
   >
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-8 @lg:grid-cols-2">
       <DevEyebrowVariantCard
         variant-title="White-Blue Variant"
         variant="white-blue"

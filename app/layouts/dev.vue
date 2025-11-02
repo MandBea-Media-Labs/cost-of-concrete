@@ -22,7 +22,7 @@ const viewportMode = useLocalStorage<'desktop' | 'tablet' | 'mobile'>('dev-viewp
 // Computed property for content max-width
 const contentMaxWidth = computed(() => {
   const widths = {
-    mobile: 'max-w-[340px]',
+    mobile: 'max-w-[400px]',
     tablet: 'max-w-[768px]',
     desktop: 'max-w-8xl'
   }
@@ -32,7 +32,7 @@ const contentMaxWidth = computed(() => {
 // Computed property for viewport width label
 const viewportLabel = computed(() => {
   const labels = {
-    mobile: '340px',
+    mobile: '400px',
     tablet: '768px',
     desktop: 'Full Width'
   }
@@ -92,8 +92,8 @@ const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
                     ? 'bg-blue-500 text-white dark:bg-blue-600'
                     : 'text-neutral-600 hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400'
                 ]"
-                :aria-label="`Switch to mobile viewport (340px)`"
-                title="Mobile (340px)"
+                :aria-label="`Switch to mobile viewport (400px)`"
+                title="Mobile (400px)"
               >
                 <Icon name="heroicons:device-phone-mobile" class="h-5 w-5" />
               </button>
@@ -152,14 +152,17 @@ const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
 
     <!-- Main Content with top padding to account for fixed header -->
     <main class="flex-1 pt-20">
-      <div
-        :class="[
-          contentMaxWidth,
-          'mx-auto px-4 py-8 transition-all duration-300 sm:px-6 lg:px-8',
-          isConstrainedViewport ? 'border-x-2 border-blue-400 bg-white shadow-xl dark:border-blue-500 dark:bg-neutral-900' : ''
-        ]"
-      >
-        <slot />
+      <!-- Container query wrapper -->
+      <div class="@container">
+        <div
+          :class="[
+            contentMaxWidth,
+            'mx-auto px-1 py-8 transition-all duration-300 sm:px-1 lg:px-2',
+            isConstrainedViewport ? 'border-x-2 border-blue-400 bg-white shadow-xl dark:border-blue-500 dark:bg-neutral-900' : ''
+          ]"
+        >
+          <slot />
+        </div>
       </div>
     </main>
 
