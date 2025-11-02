@@ -310,9 +310,21 @@ export const useComponentDocs = () => {
           default: 'false',
           description: 'Whether to apply shadow and transition effects'
         },
+        {
+          name: 'icon',
+          type: 'string',
+          required: false,
+          description: 'Optional icon name (uses Nuxt Icon). Example: "heroicons:shield-check"'
+        },
+        {
+          name: 'heading',
+          type: 'string',
+          required: false,
+          description: 'Optional heading text (displays as H2 below the icon)'
+        },
       ],
       slots: [
-        { name: 'default', description: 'Card content' },
+        { name: 'default', description: 'Card content (description/body text)' },
       ],
       examples: [
         {
@@ -320,6 +332,22 @@ export const useComponentDocs = () => {
           code: `<Card variant="primary">
   <h3>Card Title</h3>
   <p>Card content goes here</p>
+</Card>`
+        },
+        {
+          title: 'With Icon and Heading',
+          code: `<Card
+  variant="primary"
+  icon="heroicons:shield-check"
+  heading="Sealing Protects from Weather and Wear"
+>
+  Applying a good-quality concrete sealer every few years shields the driveway from moisture, freeze-thaw damage, and staining, preserving appearance and strength.
+</Card>`
+        },
+        {
+          title: 'Icon Only (No Heading)',
+          code: `<Card variant="primary" icon="heroicons:check-circle">
+  <p>Card with just an icon and description text.</p>
 </Card>`
         },
         {
@@ -332,12 +360,6 @@ export const useComponentDocs = () => {
           title: 'With Shadow',
           code: `<Card variant="primary-outline" :shadow="true">
   <p>Card with shadow effect</p>
-</Card>`
-        },
-        {
-          title: 'Custom Padding',
-          code: `<Card variant="primary-outline" padding="p-10">
-  <p>Card with custom padding</p>
 </Card>`
         }
       ]

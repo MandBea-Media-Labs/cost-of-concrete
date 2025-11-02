@@ -25,6 +25,17 @@ interface Props {
    * @default false
    */
   shadow?: boolean
+
+  /**
+   * Optional icon name (uses Nuxt Icon)
+   * Example: 'heroicons:shield-check'
+   */
+  icon?: string
+
+  /**
+   * Optional heading text (displays as H2)
+   */
+  heading?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,6 +44,9 @@ const props = withDefaults(defineProps<Props>(), {
   padding: 'p-6',
   shadow: false
 })
+
+// Check if we have icon or heading to show the header section
+const hasHeader = computed(() => !!props.icon || !!props.heading)
 
 // Variant classes for different card styles with light and dark mode
 const variantClasses = computed(() => {
@@ -73,7 +87,23 @@ const cardClasses = computed(() => {
 
 <template>
   <div :class="cardClasses">
-    <slot />
+    <!-- Header section with icon and/or heading -->
+    <div v-if="hasHeader" class="mb-6 flex flex-col gap-4">
+      <!-- Icon -->
+      <div v-if="icon" class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500">
+        <Icon :name="icon" class="h-8 w-8 text-white" />
+      </div>
+
+      <!-- Heading -->
+      <h2 v-if="heading" class="font-heading text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+        {{ heading }}
+      </h2>
+    </div>
+
+    <!-- Content slot (description/body) -->
+    <div class="text-neutral-600 dark:text-neutral-300">
+      <slot />
+    </div>
   </div>
 </template>
 

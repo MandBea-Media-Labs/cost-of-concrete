@@ -6,13 +6,49 @@
   <ComponentSection
     title="Card Component"
     component-name="Card"
-    description="Flexible card container with multiple variants and customizable border widths"
+    description="Flexible card container with multiple variants, optional icon and heading"
   >
     <div class="space-y-8">
+      <!-- Icon and Heading Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          With Icon and Heading
+        </h3>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- Icon + Heading + Content -->
+          <Card
+            variant="primary-outline"
+            icon="heroicons:shield-check"
+            heading="Sealing Protects from Weather and Wear"
+          >
+            Applying a good-quality concrete sealer every few years shields the driveway from moisture, freeze-thaw damage, and staining, preserving appearance and strength.
+          </Card>
+
+          <!-- Icon + Heading + Content (Different Icon) -->
+          <Card
+            variant="primary"
+            icon="heroicons:wrench-screwdriver"
+            heading="Professional Installation Matters"
+          >
+            Hiring experienced contractors ensures proper site preparation, correct mix ratios, and expert finishing techniques for a durable, long-lasting concrete surface.
+          </Card>
+
+          <!-- Icon Only (No Heading) -->
+          <Card variant="primary" icon="heroicons:check-circle">
+            Card with just an icon and description text. The heading is optional, allowing for flexible layouts based on your content needs.
+          </Card>
+
+          <!-- Heading Only (No Icon) -->
+          <Card variant="primary" heading="Heading Without Icon">
+            This card demonstrates a heading without an icon. The layout adapts automatically based on which props are provided.
+          </Card>
+        </div>
+      </div>
+
       <!-- Primary Variant -->
       <div>
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-          Primary Variant
+          Primary Variant (Traditional)
         </h3>
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <!-- Thin Border -->
