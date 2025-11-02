@@ -15,6 +15,37 @@ const colorMode = useColorMode()
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
+
+// Viewport mode state with localStorage persistence
+const viewportMode = useLocalStorage<'desktop' | 'tablet' | 'mobile'>('dev-viewport-mode', 'desktop')
+
+// Computed property for content max-width
+const contentMaxWidth = computed(() => {
+  const widths = {
+    mobile: 'max-w-[340px]',
+    tablet: 'max-w-[768px]',
+    desktop: 'max-w-8xl'
+  }
+  return widths[viewportMode.value]
+})
+
+// Computed property for viewport width label
+const viewportLabel = computed(() => {
+  const labels = {
+    mobile: '340px',
+    tablet: '768px',
+    desktop: 'Full Width'
+  }
+  return labels[viewportMode.value]
+})
+
+// Check if viewport is constrained (mobile or tablet)
+const isConstrainedViewport = computed(() => viewportMode.value !== 'desktop')
+
+// Handler to change viewport
+const setViewport = (mode: 'desktop' | 'tablet' | 'mobile') => {
+  viewportMode.value = mode
+}
 </script>
 
 <template>
@@ -36,7 +67,7 @@ const toggleColorMode = () => {
             <span class="hidden text-sm font-medium text-neutral-500 dark:text-neutral-400 sm:inline">Dev UI Showcase</span>
           </div>
 
-          <!-- Right Side: Color Mode Toggle + Component Navigation -->
+          <!-- Right Side: Component Navigation + Viewport Controls + Color Mode Toggle -->
           <div class="flex items-center gap-4">
             <!-- Component Navigation -->
             <nav class="flex items-center gap-1">
@@ -49,6 +80,59 @@ const toggleColorMode = () => {
                 {{ item.name }}
               </a>
             </nav>
+
+            <!-- Viewport Controls -->
+            <div class="flex items-center gap-1 border-l border-neutral-300 pl-4 dark:border-neutral-600">
+              <!-- Mobile Viewport Button -->
+              <button
+                @click="setViewport('mobile')"
+                :class="[
+                  'rounded-lg p-2 transition-all',
+                  viewportMode === 'mobile'
+                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400'
+                ]"
+                :aria-label="`Switch to mobile viewport (340px)`"
+                title="Mobile (340px)"
+              >
+                <Icon name="heroicons:device-phone-mobile" class="h-5 w-5" />
+              </button>
+
+              <!-- Tablet Viewport Button -->
+              <button
+                @click="setViewport('tablet')"
+                :class="[
+                  'rounded-lg p-2 transition-all',
+                  viewportMode === 'tablet'
+                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400'
+                ]"
+                :aria-label="`Switch to tablet viewport (768px)`"
+                title="Tablet (768px)"
+              >
+                <Icon name="heroicons:device-tablet" class="h-5 w-5" />
+              </button>
+
+              <!-- Desktop Viewport Button -->
+              <button
+                @click="setViewport('desktop')"
+                :class="[
+                  'rounded-lg p-2 transition-all',
+                  viewportMode === 'desktop'
+                    ? 'bg-blue-500 text-white dark:bg-blue-600'
+                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400'
+                ]"
+                :aria-label="`Switch to desktop viewport (full width)`"
+                title="Desktop (Full Width)"
+              >
+                <Icon name="heroicons:computer-desktop" class="h-5 w-5" />
+              </button>
+
+              <!-- Viewport Width Label -->
+              <span class="ml-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                {{ viewportLabel }}
+              </span>
+            </div>
 
             <!-- Color Mode Toggle -->
             <button
@@ -68,7 +152,13 @@ const toggleColorMode = () => {
 
     <!-- Main Content with top padding to account for fixed header -->
     <main class="flex-1 pt-20">
-      <div class="mx-auto max-w-8xl px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        :class="[
+          contentMaxWidth,
+          'mx-auto px-4 py-8 transition-all duration-300 sm:px-6 lg:px-8',
+          isConstrainedViewport ? 'border-x-2 border-blue-400 bg-white shadow-xl dark:border-blue-500 dark:bg-neutral-900' : ''
+        ]"
+      >
         <slot />
       </div>
     </main>
