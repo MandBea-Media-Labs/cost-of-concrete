@@ -18,8 +18,24 @@ const colorMode = useColorMode()
 // Server always renders light mode, client updates after mount
 const isMounted = ref(false)
 
+// Viewport mode state - initialize with desktop to match SSR
+const viewportMode = ref<'desktop' | 'tablet' | 'mobile'>('desktop')
+
 onMounted(() => {
   isMounted.value = true
+
+  // Load viewport mode from localStorage after mount
+  const savedViewport = localStorage.getItem('dev-viewport-mode')
+  if (savedViewport && ['desktop', 'tablet', 'mobile'].includes(savedViewport)) {
+    viewportMode.value = savedViewport as 'desktop' | 'tablet' | 'mobile'
+  }
+})
+
+// Watch for viewport changes and save to localStorage
+watch(viewportMode, (newMode) => {
+  if (import.meta.client) {
+    localStorage.setItem('dev-viewport-mode', newMode)
+  }
 })
 
 // Computed properties for color mode dependent values
@@ -32,9 +48,6 @@ const themeToggleLabel = computed(() => currentColorMode.value === 'dark' ? 'Swi
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
-
-// Viewport mode state with localStorage persistence
-const viewportMode = useLocalStorage<'desktop' | 'tablet' | 'mobile'>('dev-viewport-mode', 'desktop')
 
 // Computed property for content max-width
 const contentMaxWidth = computed(() => {
