@@ -132,7 +132,8 @@ const variantClasses = computed(() => {
 // Container classes
 const containerClasses = computed(() => {
   // In button mode: responsive right padding to contain button properly
-  // Mobile: pr-2 (8px) for circular button, Desktop: pr-1 (4px) for pill button
+  // Mobile container (< 448px): pr-2 (8px) for circular icon button
+  // Tablet/Desktop container (≥ 448px): pr-1 (4px) for pill text button
   // In autocomplete mode: standard padding
   const paddingClasses = isButtonMode.value ? 'pl-4 pr-2 @md:pr-1' : 'pl-4 pr-4'
 
@@ -153,21 +154,21 @@ const inputClasses = computed(() => {
 
 // Button classes (for button mode)
 const buttonClasses = computed(() => {
-  // Mobile: Round button with icon only (no padding, fixed w/h)
-  // Desktop: Pill button with text (padding, auto width)
+  // Mobile container (< 448px): Round icon-only button with fixed size, no padding
+  // Tablet/Desktop container (≥ 448px): Pill text button with auto size and padding
   // Button must fit within container with padding (container - 2*padding)
-  // sm: h-11 container -> h-7 button (2px top/bottom margin)
-  // md: h-12 container -> h-8 button (2px top/bottom margin)
-  // lg: h-14 container -> h-10 button (2px top/bottom margin)
+  // sm: h-11 container -> h-7 button (2px top/bottom margin) on mobile
+  // md: h-12 container -> h-8 button (2px top/bottom margin) on mobile
+  // lg: h-14 container -> h-10 button (2px top/bottom margin) on mobile
   const baseClasses = 'flex flex-shrink-0 items-center justify-center rounded-full bg-blue-500 font-bold text-white transition-all hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500'
 
-  // Mobile: No padding (icon centered in fixed w/h), Desktop: Horizontal padding for text
+  // Mobile: No padding (icon centered in fixed w/h), Tablet/Desktop: Horizontal padding for text
   const responsiveClasses = '@md:px-5'
 
   const sizes = {
-    sm: 'h-7 w-7 @md:h-auto @md:w-auto text-sm',
-    md: 'h-8 w-8 @md:h-auto @md:w-auto text-base',
-    lg: 'h-10 w-10 @md:h-auto @md:w-auto text-lg'
+    sm: 'h-7 w-7 @md:h-auto @md:py-2 @md:w-auto text-sm',
+    md: 'h-8 w-8 @md:h-auto @md:w-auto @md:py-2 text-base',
+    lg: 'h-10 w-10 @md:h-auto @md:w-auto @md:py-2 text-lg'
   }
 
   return [baseClasses, responsiveClasses, sizes[props.size]].join(' ')
@@ -338,10 +339,10 @@ watch(selectedIndex, (newIndex) => {
         @click="handleButtonClick"
         aria-label="Search"
       >
-        <!-- Mobile: Icon Only -->
+        <!-- Mobile container (< 448px): Show Icon, Tablet/Desktop (≥ 448px): Hidden -->
         <Icon name="heroicons:magnifying-glass" class="@md:hidden h-5 w-5" />
 
-        <!-- Desktop: Button Text -->
+        <!-- Mobile container (< 448px): Hidden, Tablet/Desktop (≥ 448px): Show Text -->
         <span class="@md:inline hidden">{{ button }}</span>
       </button>
     </div>
