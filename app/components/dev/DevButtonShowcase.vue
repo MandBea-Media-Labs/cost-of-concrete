@@ -84,6 +84,87 @@
         </div>
       </div>
 
+      <!-- Custom Colors -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Custom Colors
+        </h3>
+        <div class="rounded-lg border border-neutral-300 bg-white p-6 dark:border-neutral-600 dark:bg-neutral-800">
+          <div class="space-y-4">
+            <div>
+              <p class="mb-2 text-sm text-neutral-600 dark:text-neutral-400">
+                Ghost variant with white/silver colors
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <Button
+                  text="View Profile"
+                  variant="ghost"
+                  :colors="['#FFFFFF', '#C0C0C0']"
+                  icon="heroicons:arrow-right"
+                  size="sm"
+                />
+                <Button
+                  text="View Profile"
+                  variant="ghost"
+                  :colors="['#FFFFFF', '#C0C0C0']"
+                  icon="heroicons:arrow-right"
+                  size="md"
+                />
+                <Button
+                  text="View Profile"
+                  variant="ghost"
+                  :colors="['#FFFFFF', '#C0C0C0']"
+                  icon="heroicons:arrow-right"
+                  size="lg"
+                />
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-2 text-sm text-neutral-600 dark:text-neutral-400">
+                Custom red/orange colors
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <Button
+                  text="Delete"
+                  variant="ghost"
+                  :colors="['#FF5733', '#C70039']"
+                  size="md"
+                />
+                <Button
+                  text="Remove"
+                  variant="ghost"
+                  :colors="['#FF5733', '#C70039']"
+                  icon="heroicons:trash"
+                  size="md"
+                />
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-2 text-sm text-neutral-600 dark:text-neutral-400">
+                Custom green colors
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <Button
+                  text="Success"
+                  variant="ghost"
+                  :colors="['#28A745', '#1E7E34']"
+                  size="md"
+                />
+                <Button
+                  text="Confirm"
+                  variant="ghost"
+                  :colors="['#28A745', '#1E7E34']"
+                  icon="heroicons:check-circle"
+                  size="md"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Mixed Examples -->
       <div>
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
@@ -97,6 +178,7 @@
             <Button text="Get Started" variant="primary-outline" size="md" icon="heroicons:arrow-right" />
             <Button text="View Details" variant="ghost" size="md" icon="heroicons:arrow-right" />
             <Button text="Contact Us" variant="secondary-outline" size="sm" />
+            <Button text="Custom" variant="ghost" :colors="['#FF5733', '#C70039']" size="md" />
           </div>
         </div>
       </div>

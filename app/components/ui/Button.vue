@@ -37,6 +37,14 @@ interface Props {
    * Example: 'heroicons:arrow-right'
    */
   icon?: string | null
+
+  /**
+   * Optional custom colors as [normalColor, hoverColor] hex values
+   * When provided, overrides all variant colors
+   * Example: ['#FFFFFF', '#C0C0C0']
+   * @default null
+   */
+  colors?: [string, string] | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +52,8 @@ const props = withDefaults(defineProps<Props>(), {
   location: null,
   variant: 'primary',
   disabled: false,
-  icon: null
+  icon: null,
+  colors: null
 })
 
 // Size classes for different button sizes
@@ -71,6 +80,11 @@ const iconSizeClasses = computed(() => {
 
 // Variant classes for primary and secondary styles
 const variantClasses = computed(() => {
+  // If custom colors are provided, use CSS custom properties
+  if (props.colors) {
+    return 'bg-transparent text-[var(--btn-color)] hover:text-[var(--btn-hover-color)] transition-colors'
+  }
+
   const variants = {
     primary: 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg',
     secondary: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 active:bg-neutral-400 border-2 border-neutral-300 hover:border-neutral-400 dark:bg-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-600 dark:active:bg-neutral-500 dark:border-neutral-600 dark:hover:border-neutral-500',
@@ -79,6 +93,16 @@ const variantClasses = computed(() => {
     'ghost': 'bg-transparent text-blue-500 hover:text-blue-600 active:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
   }
   return variants[props.variant]
+})
+
+// Custom styles for color overrides
+const customStyles = computed(() => {
+  if (!props.colors) return {}
+
+  return {
+    '--btn-color': props.colors[0],
+    '--btn-hover-color': props.colors[1]
+  }
 })
 
 // Combined button classes
@@ -107,6 +131,7 @@ const isLink = computed(() => props.location && !props.disabled)
     <NuxtLink
       :to="location!"
       :class="buttonClasses"
+      :style="customStyles"
     >
       {{ text }}
       <Icon v-if="icon" :name="icon" :class="iconSizeClasses" />
@@ -118,6 +143,7 @@ const isLink = computed(() => props.location && !props.disabled)
     type="button"
     :disabled="disabled"
     :class="buttonClasses"
+    :style="customStyles"
   >
     {{ text }}
     <Icon v-if="icon" :name="icon" :class="iconSizeClasses" />

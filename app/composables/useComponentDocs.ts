@@ -157,6 +157,12 @@ export const useComponentDocs = () => {
           default: 'null',
           description: 'Optional icon name (uses Nuxt Icon). When provided, displays on the right side of the button text. Example: "heroicons:arrow-right"'
         },
+        {
+          name: 'colors',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Optional custom colors as [normalColor, hoverColor] hex values. When provided, overrides all variant colors. Example: ["#FFFFFF", "#C0C0C0"]'
+        },
       ],
       examples: [
         {
@@ -182,6 +188,14 @@ export const useComponentDocs = () => {
         {
           title: 'Ghost Variant with Icon',
           code: `<Button text="View Profile" variant="ghost" icon="heroicons:arrow-right" size="md" />`
+        },
+        {
+          title: 'Custom Colors',
+          code: `<Button text="Custom Button" :colors="['#FF5733', '#C70039']" />`
+        },
+        {
+          title: 'Ghost with Custom Colors',
+          code: `<Button text="View Profile" variant="ghost" :colors="['#FFFFFF', '#C0C0C0']" icon="heroicons:arrow-right" />`
         }
       ]
     },
