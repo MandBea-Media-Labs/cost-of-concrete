@@ -326,7 +326,7 @@ export const useComponentDocs = () => {
           name: 'step',
           type: 'number | null',
           default: 'null',
-          description: 'Optional step number. When provided, displays in 2-column layout with step number in blue circle'
+          description: 'Optional step number. When provided, displays in 2-column layout with step number in blue circle. Icon is hidden on mobile (container < 768px) for better readability.'
         },
       ],
       slots: [

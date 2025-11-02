@@ -99,9 +99,10 @@ const cardClasses = computed(() => {
 <template>
   <div :class="cardClasses">
     <!-- Step-based layout: 2 columns with icon on left, step+heading+content on right -->
-    <div v-if="isStepLayout" class="grid grid-cols-[auto_1fr] gap-6">
-      <!-- Left column: Icon (vertically centered) -->
-      <div v-if="icon" class="flex items-center">
+    <!-- On mobile (@container < md), hide icon and show single column -->
+    <div v-if="isStepLayout" class="grid grid-cols-1 gap-6 @md:grid-cols-[auto_1fr]">
+      <!-- Left column: Icon (vertically centered) - Hidden on mobile -->
+      <div v-if="icon" class="hidden items-center @md:flex">
         <Icon :name="icon" class="h-16 w-16 text-neutral-900 dark:text-neutral-100" />
       </div>
 
