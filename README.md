@@ -1,6 +1,14 @@
-# Nuxt Minimal Starter
+# Cost of Concrete
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A web application for finding local concrete contractors and calculating concrete project costs.
+
+## Tech Stack
+
+- **Nuxt 4** - Vue.js framework
+- **Vue 3** - Progressive JavaScript framework
+- **Tailwind CSS** - Utility-first CSS framework
+- **Reka UI** - Accessible component library
+- **TypeScript** - Type-safe development
 
 ## Setup
 
