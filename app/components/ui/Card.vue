@@ -42,6 +42,26 @@ interface Props {
    * When provided, displays in 2-column layout with step number in blue circle
    */
   step?: number | null
+
+  /**
+   * Whether to show borders
+   * @default true
+   */
+  border?: boolean
+
+  /**
+   * Custom border colors [light mode, dark mode]
+   * Overrides variant border colors when provided
+   * Example: ['#FF0000', '#00FF00']
+   */
+  borderColor?: [string, string] | null
+
+  /**
+   * Custom background colors [light mode, dark mode]
+   * Overrides variant background colors when provided
+   * Example: ['#FFFFFF', '#000000']
+   */
+  backgroundColors?: [string, string] | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -49,7 +69,10 @@ const props = withDefaults(defineProps<Props>(), {
   borderWidth: 'thin',
   padding: 'p-6',
   shadow: false,
-  step: null
+  step: null,
+  border: true,
+  borderColor: null,
+  backgroundColors: null
 })
 
 // Check if we're using step-based layout
@@ -72,6 +95,9 @@ const variantClasses = computed(() => {
 
 // Border width classes
 const borderWidthClasses = computed(() => {
+  // If border is false, return empty string (no border)
+  if (!props.border) return ''
+
   const widths = {
     thin: 'border',
     thick: 'border-2'
@@ -84,20 +110,62 @@ const shadowClasses = computed(() => {
   return props.shadow ? 'shadow-md transition-shadow duration-300' : ''
 })
 
+// Custom inline styles for border and background colors
+const customStyles = computed(() => {
+  const styles: Record<string, string> = {}
+
+  // Apply custom border color if provided
+  if (props.borderColor && props.border) {
+    styles['--card-border-light'] = props.borderColor[0]
+    styles['--card-border-dark'] = props.borderColor[1]
+  }
+
+  // Apply custom background colors if provided
+  if (props.backgroundColors) {
+    styles['--card-bg-light'] = props.backgroundColors[0]
+    styles['--card-bg-dark'] = props.backgroundColors[1]
+  }
+
+  return styles
+})
+
 // Combined card classes
 const cardClasses = computed(() => {
-  return [
+  const classes = [
     'rounded-lg',
     props.padding,
     borderWidthClasses.value,
-    variantClasses.value,
     shadowClasses.value
-  ].join(' ')
+  ]
+
+  // Only apply variant classes if no custom colors are provided
+  if (!props.borderColor && !props.backgroundColors) {
+    classes.push(variantClasses.value)
+  } else {
+    // Apply custom color classes
+    if (props.borderColor && props.border) {
+      classes.push('border-[var(--card-border-light)] dark:border-[var(--card-border-dark)]')
+    } else if (!props.borderColor && props.border) {
+      // Use variant border color only
+      const variantBorderClasses = variantClasses.value.split(' ').filter(c => c.includes('border-'))
+      classes.push(...variantBorderClasses)
+    }
+
+    if (props.backgroundColors) {
+      classes.push('bg-[var(--card-bg-light)] dark:bg-[var(--card-bg-dark)]')
+    } else {
+      // Use variant background color only
+      const variantBgClasses = variantClasses.value.split(' ').filter(c => c.includes('bg-'))
+      classes.push(...variantBgClasses)
+    }
+  }
+
+  return classes.filter(Boolean).join(' ')
 })
 </script>
 
 <template>
-  <div :class="cardClasses">
+  <div :class="cardClasses" :style="customStyles">
     <!-- Step-based layout: 2 columns with icon on left, step+heading+content on right -->
     <!-- On mobile (@container < md), hide icon and show single column -->
     <div v-if="isStepLayout" class="grid grid-cols-1 gap-6 @md:grid-cols-[auto_1fr]">

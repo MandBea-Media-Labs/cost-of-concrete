@@ -365,6 +365,24 @@ export const useComponentDocs = () => {
           default: 'null',
           description: 'Optional step number. When provided, displays in 2-column layout with step number in blue circle. Icon is hidden on mobile (container < 768px) for better readability.'
         },
+        {
+          name: 'border',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether to show borders on the card. When false, all borders are removed.'
+        },
+        {
+          name: 'borderColor',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Custom border colors as [light mode, dark mode] hex values. Overrides variant border colors. Example: ["#FF0000", "#00FF00"]'
+        },
+        {
+          name: 'backgroundColors',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Custom background colors as [light mode, dark mode] hex values. Overrides variant background colors. Example: ["#FFFFFF", "#000000"]'
+        },
       ],
       slots: [
         { name: 'default', description: 'Card content (description/body text)' },
@@ -414,6 +432,40 @@ export const useComponentDocs = () => {
   :step="1"
 >
   Find local concrete contractors by entering your ZIP code, giving you fast access to nearby service options that match your specific project needs.
+</Card>`
+        },
+        {
+          title: 'No Border',
+          code: `<Card variant="primary" :border="false">
+  <p>Card with no border</p>
+</Card>`
+        },
+        {
+          title: 'Custom Border Color',
+          code: `<Card
+  variant="primary"
+  :border-color="['#FF0000', '#00FF00']"
+>
+  <p>Card with custom red border in light mode, green in dark mode</p>
+</Card>`
+        },
+        {
+          title: 'Custom Background Colors',
+          code: `<Card
+  variant="primary"
+  :background-colors="['#FFF5F5', '#1A0A0A']"
+>
+  <p>Card with custom background colors for light and dark modes</p>
+</Card>`
+        },
+        {
+          title: 'Custom Border and Background',
+          code: `<Card
+  :border-color="['#0041D9', '#65B4FF']"
+  :background-colors="['#F7F7F7', '#2A2A33']"
+  border-width="thick"
+>
+  <p>Card with fully custom colors</p>
 </Card>`
         }
       ]

@@ -321,6 +321,141 @@
           </Card>
         </div>
       </div>
+
+      <!-- No Border Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          No Border Examples
+        </h3>
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
+          <!-- Primary variant without border -->
+          <Card variant="primary" :border="false">
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Primary Card - No Border
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              This card has no border, creating a seamless look with just the background color.
+            </p>
+          </Card>
+
+          <!-- Secondary variant without border -->
+          <Card variant="secondary" :border="false">
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Secondary Card - No Border
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              A borderless secondary card for a clean, minimal appearance.
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      <!-- Custom Border Color Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Custom Border Color Examples
+        </h3>
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
+          <!-- Red/Green border -->
+          <Card
+            variant="primary"
+            :border-color="['#D03C0B', '#65B4FF']"
+            border-width="thick"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Custom Border Colors
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Red border (#D03C0B) in light mode, light blue border (#65B4FF) in dark mode.
+            </p>
+          </Card>
+
+          <!-- Purple/Orange border -->
+          <Card
+            variant="secondary"
+            :border-color="['#9333EA', '#F97316']"
+            border-width="thick"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Purple/Orange Border
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Purple border in light mode, orange border in dark mode.
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      <!-- Custom Background Colors Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Custom Background Colors Examples
+        </h3>
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
+          <!-- Light pink/Dark purple background -->
+          <Card
+            variant="primary"
+            :background-colors="['#FFF5F5', '#1A0A0A']"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Custom Background Colors
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Light pink background (#FFF5F5) in light mode, very dark background (#1A0A0A) in dark mode.
+            </p>
+          </Card>
+
+          <!-- Light blue/Dark blue background -->
+          <Card
+            variant="secondary"
+            :background-colors="['#EFF6FF', '#1E3A8A']"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Blue Themed Background
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Very light blue in light mode, deep blue in dark mode.
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      <!-- Combined Custom Colors Examples -->
+      <div>
+        <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          Combined Custom Border & Background
+        </h3>
+        <div class="grid grid-cols-1 gap-6 @5xl:grid-cols-2">
+          <!-- Brand colors -->
+          <Card
+            :border-color="['#0041D9', '#65B4FF']"
+            :background-colors="['#F7F7F7', '#2A2A33']"
+            border-width="thick"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Brand Colors
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Using custom brand colors for both border and background. Dark blue border with light gray background in light mode.
+            </p>
+          </Card>
+
+          <!-- Accent colors -->
+          <Card
+            :border-color="['#D03C0B', '#65B4FF']"
+            :background-colors="['#EEEEEF', '#111116']"
+            border-width="thick"
+            :shadow="true"
+          >
+            <h4 class="mb-2 font-heading text-lg font-bold text-neutral-700 dark:text-neutral-200">
+              Accent Colors with Shadow
+            </h4>
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">
+              Combining custom colors with shadow effect for maximum visual impact.
+            </p>
+          </Card>
+        </div>
+      </div>
     </div>
   </ComponentSection>
 </template>
