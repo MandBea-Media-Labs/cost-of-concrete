@@ -1035,6 +1035,16 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    Footer: {
+      props: [],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<Footer />`
+        }
+      ]
+    },
   }
 
   return { docs }
