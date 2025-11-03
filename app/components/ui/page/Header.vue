@@ -149,7 +149,7 @@ onUnmounted(() => {
             </NavigationMenuList>
 
             <!-- Viewport for content rendering -->
-            <NavigationMenuViewport class="NavigationMenuViewport absolute left-1/2 top-full mt-2 -translate-x-1/2 origin-top overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in" />
+            <NavigationMenuViewport class="NavigationMenuViewport absolute top-full mt-2 origin-top overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in" />
           </NavigationMenuRoot>
         </div>
 
@@ -367,8 +367,9 @@ onUnmounted(() => {
   animation-name: exitToRight;
 }
 
-/* Viewport sizing with CSS variables */
+/* Viewport sizing and positioning with CSS variables */
 .NavigationMenuViewport {
+  left: var(--reka-navigation-menu-viewport-left);
   width: var(--reka-navigation-menu-viewport-width);
   height: var(--reka-navigation-menu-viewport-height);
   transition: width, height, 250ms ease;
