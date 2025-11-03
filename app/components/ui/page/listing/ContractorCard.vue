@@ -103,7 +103,7 @@ const variantClasses = computed(() => {
 // Combined card classes
 const cardClasses = computed(() => {
   return [
-    'flex flex-col overflow-hidden rounded-lg transition-all duration-300',
+    'flex flex-col rounded-2xl transition-all duration-300',
     'hover:shadow-lg hover:-translate-y-1',
     borderWidthClasses.value,
     variantClasses.value
@@ -126,87 +126,90 @@ const starRating = computed(() => {
 
 <template>
   <NuxtLink :to="contractorUrl" :class="cardClasses">
-    <!-- Image Section -->
-    <div v-if="image" class="aspect-[16/10] w-full overflow-hidden">
-      <!-- Use NuxtImage for non-webp images -->
-      <NuxtImg
-        v-if="!isWebp"
-        :src="image"
-        :alt="`${companyName} - ${location}`"
-        class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-        loading="lazy"
-      />
-      <!-- Use standard img tag for webp images -->
-      <img
-        v-else
-        :src="image"
-        :alt="`${companyName} - ${location}`"
-        class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-        loading="lazy"
-      />
-    </div>
-
-    <!-- Content Section -->
-    <div class="flex flex-col gap-3 p-6">
-      <!-- Company Name -->
-      <h3 class="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50">
-        {{ companyName }}
-      </h3>
-
-      <!-- Location -->
-      <p class="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
-        <Icon name="heroicons:map-pin" class="h-4 w-4" />
-        {{ location }}
-      </p>
-
-      <!-- Description Slot -->
-      <div class="text-sm text-neutral-600 dark:text-neutral-300">
-        <slot />
+    <!-- Card Inner Container with Padding -->
+    <div class="flex flex-col gap-4 p-5">
+      <!-- Image Section -->
+      <div v-if="image" class="aspect-[16/9] w-full overflow-hidden rounded-2xl">
+        <!-- Use NuxtImage for non-webp images -->
+        <NuxtImg
+          v-if="!isWebp"
+          :src="image"
+          :alt="`${companyName} - ${location}`"
+          class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          loading="lazy"
+        />
+        <!-- Use standard img tag for webp images -->
+        <img
+          v-else
+          :src="image"
+          :alt="`${companyName} - ${location}`"
+          class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          loading="lazy"
+        />
       </div>
 
-      <!-- Rating Section -->
-      <div class="flex items-center gap-2">
-        <!-- Stars -->
-        <div class="flex items-center gap-0.5">
-          <!-- Full Stars -->
-          <Icon
-            v-for="i in starRating.full"
-            :key="`full-${i}`"
-            name="heroicons:star-solid"
-            class="h-4 w-4 text-yellow-400"
-          />
-          <!-- Half Star -->
-          <Icon
-            v-if="starRating.half"
-            name="heroicons:star-solid"
-            class="h-4 w-4 text-yellow-400 opacity-50"
-          />
-          <!-- Empty Stars -->
-          <Icon
-            v-for="i in starRating.empty"
-            :key="`empty-${i}`"
-            name="heroicons:star"
-            class="h-4 w-4 text-neutral-300 dark:text-neutral-600"
-          />
+      <!-- Content Section -->
+      <div class="flex flex-col gap-3">
+        <!-- Company Name -->
+        <h3 class="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50">
+          {{ companyName }}
+        </h3>
+
+        <!-- Location -->
+        <p class="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
+          <Icon name="heroicons:map-pin" class="h-4 w-4" />
+          {{ location }}
+        </p>
+
+        <!-- Description Slot -->
+        <div class="text-sm text-neutral-600 dark:text-neutral-300">
+          <slot />
         </div>
 
-        <!-- Rating Number and Review Count -->
-        <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-          {{ rating.toFixed(1) }}
-        </span>
-        <span class="text-sm text-neutral-500 dark:text-neutral-400">
-          ({{ reviewCount }})
-        </span>
-      </div>
+        <!-- Rating Section -->
+        <div class="flex items-center gap-2">
+          <!-- Stars -->
+          <div class="flex items-center gap-0.5">
+            <!-- Full Stars -->
+            <Icon
+              v-for="i in starRating.full"
+              :key="`full-${i}`"
+              name="heroicons:star-solid"
+              class="h-4 w-4 text-yellow-400"
+            />
+            <!-- Half Star -->
+            <Icon
+              v-if="starRating.half"
+              name="heroicons:star-solid"
+              class="h-4 w-4 text-yellow-400 opacity-50"
+            />
+            <!-- Empty Stars -->
+            <Icon
+              v-for="i in starRating.empty"
+              :key="`empty-${i}`"
+              name="heroicons:star"
+              class="h-4 w-4 text-neutral-300 dark:text-neutral-600"
+            />
+          </div>
 
-      <!-- View Profile Button -->
-      <div class="mt-2">
-        <Button
-          text="View Profile"
-          variant="primary-outline"
-          size="md"
-          icon="heroicons:arrow-right"
-        />
+          <!-- Rating Number and Review Count -->
+          <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+            {{ rating.toFixed(1) }}
+          </span>
+          <span class="text-sm text-neutral-500 dark:text-neutral-400">
+            ({{ reviewCount }})
+          </span>
+        </div>
+
+        <!-- View Profile Button -->
+        <div class="mt-2">
+          <Button
+            text="View Profile"
+            variant="primary-outline"
+            size="md"
+            icon="heroicons:arrow-right"
+          />
+        </div>
       </div>
     </div>
   </NuxtLink>

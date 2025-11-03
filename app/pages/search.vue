@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
-import type { ContractorResult } from '~/composables/useSearchFilters'
+// Import mock data
+import {
+  serviceOptions,
+  contractors as mockContractors,
+  serviceTypeOptions,
+  distanceOptions,
+  ratingOptions,
+  availabilityOptions,
+  sortByOptions
+} from '~/mock-data'
 
 // SEO Meta
 useHead({
@@ -14,141 +22,11 @@ useHead({
   ]
 })
 
-// Service options for SearchInput dropdown
-const serviceOptions: ServiceOption[] = [
-  { id: null, name: 'All Services', slug: null },
-  { id: 1, name: 'Driveways', slug: 'driveways' },
-  { id: 2, name: 'Patios', slug: 'patios' },
-  { id: 3, name: 'Foundations', slug: 'foundations' },
-  { id: 4, name: 'Walkways', slug: 'walkways' },
-  { id: 5, name: 'Stamped & Decorative', slug: 'stamped-decorative' }
-]
-
-// Mock contractor data (replace with API call in production)
-const contractors = ref<ContractorResult[]>([
-  {
-    id: '1',
-    companyName: 'ABC Concrete Solutions',
-    serviceType: 'driveways',
-    location: 'Los Angeles, CA',
-    distance: 2.5,
-    rating: 4.8,
-    reviewCount: 127,
-    availability: 'available',
-    priceRange: '$$',
-    image: '/images/contractors/abc-concrete.webp',
-    slug: 'abc-concrete-solutions'
-  },
-  {
-    id: '2',
-    companyName: 'Premium Patio Builders',
-    serviceType: 'patios',
-    location: 'Los Angeles, CA',
-    distance: 5.2,
-    rating: 4.9,
-    reviewCount: 203,
-    availability: 'busy',
-    priceRange: '$$$',
-    image: '/images/contractors/premium-patio.webp',
-    slug: 'premium-patio-builders'
-  },
-  {
-    id: '3',
-    companyName: 'Foundation Experts Inc',
-    serviceType: 'foundations',
-    location: 'Los Angeles, CA',
-    distance: 8.1,
-    rating: 4.6,
-    reviewCount: 89,
-    availability: 'available',
-    priceRange: '$$',
-    image: '/images/contractors/foundation-experts.webp',
-    slug: 'foundation-experts-inc'
-  },
-  {
-    id: '4',
-    companyName: 'Walkway Wizards',
-    serviceType: 'walkways',
-    location: 'Los Angeles, CA',
-    distance: 3.7,
-    rating: 4.7,
-    reviewCount: 156,
-    availability: 'available',
-    priceRange: '$',
-    image: '/images/contractors/walkway-wizards.webp',
-    slug: 'walkway-wizards'
-  },
-  {
-    id: '5',
-    companyName: 'Decorative Concrete Co',
-    serviceType: 'stamped-decorative',
-    location: 'Los Angeles, CA',
-    distance: 12.3,
-    rating: 4.9,
-    reviewCount: 241,
-    availability: 'busy',
-    priceRange: '$$$',
-    image: '/images/contractors/decorative-concrete.webp',
-    slug: 'decorative-concrete-co'
-  },
-  {
-    id: '6',
-    companyName: 'Quick Driveway Pros',
-    serviceType: 'driveways',
-    location: 'Los Angeles, CA',
-    distance: 6.8,
-    rating: 4.5,
-    reviewCount: 94,
-    availability: 'available',
-    priceRange: '$',
-    image: '/images/contractors/quick-driveway.webp',
-    slug: 'quick-driveway-pros'
-  }
-])
+// Use mock contractor data (replace with API call in production)
+const contractors = ref(mockContractors)
 
 // Use the search filters composable
-const { filters, filteredResults, resultCount, resetFilters, hasActiveFilters } = useSearchFilters(contractors.value)
-
-// Filter options
-const serviceTypeOptions: FilterOption[] = [
-  { value: 'all', label: 'All Services' },
-  { value: 'driveways', label: 'Driveways' },
-  { value: 'patios', label: 'Patios' },
-  { value: 'foundations', label: 'Foundations' },
-  { value: 'walkways', label: 'Walkways' },
-  { value: 'stamped-decorative', label: 'Stamped & Decorative' }
-]
-
-const distanceOptions: FilterOption[] = [
-  { value: 'all', label: 'Any Distance' },
-  { value: '5', label: 'Within 5 miles' },
-  { value: '10', label: 'Within 10 miles' },
-  { value: '25', label: 'Within 25 miles' },
-  { value: '50', label: 'Within 50 miles' }
-]
-
-const ratingOptions: FilterOption[] = [
-  { value: 'all', label: 'Any Rating' },
-  { value: '4', label: '4+ Stars' },
-  { value: '4.5', label: '4.5+ Stars' },
-  { value: '4.8', label: '4.8+ Stars' }
-]
-
-const availabilityOptions: FilterOption[] = [
-  { value: 'all', label: 'Any Availability' },
-  { value: 'available', label: 'Available Now' },
-  { value: 'busy', label: 'Busy' }
-]
-
-const sortByOptions: FilterOption[] = [
-  { value: 'default', label: 'Top Rated' },
-  { value: 'rating-high', label: 'Highest Rating' },
-  { value: 'rating-low', label: 'Lowest Rating' },
-  { value: 'distance-near', label: 'Nearest First' },
-  { value: 'distance-far', label: 'Farthest First' },
-  { value: 'reviews-most', label: 'Most Reviews' },
-  { value: 'reviews-least', label: 'Least Reviews' }
-]
+const { filters, filteredResults, resultCount, resetFilters } = useSearchFilters(contractors.value)
 
 // Handle search submission from Hero
 const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
@@ -162,7 +40,7 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
     <!-- Hero Section with overlaying filter bar -->
     <div class="container mx-auto mb-12 px-4 py-8">
       <SearchHero
-        background-color="#E8EBF3"
+        background-color="#edf2fc"
         :service-options="serviceOptions"
         :service-type-filter-options="serviceTypeOptions"
         :distance-filter-options="distanceOptions"
@@ -175,26 +53,18 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
         v-model:availability-filter="filters.availability"
         v-model:sort-by-filter="filters.sortBy"
         @search="handleHeroSearch"
+        @reset-filters="resetFilters"
       />
     </div>
 
     <!-- Results Section -->
     <div class="container mx-auto px-4 py-8">
-      <!-- Results Count & Reset Button -->
-      <div class="mb-6 flex items-center justify-between">
+      <!-- Results Count -->
+      <div class="mb-6">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
           Showing <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ resultCount }}</span>
           of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ contractors.length }}</span> contractors
         </p>
-
-        <!-- Reset Button (only show when filters are active) -->
-        <Button
-          v-if="hasActiveFilters"
-          text="Reset Filters"
-          variant="secondary-outline"
-          size="sm"
-          @click="resetFilters"
-        />
       </div>
 
       <!-- Results Grid -->
