@@ -33,7 +33,7 @@
           <SearchInput
             placeholder="Type a city, state or zip code.."
             variant="primary-outline"
-            size="md"
+            size="lg"
             button="Find Contractors"
           />
         </div>
