@@ -1232,6 +1232,145 @@ const handleSubmit = (data) => {
         }
       ]
     },
+
+    FilterSelect: {
+      props: [
+        {
+          name: 'label',
+          type: 'string',
+          default: 'undefined',
+          description: 'Optional label text displayed above the select'
+        },
+        {
+          name: 'modelValue',
+          type: 'string | number | null',
+          required: true,
+          description: 'The current selected value (use with v-model)'
+        },
+        {
+          name: 'options',
+          type: 'FilterOption[]',
+          required: true,
+          description: 'Array of options to display. FilterOption: { value: string | number, label: string, disabled?: boolean }'
+        },
+        {
+          name: 'placeholder',
+          type: 'string',
+          default: "'Select...'",
+          description: 'Placeholder text when no option is selected'
+        },
+        {
+          name: 'size',
+          type: "'sm' | 'md' | 'lg'",
+          default: "'md'",
+          description: 'The size of the select dropdown'
+        },
+        {
+          name: 'disabled',
+          type: 'boolean',
+          default: 'false',
+          description: 'Whether the select is disabled'
+        }
+      ],
+      events: [
+        {
+          name: 'update:modelValue',
+          payload: 'string | number | null',
+          description: 'Emitted when the selected value changes. Use with v-model for two-way binding.'
+        }
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<script setup>
+import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
+
+const selectedService = ref(null)
+
+const serviceOptions: FilterOption[] = [
+  { value: 'all', label: 'All Services' },
+  { value: 'driveways', label: 'Driveways' },
+  { value: 'patios', label: 'Patios' }
+]
+</script>
+
+<template>
+  <FilterSelect
+    v-model="selectedService"
+    :options="serviceOptions"
+    placeholder="Select service"
+  />
+</template>`
+        },
+        {
+          title: 'With Label',
+          code: `<FilterSelect
+  v-model="selectedRating"
+  label="Minimum Rating"
+  :options="ratingOptions"
+  placeholder="Select rating"
+  size="md"
+/>`
+        },
+        {
+          title: 'Different Sizes',
+          code: `<!-- Small -->
+<FilterSelect
+  v-model="value"
+  :options="options"
+  size="sm"
+/>
+
+<!-- Medium (default) -->
+<FilterSelect
+  v-model="value"
+  :options="options"
+  size="md"
+/>
+
+<!-- Large -->
+<FilterSelect
+  v-model="value"
+  :options="options"
+  size="lg"
+/>`
+        },
+        {
+          title: 'Disabled State',
+          code: `<FilterSelect
+  v-model="value"
+  :options="options"
+  :disabled="true"
+  placeholder="Disabled select"
+/>`
+        },
+        {
+          title: 'With useSearchFilters Composable',
+          code: `<script setup>
+const contractors = ref([...])
+const { filters, filteredResults } = useSearchFilters(contractors.value)
+
+const serviceOptions: FilterOption[] = [
+  { value: 'all', label: 'All Services' },
+  { value: 'driveways', label: 'Driveways' }
+]
+</script>
+
+<template>
+  <FilterSelect
+    v-model="filters.serviceType"
+    :options="serviceOptions"
+    placeholder="Service Type"
+  />
+
+  <!-- Results update automatically -->
+  <div v-for="result in filteredResults" :key="result.id">
+    {{ result.companyName }}
+  </div>
+</template>`
+        }
+      ]
+    },
   }
 
   return { docs }
