@@ -3,11 +3,23 @@
 // Handles desktop and mobile navigation with responsive design
 // Auto-imports: ref, computed, onMounted, onUnmounted, useColorMode (from Nuxt)
 
+import {
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuRoot,
+  NavigationMenuTrigger,
+  NavigationMenuViewport
+} from 'reka-ui'
+import { navigationItems } from '~/mock-data'
+
 // Color mode
 const colorMode = useColorMode()
 
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
+const activeSubmenu = ref<string | null>(null)
 
 // Track if component is mounted (for SSR)
 const isMounted = ref(false)
@@ -30,10 +42,21 @@ const openMobileMenu = () => {
 // Close mobile menu
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
+  activeSubmenu.value = null
   // Unlock body scroll on client side only
   if (import.meta.client) {
     document.body.style.overflow = ''
   }
+}
+
+// Open submenu
+const openSubmenu = (category: string) => {
+  activeSubmenu.value = category
+}
+
+// Close submenu (back to main menu)
+const closeSubmenu = () => {
+  activeSubmenu.value = null
 }
 
 // Handle ESC key to close menu
@@ -59,7 +82,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="top-0 z-50 bg-neutral-50">
+  <header class="top-0 z-50 bg-neutral-50 dark:bg-neutral-900">
     <div class="mx-auto max-w-8xl px-4 py-4 sm:px-6 lg:px-8">
       <!-- Desktop & Mobile Header -->
       <div class="flex items-center justify-between gap-4">
@@ -72,31 +95,76 @@ onUnmounted(() => {
           />
         </NuxtLink>
 
-        <!-- Desktop Navigation (Center & Right) - Hidden on mobile -->
-        <div class="hidden flex-1 items-center justify-between gap-6 md:flex">
-          <!-- Center: SearchInput -->
-          <div class="mx-auto w-full max-w-md">
-            <!-- <SearchInput
-              placeholder="Type a city, state or zip code.."
-              variant="secondary-light-outline"
-              size="md"
-              :backgroundColor="['#f3f4f6', '#626262']"
-            /> -->
-          </div>
+        <!-- Desktop Navigation (Center) - Hidden on mobile -->
+        <div class="hidden flex-1 items-center justify-center md:flex">
+          <NavigationMenuRoot class="relative z-50">
+            <NavigationMenuList class="flex items-center gap-1">
+              <!-- Loop through navigation items -->
+              <NavigationMenuItem
+                v-for="item in navigationItems"
+                :key="item.label"
+              >
+                <!-- Single link (no children) -->
+                <NavigationMenuLink
+                  v-if="!item.children"
+                  as-child
+                >
+                  <NuxtLink
+                    :to="item.link"
+                    class="rounded-md px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
+                  >
+                    {{ item.label }}
+                  </NuxtLink>
+                </NavigationMenuLink>
 
-          <!-- Right: Auth Buttons -->
-          <div class="flex flex-shrink-0 items-center gap-3">
-            <Button
-              text="Login"
-              variant="primary"
-              size="md"
-            />
-            <Button
-              text="Sign Up"
-              variant="primary-outline"
-              size="md"
-            />
-          </div>
+                <!-- Dropdown (has children) -->
+                <template v-else>
+                  <NavigationMenuTrigger
+                    class="group flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
+                  >
+                    {{ item.label }}
+                    <Icon
+                      name="heroicons:chevron-down"
+                      class="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180"
+                    />
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent
+                    class="NavigationMenuContent grid w-[400px] grid-cols-2 gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+                  >
+                    <NavigationMenuLink
+                      v-for="child in item.children"
+                      :key="child.label"
+                      as-child
+                    >
+                      <NuxtLink
+                        :to="child.link"
+                        class="block rounded-md px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-blue-600 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-blue-400"
+                      >
+                        {{ child.label }}
+                      </NuxtLink>
+                    </NavigationMenuLink>
+                  </NavigationMenuContent>
+                </template>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+
+            <!-- Viewport for content rendering -->
+            <NavigationMenuViewport class="NavigationMenuViewport absolute left-1/2 top-full mt-2 -translate-x-1/2 origin-top overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in" />
+          </NavigationMenuRoot>
+        </div>
+
+        <!-- Desktop: Auth Buttons - Hidden on mobile -->
+        <div class="hidden flex-shrink-0 items-center gap-3 md:flex">
+          <Button
+            text="Login"
+            variant="primary"
+            size="md"
+          />
+          <Button
+            text="Sign Up"
+            variant="primary-outline"
+            size="md"
+          />
         </div>
 
         <!-- Mobile: Hamburger Menu Button - Visible only on mobile -->
@@ -138,48 +206,132 @@ onUnmounted(() => {
     >
       <div
         v-if="isMobileMenuOpen"
-        class="fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] overflow-y-auto bg-neutral-50 shadow-2xl dark:bg-neutral-900 md:hidden"
+        class="fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] overflow-hidden bg-neutral-50 shadow-2xl dark:bg-neutral-900 md:hidden"
       >
-        <!-- Mobile Menu Header -->
-        <div class="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-700">
-          <h2 class="font-heading text-xl font-bold text-neutral-700 dark:text-neutral-100">
-            Menu
-          </h2>
-          <button
-            @click="closeMobileMenu"
-            class="rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-red-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-red-400"
-            aria-label="Close menu"
-          >
-            <Icon name="heroicons:x-mark" class="h-6 w-6" />
-          </button>
-        </div>
-
-        <!-- Mobile Menu Content -->
-        <div class="flex flex-col gap-6 p-6">
-          <!-- SearchInput -->
-          <div>
-            <SearchInput
-              placeholder="Type a city, state or zip code.."
-              variant="secondary-light-outline"
-              size="sm"
-            />
+        <!-- Main Menu -->
+        <div
+          class="absolute inset-0 flex flex-col transition-transform duration-300 ease-out"
+          :class="activeSubmenu ? '-translate-x-full' : 'translate-x-0'"
+        >
+          <!-- Main Menu Header -->
+          <div class="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <h2 class="font-heading text-xl font-bold text-neutral-700 dark:text-neutral-100">
+              Menu
+            </h2>
+            <button
+              @click="closeMobileMenu"
+              class="rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-red-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-red-400"
+              aria-label="Close menu"
+            >
+              <Icon name="heroicons:x-mark" class="h-6 w-6" />
+            </button>
           </div>
 
-          <!-- Divider -->
-          <Divider />
+          <!-- Main Menu Content -->
+          <div class="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+            <!-- SearchInput -->
+            <div>
+              <SearchInput
+                placeholder="Type a city, state or zip code.."
+                variant="secondary-light-outline"
+                size="sm"
+              />
+            </div>
 
-          <!-- Auth Buttons -->
-          <div class="flex flex-col gap-3">
-            <Button
-              text="Login"
-              variant="primary"
-              size="lg"
-            />
-            <Button
-              text="Sign Up"
-              variant="primary-outline"
-              size="lg"
-            />
+            <!-- Divider -->
+            <Divider />
+
+            <!-- Navigation Items -->
+            <nav>
+              <ul class="space-y-2">
+                <li
+                  v-for="item in navigationItems"
+                  :key="item.label"
+                >
+                  <!-- Single link (no children) -->
+                  <NuxtLink
+                    v-if="!item.children"
+                    :to="item.link"
+                    @click="closeMobileMenu"
+                    class="block rounded-lg px-4 py-3 text-base font-medium text-blue-600 transition-colors hover:bg-neutral-100 dark:text-blue-400 dark:hover:bg-neutral-800"
+                  >
+                    {{ item.label }}
+                  </NuxtLink>
+
+                  <!-- Category with children -->
+                  <button
+                    v-else
+                    @click="openSubmenu(item.label)"
+                    class="flex w-full items-center justify-between rounded-lg px-4 py-3 text-base font-medium text-blue-600 transition-colors hover:bg-neutral-100 dark:text-blue-400 dark:hover:bg-neutral-800"
+                  >
+                    {{ item.label }}
+                    <Icon name="heroicons:chevron-right" class="h-5 w-5" />
+                  </button>
+                </li>
+              </ul>
+            </nav>
+
+            <!-- Divider -->
+            <Divider />
+
+            <!-- Auth Buttons -->
+            <div class="flex flex-col gap-3">
+              <Button
+                text="Login"
+                variant="primary"
+                size="lg"
+              />
+              <Button
+                text="Sign Up"
+                variant="primary-outline"
+                size="lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Submenu Panel -->
+        <div
+          class="absolute inset-0 flex flex-col transition-transform duration-300 ease-out"
+          :class="activeSubmenu ? 'translate-x-0' : 'translate-x-full'"
+        >
+          <!-- Submenu Header -->
+          <div class="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <button
+              @click="closeSubmenu"
+              class="rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+              aria-label="Back to main menu"
+            >
+              <Icon name="heroicons:arrow-left" class="h-6 w-6" />
+            </button>
+            <h2 class="flex-1 text-center font-heading text-lg font-bold text-neutral-700 dark:text-neutral-100">
+              {{ activeSubmenu }}
+            </h2>
+            <button
+              @click="closeMobileMenu"
+              class="rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-red-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-red-400"
+              aria-label="Close menu"
+            >
+              <Icon name="heroicons:x-mark" class="h-6 w-6" />
+            </button>
+          </div>
+
+          <!-- Submenu Content -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <ul class="space-y-2">
+              <li
+                v-for="item in navigationItems.find(i => i.label === activeSubmenu)?.children"
+                :key="item?.label"
+              >
+                <NuxtLink
+                  :to="item?.link || '/search'"
+                  @click="closeMobileMenu"
+                  class="block rounded-lg px-4 py-3 text-base text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-blue-600 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+                >
+                  {{ item?.label }}
+                </NuxtLink>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -188,5 +340,83 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Reka UI Navigation Menu - Advanced Animation */
+
+/* Content positioning and animation */
+.NavigationMenuContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation-duration: 250ms;
+  animation-timing-function: ease;
+}
+
+.NavigationMenuContent[data-motion="from-start"] {
+  animation-name: enterFromLeft;
+}
+
+.NavigationMenuContent[data-motion="from-end"] {
+  animation-name: enterFromRight;
+}
+
+.NavigationMenuContent[data-motion="to-start"] {
+  animation-name: exitToLeft;
+}
+
+.NavigationMenuContent[data-motion="to-end"] {
+  animation-name: exitToRight;
+}
+
+/* Viewport sizing with CSS variables */
+.NavigationMenuViewport {
+  width: var(--reka-navigation-menu-viewport-width);
+  height: var(--reka-navigation-menu-viewport-height);
+  transition: width, height, 250ms ease;
+}
+
+/* Smooth slide animations */
+@keyframes enterFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enterFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes exitToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+}
+
+@keyframes exitToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+}
 </style>
 
