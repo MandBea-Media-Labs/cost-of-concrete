@@ -59,7 +59,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+  <header class="sticky top-0 z-50 bg-neutral-50">
     <div class="mx-auto max-w-8xl px-4 py-4 sm:px-6 lg:px-8">
       <!-- Desktop & Mobile Header -->
       <div class="flex items-center justify-between gap-4">

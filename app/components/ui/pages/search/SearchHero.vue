@@ -109,7 +109,7 @@ const handleResetFilters = () => {
   <div class="relative">
     <!-- Hero Container -->
     <div
-      class="rounded-3xl px-6 py-12 pb-20 md:px-12 md:py-16 md:pb-24"
+      class="rounded-3xl px-6 py-12 pb-20 md:px-12 md:py-16 md:pb-24 md:pt-10"
       :style="{ backgroundColor }"
     >
       <div class="mx-auto max-w-4xl">
@@ -150,7 +150,7 @@ const handleResetFilters = () => {
     <!-- Filter Bar - Positioned to overlay the bottom of hero -->
     <div class="absolute bottom-0 left-0 right-0 -mb-8 px-6 md:px-12">
       <div class="mx-auto max-w-8xl">
-        <div class="rounded-3xl bg-white px-6 py-5 shadow-lg dark:bg-neutral-800">
+        <div class="rounded-3xl bg-white px-6 py-5 shadow-md dark:bg-neutral-800">
           <div class="flex flex-wrap items-center justify-center gap-3 md:justify-between">
             <!-- Service Type Filter -->
             <div class="w-full sm:w-auto sm:min-w-[140px] sm:flex-1 md:max-w-[230px]">

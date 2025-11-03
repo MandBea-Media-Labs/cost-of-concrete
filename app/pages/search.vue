@@ -74,7 +74,7 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
     </div>
 
     <!-- Results Section -->
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 pb-10 pt-2">
       <!-- Results Count -->
       <div class="mb-6">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
