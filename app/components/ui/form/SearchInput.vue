@@ -4,6 +4,16 @@ import { onClickOutside } from '@vueuse/core'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import { mockZipCodes, type ZipCodeData } from '~/mock-data/zipCodes'
 import { consola } from 'consola'
+import {
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectPortal,
+  SelectContent,
+  SelectViewport,
+  SelectItem,
+  SelectItemText
+} from 'reka-ui'
 
 export interface ServiceOption {
   id: number | null
@@ -93,8 +103,7 @@ const isOpen = ref(false)
 const selectedIndex = ref(-1)
 const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
-const selectedService = ref<ServiceOption | null>(null)
-const selectedServiceIndex = ref(0)
+const selectedService = ref<string>('')
 
 // Computed: Is button mode active
 const isButtonMode = computed(() => props.button !== null && props.button !== undefined)
@@ -109,8 +118,7 @@ const hasServiceDropdown = computed(() =>
 // Initialize selected service to first option (usually "All Services")
 watch(() => props.serviceDropdownValues, (newValue) => {
   if (newValue && newValue.length > 0) {
-    selectedService.value = newValue[0] || null
-    selectedServiceIndex.value = 0
+    selectedService.value = String(newValue[0].id ?? '0')
   }
 }, { immediate: true })
 
@@ -295,7 +303,7 @@ const selectResult = (result: ZipCodeData) => {
   if (hasServiceDropdown.value) {
     emit('submit', {
       location: `${result.zip} - ${result.city}, ${result.stateAbbr}`,
-      service: selectedService.value
+      service: getSelectedServiceObject()
     })
   } else {
     emit('submit', result)
@@ -319,22 +327,17 @@ const handleButtonClick = () => {
   if (hasServiceDropdown.value) {
     emit('submit', {
       location: searchQuery.value,
-      service: selectedService.value
+      service: getSelectedServiceObject()
     })
   } else {
     emit('submit', searchQuery.value)
   }
 }
 
-// Handle service selection change
-const handleServiceChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  const index = parseInt(target.value, 10)
-  selectedServiceIndex.value = index
-
-  if (props.serviceDropdownValues && index >= 0 && index < props.serviceDropdownValues.length) {
-    selectedService.value = props.serviceDropdownValues[index] || null
-  }
+// Get selected service object from value
+const getSelectedServiceObject = (): ServiceOption | null => {
+  if (!props.serviceDropdownValues || !selectedService.value) return null
+  return props.serviceDropdownValues.find(s => String(s.id ?? '0') === selectedService.value) || null
 }
 
 // Handle clear button
@@ -389,7 +392,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-// Click outside to close
+// Click outside to close autocomplete dropdown
 onClickOutside(containerRef, () => {
   isOpen.value = false
   selectedIndex.value = -1
@@ -448,27 +451,40 @@ watch(selectedIndex, (newIndex) => {
         <!-- Divider (hidden on mobile, shown on desktop) -->
         <div class="hidden @md:block mr-3 h-6 w-px bg-neutral-300 dark:bg-neutral-600" />
 
-        <!-- Select Dropdown -->
-        <select
-          v-model="selectedServiceIndex"
-          class="w-full @md:w-auto cursor-pointer appearance-none bg-transparent pr-6 text-sm font-medium text-neutral-700 outline-none dark:text-neutral-300"
-          @change="handleServiceChange"
-          aria-label="Select service type"
-        >
-          <option
-            v-for="(service, index) in serviceDropdownValues"
-            :key="service.id ?? index"
-            :value="index"
+        <!-- Reka UI Select Component -->
+        <SelectRoot v-model="selectedService">
+          <SelectTrigger
+            class="w-full @md:w-auto cursor-pointer flex items-center justify-between gap-2 bg-transparent text-sm font-medium text-neutral-700 outline-none dark:text-neutral-300 border-0"
+            aria-label="Select service type"
           >
-            {{ service.name }}
-          </option>
-        </select>
+            <SelectValue placeholder="All Services" />
+            <Icon
+              name="heroicons:chevron-down"
+              class="h-4 w-4 text-neutral-500 dark:text-neutral-400"
+            />
+          </SelectTrigger>
 
-        <!-- Chevron Icon -->
-        <Icon
-          name="heroicons:chevron-down"
-          class="pointer-events-none absolute right-0 h-4 w-4 text-neutral-500 dark:text-neutral-400"
-        />
+          <SelectPortal>
+            <SelectContent
+              position="popper"
+              :side-offset="8"
+              class="z-50 rounded-2xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800 overflow-hidden"
+            >
+              <SelectViewport class="p-1">
+                <SelectItem
+                  v-for="(service, index) in serviceDropdownValues"
+                  :key="service.id ?? index"
+                  :value="String(service.id ?? index)"
+                  class="relative flex items-center px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-100 rounded-lg cursor-pointer outline-none select-none data-[highlighted]:bg-neutral-50 dark:data-[highlighted]:bg-neutral-700 data-[state=checked]:bg-blue-50 dark:data-[state=checked]:bg-blue-900/20"
+                >
+                  <SelectItemText>
+                    {{ service.name }}
+                  </SelectItemText>
+                </SelectItem>
+              </SelectViewport>
+            </SelectContent>
+          </SelectPortal>
+        </SelectRoot>
       </div>
 
       <!-- Submit Button (Button Mode Only) -->
