@@ -67,55 +67,55 @@ export const stainingConcreteNavigation: NavigationSection[] = [
  */
 export const stainingConcreteTopicCards: TopicCard[] = [
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Stained+Concrete+Pictures',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete Pictures',
     description: 'Browse a collection of indoor and outdoor concrete stains; a variety of colors and finishes.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Stained+Concrete+Cost',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete Cost',
     description: 'The price of stained concrete starts at $2 to $4 per square foot and increases with complexity.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Color+Chart',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete Color Chart',
     description: 'See your stain color choices for staining concrete floors and outdoor surfaces.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Compare+Options',
+    image: 'https://placehold.co/600x400',
     title: 'Compare Stained Concrete',
     description: 'Stained floors offer advantages that carpet, tile and other materials can\'t match.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Projects',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete Projects',
     description: 'See pictures and get inside info on stained concrete projects from across the country.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Floor+Info',
+    image: 'https://placehold.co/600x400',
     title: 'Concrete Floor Info',
     description: 'Discover the benefits of concrete flooring, including staining, polishing and overlays.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=FAQs',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete FAQs',
     description: 'Find answers to common questions about stained concrete benefits, performance and maintenance.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Patios',
+    image: 'https://placehold.co/600x400',
     title: 'Staining Concrete Patios',
     description: 'Get tips and design ideas for using stains to enhance a concrete patio.',
     to: '/'
   },
   {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Driveways',
+    image: 'https://placehold.co/600x400',
     title: 'Stained Concrete Driveways',
     description: 'Transform your driveway with decorative concrete staining techniques and patterns.',
     to: '/'

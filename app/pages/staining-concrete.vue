@@ -60,13 +60,13 @@ const topicCards = stainingConcreteTopicCards
             <!-- Featured Image -->
             <div class="relative overflow-hidden rounded-lg">
               <img
-                src="https://placehold.co/1200x600/e3f2fd/1877f2?text=Stained+Concrete+Floor"
+                src="/images/mock-data/hub-pages/concrete-stained-basement-floor.webp"
                 alt="Beautiful acid stained concrete floor"
-                class="h-auto w-full object-cover"
+                class="h-auto w-full object-contain"
               />
               <!-- Image Caption -->
               <div class="absolute bottom-4 right-4 rounded-md bg-neutral-900/80 px-3 py-2 text-sm text-white backdrop-blur-sm">
-                Reformed Concrete LLC, Quarryville, PA
+                Concrete Wizards, Charlotte, NC
               </div>
             </div>
           </section>

@@ -45,12 +45,12 @@ const isActiveLink = (linkTo: string) => {
 // Sidebar container classes
 const sidebarClasses = computed(() => {
   const classes = [
-    'rounded-lg border border-neutral-200 bg-white p-6',
+    'border-r border-neutral-200 bg-white p-6',
     'dark:border-neutral-700 dark:bg-neutral-900'
   ]
 
   if (props.sticky) {
-    classes.push('lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto')
+    classes.push('lg:sticky lg:top-2 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto')
   }
 
   return classes.join(' ')
@@ -60,9 +60,9 @@ const sidebarClasses = computed(() => {
 <template>
   <aside :class="sidebarClasses">
     <!-- Sidebar Title -->
-    <h2 class="mb-6 font-heading text-xl font-bold text-neutral-900 dark:text-neutral-100">
+    <!-- <h2 class="mb-6 font-heading text-xl font-bold text-neutral-900 dark:text-neutral-100">
       Browse Topics
-    </h2>
+    </h2> -->
 
     <!-- Navigation Sections -->
     <nav class="space-y-8">
