@@ -135,6 +135,9 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
         />
       </div>
     </div>
+
+    <!-- Bottom CTA -->
+    <BottomCta />
   </div>
 </template>
 
