@@ -1,5 +1,21 @@
 <script setup lang="ts">
 // SearchInput Component Showcase
+import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
+
+// Mock service data
+const services: ServiceOption[] = [
+  { id: null, name: 'All Services', slug: null },
+  { id: 1, name: 'Driveways', slug: 'driveways' },
+  { id: 2, name: 'Patios', slug: 'patios' },
+  { id: 3, name: 'Foundations', slug: 'foundations' },
+  { id: 4, name: 'Walkways', slug: 'walkways' },
+  { id: 5, name: 'Stamped & Decorative', slug: 'stamped-decorative' }
+]
+
+// Handle submit with service dropdown
+const handleServiceSubmit = (data: any) => {
+  // Event is already logged in the SearchInput component
+}
 </script>
 
 <template>
@@ -58,6 +74,94 @@
             :button-mode="true"
             button-text="Find Contractors"
           />
+        </div>
+      </div>
+
+      <!-- Service Dropdown Section -->
+      <div>
+        <h3 class="mb-6 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
+          With Service Dropdown
+        </h3>
+        <div class="grid grid-cols-1 gap-6">
+          <!-- Primary Outline with Service Dropdown -->
+          <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+            <h4 class="mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Primary Outline - Small
+            </h4>
+            <div class="space-y-4">
+              <SearchInput
+                placeholder="ZIP Code"
+                variant="primary-outline"
+                size="sm"
+                button="Find Contractors"
+                :service-dropdown-values="services"
+                @submit="handleServiceSubmit"
+              />
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Includes inline service selector with 6 service options
+              </p>
+            </div>
+          </div>
+
+          <!-- Secondary Outline with Service Dropdown -->
+          <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+            <h4 class="mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Primary Outline - Medium
+            </h4>
+            <div class="space-y-4">
+              <SearchInput
+                placeholder="ZIP Code"
+                variant="primary-outline"
+                size="md"
+                button="Find Contractors"
+                :service-dropdown-values="services"
+                @submit="handleServiceSubmit"
+              />
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Medium size with service dropdown
+              </p>
+            </div>
+          </div>
+
+          <!-- Large with Service Dropdown -->
+          <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+            <h4 class="mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Primary Outline - Large
+            </h4>
+            <div class="space-y-4">
+              <SearchInput
+                placeholder="ZIP Code"
+                variant="primary-outline"
+                size="lg"
+                button="Find Contractors"
+                :service-dropdown-values="services"
+                @submit="handleServiceSubmit"
+              />
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Large size with service dropdown - ideal for hero sections
+              </p>
+            </div>
+          </div>
+
+          <!-- Secondary Variant with Service Dropdown -->
+          <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+            <h4 class="mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Secondary Outline - Medium
+            </h4>
+            <div class="space-y-4">
+              <SearchInput
+                placeholder="ZIP Code"
+                variant="secondary-outline"
+                size="md"
+                button="Find Contractors"
+                :service-dropdown-values="services"
+                @submit="handleServiceSubmit"
+              />
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Secondary variant with service dropdown
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

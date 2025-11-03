@@ -5,6 +5,12 @@ import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import { mockZipCodes, type ZipCodeData } from '~/mock-data/zipCodes'
 import { consola } from 'consola'
 
+export interface ServiceOption {
+  id: number | null
+  name: string
+  slug: string | null
+}
+
 interface Props {
   /**
    * Placeholder text for the input
@@ -55,6 +61,12 @@ interface Props {
    * @default null
    */
   backgroundColor?: [string, string] | null
+
+  /**
+   * Service dropdown options. When provided, shows inline service selector
+   * @default null
+   */
+  serviceDropdownValues?: ServiceOption[] | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -65,12 +77,13 @@ const props = withDefaults(defineProps<Props>(), {
   minCharacters: 2,
   loading: false,
   button: null,
-  backgroundColor: null
+  backgroundColor: null,
+  serviceDropdownValues: null
 })
 
 // Emits
 const emit = defineEmits<{
-  submit: [value: ZipCodeData | string]
+  submit: [value: ZipCodeData | string | { location: string, service: ServiceOption | null }]
   input: [value: string]
 }>()
 
@@ -80,9 +93,26 @@ const isOpen = ref(false)
 const selectedIndex = ref(-1)
 const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
+const selectedService = ref<ServiceOption | null>(null)
+const selectedServiceIndex = ref(0)
 
 // Computed: Is button mode active
 const isButtonMode = computed(() => props.button !== null && props.button !== undefined)
+
+// Computed: Has service dropdown
+const hasServiceDropdown = computed(() =>
+  props.serviceDropdownValues !== null &&
+  props.serviceDropdownValues !== undefined &&
+  props.serviceDropdownValues.length > 0
+)
+
+// Initialize selected service to first option (usually "All Services")
+watch(() => props.serviceDropdownValues, (newValue) => {
+  if (newValue && newValue.length > 0) {
+    selectedService.value = newValue[0] || null
+    selectedServiceIndex.value = 0
+  }
+}, { immediate: true })
 
 // Computed: Filtered results (autocomplete mode only)
 const filteredResults = computed(() => {
@@ -120,6 +150,17 @@ const showClearButton = computed(() => {
 
 // Size classes
 const sizeClasses = computed(() => {
+  // When service dropdown is present, use auto height on mobile (stacked), fixed height on desktop
+  if (hasServiceDropdown.value) {
+    const sizes = {
+      sm: 'min-h-11 @md:h-11 text-sm py-3 @md:py-0',
+      md: 'min-h-12 @md:h-12 text-base py-3 @md:py-0',
+      lg: 'min-h-14 @md:h-14 text-lg py-4 @md:py-0'
+    }
+    return sizes[props.size]
+  }
+
+  // Default: fixed height for all breakpoints
   const sizes = {
     sm: 'h-11 text-sm',
     md: 'h-12 text-base',
@@ -163,12 +204,18 @@ const containerClasses = computed(() => {
     ? 'bg-[var(--search-bg-light)] dark:bg-[var(--search-bg-dark)]'
     : 'bg-gray-100 dark:bg-neutral-900'
 
+  // Layout classes - when service dropdown is present, stack on mobile
+  const layoutClasses = hasServiceDropdown.value
+    ? 'flex flex-col @md:flex-row @md:items-center gap-3 rounded-3xl @md:rounded-full'
+    : 'flex items-center gap-3 rounded-full'
+
   return [
-    'relative flex items-center gap-3 rounded-full border transition-all',
+    'relative border transition-all',
     bgClasses,
     paddingClasses,
     sizeClasses.value,
-    variantClasses.value
+    variantClasses.value,
+    layoutClasses
   ].join(' ')
 })
 
@@ -192,13 +239,21 @@ const buttonClasses = computed(() => {
   // Mobile: No padding (icon centered in fixed w/h), Tablet/Desktop: Horizontal padding for text
   const responsiveClasses = '@md:px-5'
 
+  // When service dropdown is present, button should be full width on mobile
+  const widthClasses = hasServiceDropdown.value ? 'w-full @md:w-auto' : ''
+
   const sizes = {
     sm: 'h-7 w-7 @md:h-auto @md:py-2 @md:w-auto text-sm',
     md: 'h-8 w-8 @md:h-auto @md:w-auto @md:py-2 text-base',
     lg: 'h-10 w-10 @md:h-auto @md:w-auto @md:py-2 text-lg'
   }
 
-  return [baseClasses, responsiveClasses, sizes[props.size]].join(' ')
+  // Override size width classes when service dropdown is present
+  const sizeClasses = hasServiceDropdown.value
+    ? sizes[props.size].replace(/w-\d+/, 'w-full').replace(/@md:w-auto/, '@md:w-auto')
+    : sizes[props.size]
+
+  return [baseClasses, responsiveClasses, widthClasses, sizeClasses].join(' ')
 })
 
 // Dropdown classes
@@ -236,7 +291,15 @@ const selectResult = (result: ZipCodeData) => {
     })
   }
 
-  emit('submit', result)
+  // If service dropdown is present, emit object with location and service
+  if (hasServiceDropdown.value) {
+    emit('submit', {
+      location: `${result.zip} - ${result.city}, ${result.stateAbbr}`,
+      service: selectedService.value
+    })
+  } else {
+    emit('submit', result)
+  }
 }
 
 // Handle button click (button mode)
@@ -247,11 +310,31 @@ const handleButtonClick = () => {
   if (import.meta.dev) {
     consola.info('SearchInput (Button Mode): Submitted value', {
       value: searchQuery.value,
-      buttonText: props.button
+      buttonText: props.button,
+      service: hasServiceDropdown.value ? selectedService.value : null
     })
   }
 
-  emit('submit', searchQuery.value)
+  // If service dropdown is present, emit object with location and service
+  if (hasServiceDropdown.value) {
+    emit('submit', {
+      location: searchQuery.value,
+      service: selectedService.value
+    })
+  } else {
+    emit('submit', searchQuery.value)
+  }
+}
+
+// Handle service selection change
+const handleServiceChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const index = parseInt(target.value, 10)
+  selectedServiceIndex.value = index
+
+  if (props.serviceDropdownValues && index >= 0 && index < props.serviceDropdownValues.length) {
+    selectedService.value = props.serviceDropdownValues[index] || null
+  }
 }
 
 // Handle clear button
@@ -325,37 +408,68 @@ watch(selectedIndex, (newIndex) => {
   <div ref="containerRef" class="@container relative w-full">
     <!-- Input Container -->
     <div :class="containerClasses" :style="customStyles">
-      <!-- Search Icon -->
-      <Icon name="heroicons:magnifying-glass" class="h-5 w-5 flex-shrink-0 text-neutral-400 dark:text-neutral-500" />
+      <!-- Input Row (Search Icon + Input + Loading/Clear) -->
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <!-- Search Icon -->
+        <Icon name="heroicons:magnifying-glass" class="h-5 w-5 flex-shrink-0 text-neutral-400 dark:text-neutral-500" />
 
-      <!-- Input Field -->
-      <input
-        ref="inputRef"
-        v-model="searchQuery"
-        type="text"
-        :placeholder="placeholder"
-        :class="inputClasses"
-        @input="handleInput"
-        @keydown="handleKeydown"
-      />
+        <!-- Input Field -->
+        <input
+          ref="inputRef"
+          v-model="searchQuery"
+          type="text"
+          :placeholder="placeholder"
+          :class="inputClasses"
+          @input="handleInput"
+          @keydown="handleKeydown"
+        />
 
-      <!-- Loading Spinner -->
-      <Icon
-        v-if="loading"
-        name="heroicons:arrow-path"
-        class="h-5 w-5 flex-shrink-0 animate-spin text-neutral-400 dark:text-neutral-500"
-      />
+        <!-- Loading Spinner -->
+        <Icon
+          v-if="loading"
+          name="heroicons:arrow-path"
+          class="h-5 w-5 flex-shrink-0 animate-spin text-neutral-400 dark:text-neutral-500"
+        />
 
-      <!-- Clear Button (Autocomplete Mode Only) -->
-      <button
-        v-if="showClearButton"
-        type="button"
-        class="flex-shrink-0 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-        @click="handleClear"
-        aria-label="Clear search"
-      >
-        <Icon name="heroicons:x-mark" class="h-5 w-5" />
-      </button>
+        <!-- Clear Button (Autocomplete Mode Only) -->
+        <button
+          v-if="showClearButton"
+          type="button"
+          class="flex-shrink-0 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+          @click="handleClear"
+          aria-label="Clear search"
+        >
+          <Icon name="heroicons:x-mark" class="h-5 w-5" />
+        </button>
+      </div>
+
+      <!-- Service Dropdown (when serviceDropdownValues is provided) -->
+      <div v-if="hasServiceDropdown" class="relative flex items-center w-full @md:w-auto">
+        <!-- Divider (hidden on mobile, shown on desktop) -->
+        <div class="hidden @md:block mr-3 h-6 w-px bg-neutral-300 dark:bg-neutral-600" />
+
+        <!-- Select Dropdown -->
+        <select
+          v-model="selectedServiceIndex"
+          class="w-full @md:w-auto cursor-pointer appearance-none bg-transparent pr-6 text-sm font-medium text-neutral-700 outline-none dark:text-neutral-300"
+          @change="handleServiceChange"
+          aria-label="Select service type"
+        >
+          <option
+            v-for="(service, index) in serviceDropdownValues"
+            :key="service.id ?? index"
+            :value="index"
+          >
+            {{ service.name }}
+          </option>
+        </select>
+
+        <!-- Chevron Icon -->
+        <Icon
+          name="heroicons:chevron-down"
+          class="pointer-events-none absolute right-0 h-4 w-4 text-neutral-500 dark:text-neutral-400"
+        />
+      </div>
 
       <!-- Submit Button (Button Mode Only) -->
       <button
@@ -366,11 +480,17 @@ watch(selectedIndex, (newIndex) => {
         @click="handleButtonClick"
         aria-label="Search"
       >
-        <!-- Mobile container (< 448px): Show Icon, Tablet/Desktop (≥ 448px): Hidden -->
-        <Icon name="heroicons:magnifying-glass" class="@md:hidden h-5 w-5" />
-
-        <!-- Mobile container (< 448px): Hidden, Tablet/Desktop (≥ 448px): Show Text -->
-        <span class="@md:inline hidden">{{ button }}</span>
+        <!-- When service dropdown is present: Always show text (full width button) -->
+        <!-- When no service dropdown: Mobile shows icon, Desktop shows text -->
+        <template v-if="hasServiceDropdown">
+          <span>{{ button }}</span>
+        </template>
+        <template v-else>
+          <!-- Mobile container (< 448px): Show Icon, Tablet/Desktop (≥ 448px): Hidden -->
+          <Icon name="heroicons:magnifying-glass" class="@md:hidden h-5 w-5" />
+          <!-- Mobile container (< 448px): Hidden, Tablet/Desktop (≥ 448px): Show Text -->
+          <span class="@md:inline hidden">{{ button }}</span>
+        </template>
       </button>
     </div>
 

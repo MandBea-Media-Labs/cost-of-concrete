@@ -830,13 +830,19 @@ export const useComponentDocs = () => {
           type: '[string, string] | null',
           default: 'null',
           description: 'Custom background colors as [lightMode, darkMode] hex values. When provided, overrides the default background colors. Example: ["#FFFFFF", "#1F2937"]'
+        },
+        {
+          name: 'serviceDropdownValues',
+          type: 'ServiceOption[] | null',
+          default: 'null',
+          description: 'Service dropdown options. When provided, shows inline service selector. ServiceOption: { id: number | null, name: string, slug: string | null }'
         }
       ],
       events: [
         {
           name: 'submit',
-          payload: 'ZipCodeData | string',
-          description: 'Emitted when user selects autocomplete result (ZipCodeData) or clicks button (string)'
+          payload: 'ZipCodeData | string | { location: string, service: ServiceOption | null }',
+          description: 'Emitted when user selects autocomplete result (ZipCodeData), clicks button (string), or submits with service dropdown (object with location and service)'
         },
         {
           name: 'input',
@@ -888,6 +894,31 @@ export const useComponentDocs = () => {
   :backgroundColor="['#F3F4F6', '#374151']"
   variant="secondary-outline"
   size="lg"
+/>`
+        },
+        {
+          title: 'With Service Dropdown',
+          code: `<script setup>
+const services = [
+  { id: null, name: 'All Services', slug: null },
+  { id: 1, name: 'Driveways', slug: 'driveways' },
+  { id: 2, name: 'Patios', slug: 'patios' },
+  { id: 3, name: 'Foundations', slug: 'foundations' }
+]
+
+const handleSubmit = (data) => {
+  console.log('Location:', data.location)
+  console.log('Service:', data.service)
+}
+</script>
+
+<SearchInput
+  placeholder="ZIP Code"
+  button="Find Contractors"
+  :service-dropdown-values="services"
+  variant="primary-outline"
+  size="md"
+  @submit="handleSubmit"
 />`
         }
       ]
