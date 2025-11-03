@@ -150,7 +150,7 @@ onUnmounted(() => {
                           </div>
                           <div
                             v-if="child.description"
-                            class="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
+                            class="mt-1 text-xs leading-tight text-neutral-600 dark:text-neutral-400"
                           >
                             {{ child.description }}
                           </div>
