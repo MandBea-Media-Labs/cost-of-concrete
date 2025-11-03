@@ -2,109 +2,17 @@
 // Staining Concrete Hub Page
 // Template for hub pages with sidebar navigation and topic cards grid
 
+import { stainingConcreteNavigation, stainingConcreteTopicCards } from '~/mock-data/hubNavigation'
+
 // SEO Meta
 useSeoMeta({
   title: 'The Art of Acid Stained Concrete | Complete Guide',
   description: 'Learn how to use acid-based chemical stains to impart rich, earth-toned color to plain concrete floors. Expert tips, cost breakdowns, and contractor recommendations.'
 })
 
-// Sidebar navigation sections
-const navigationSections = [
-  {
-    title: 'Stained Concrete Overview',
-    links: [
-      { label: 'Stained Concrete Home', to: '/staining-concrete' },
-      { label: 'Stained Concrete Pictures', to: '/stained-concrete-pictures' },
-      { label: 'Sample Stain Colors', to: '/sample-stain-colors' },
-      { label: 'Design Ideas', to: '/stained-concrete-design-ideas' },
-      { label: 'Stained Concrete FAQs', to: '/stained-concrete-faqs' },
-      { label: 'Pricing Guide', to: '/stained-concrete-pricing' },
-      { label: 'Comparison Chart', to: '/stained-concrete-comparison' }
-    ]
-  },
-  {
-    title: 'How-To Guides',
-    links: [
-      { label: 'Concrete Stain Application', to: '/concrete-stain-application' },
-      { label: 'Sealing Stained Concrete', to: '/sealing-stained-concrete' },
-      { label: 'DIY Tips & Tricks', to: '/diy-staining-tips' }
-    ]
-  },
-  {
-    title: 'Related Information',
-    links: [
-      { label: 'Video Tutorials', to: '/staining-video-tutorials' },
-      { label: 'Case Studies', to: '/staining-case-studies' },
-      { label: 'Before & After Gallery', to: '/staining-before-after' }
-    ]
-  },
-  {
-    title: 'Other Resources',
-    links: [
-      { label: 'Concrete Products', to: '/concrete-products' },
-      { label: 'Concrete Stains', to: '/concrete-stains' },
-      { label: 'Design Inspiration', to: '/design-inspiration' }
-    ]
-  }
-]
-
-// Topic cards data for the grid
-const topicCards = [
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Stained+Concrete+Pictures',
-    title: 'Stained Concrete Pictures',
-    description: 'Browse a collection of indoor and outdoor concrete stains; a variety of colors and finishes.',
-    to: '/stained-concrete-pictures'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Stained+Concrete+Cost',
-    title: 'Stained Concrete Cost',
-    description: 'The price of stained concrete starts at $2 to $4 per square foot and increases with complexity.',
-    to: '/stained-concrete-cost'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Color+Chart',
-    title: 'Stained Concrete Color Chart',
-    description: 'See your stain color choices for staining concrete floors and outdoor surfaces.',
-    to: '/stained-concrete-color-chart'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Compare+Options',
-    title: 'Compare Stained Concrete',
-    description: 'Stained floors offer advantages that carpet, tile and other materials can\'t match.',
-    to: '/compare-stained-concrete'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Projects',
-    title: 'Stained Concrete Projects',
-    description: 'See pictures and get inside info on stained concrete projects from across the country.',
-    to: '/stained-concrete-projects'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Floor+Info',
-    title: 'Concrete Floor Info',
-    description: 'Discover the benefits of concrete flooring, including staining, polishing and overlays.',
-    to: '/concrete-floor-info'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=FAQs',
-    title: 'Stained Concrete FAQs',
-    description: 'Find answers to common questions about stained concrete benefits, performance and maintenance.',
-    to: '/stained-concrete-faqs'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Patios',
-    title: 'Staining Concrete Patios',
-    description: 'Get tips and design ideas for using stains to enhance a concrete patio.',
-    to: '/staining-concrete-patios'
-  },
-  {
-    image: 'https://placehold.co/600x400/e3f2fd/1877f2?text=Driveways',
-    title: 'Stained Concrete Driveways',
-    description: 'Transform your driveway with decorative concrete staining techniques and patterns.',
-    to: '/stained-concrete-driveways'
-  }
-]
+// Import navigation sections and topic cards from mock data
+const navigationSections = stainingConcreteNavigation
+const topicCards = stainingConcreteTopicCards
 </script>
 
 <template>
@@ -165,7 +73,7 @@ const topicCards = [
 
           <!-- Introduction -->
           <section class="mb-12">
-            <div class="prose prose-lg max-w-none dark:prose-invert">
+            <div class="prose prose-lg dark:prose-invert max-w-none">
               <p class="text-neutral-700 dark:text-neutral-300">
                 Staining imparts a luxurious richness that can't be achieved by any other coloring medium. Rather than produce a solid, opaque effect like paint, stains permeate the concrete to infuse it with luminous, translucent tones that vary depending on the surface they are applied to. The application techniques used, the results can mimic everything from polished marble to tanned leather to natural stone or even stained wood.
               </p>
@@ -204,7 +112,7 @@ const topicCards = [
               <h2 class="mb-6 font-heading text-3xl font-bold text-neutral-900 dark:text-neutral-50">
                 Acid Stains Vs Water-Based Stains
               </h2>
-              <div class="prose prose-lg max-w-none dark:prose-invert">
+              <div class="prose prose-lg dark:prose-invert max-w-none">
                 <p class="text-neutral-700 dark:text-neutral-300">
                   Stains for concrete come in two general categories: acid-based chemical stains and water-based stains. Both types of stain penetrate the surface to add permanent color, but they achieve this in different ways.
                 </p>
@@ -219,7 +127,7 @@ const topicCards = [
               <h2 class="mb-6 font-heading text-3xl font-bold text-neutral-900 dark:text-neutral-50">
                 Types of Concrete Stains
               </h2>
-              <div class="prose prose-lg max-w-none dark:prose-invert">
+              <div class="prose prose-lg dark:prose-invert max-w-none">
                 <p class="text-neutral-700 dark:text-neutral-300">
                   Understanding the different types of concrete stains available will help you choose the right product for your project. Acid stains offer earth-toned colors like browns, tans, and terra cottas, while water-based stains provide a broader color palette including blues, greens, reds, and blacks.
                 </p>
@@ -231,7 +139,7 @@ const topicCards = [
               <h2 class="mb-6 font-heading text-3xl font-bold text-neutral-900 dark:text-neutral-50">
                 Application Process
               </h2>
-              <div class="prose prose-lg max-w-none dark:prose-invert">
+              <div class="prose prose-lg dark:prose-invert max-w-none">
                 <p class="text-neutral-700 dark:text-neutral-300">
                   The application of concrete stain requires careful surface preparation, proper safety equipment, and attention to detail. The concrete must be clean, dry, and free of any sealers or coatings. The stain is typically applied with a sprayer, brush, or sponge, and the final appearance depends on factors like application technique, concrete porosity, and dwell time.
                 </p>
