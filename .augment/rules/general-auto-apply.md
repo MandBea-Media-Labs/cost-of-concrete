@@ -22,10 +22,12 @@ type: "always_apply"
 - Always examine the installed modules so we take full advantage of the applications abilities.
 - Always design the UI with a mobile-first approach.
 - Always include light and dark Tailwind CSS styling when creating UI components.
+- The root nuxt application directory is in ..\app\ and you need to store MOST of the application files here with the exception of ..\server\, ..\public\, etc so keep this mind.
 
 # MISSION CRITICAL RULES
 - consola is installed for logging, and we want to use it effectively and liberally within our application.
 - All logging in the browser console should only be available in the dev environment, so keep this in mind.
-- You will always ultra think on every thought you have.
 - Never git commit without asking first.
 - Never start the dev server, if this is require ask the user to start it.
+- All Linear MCP tickets and issues are to always be saved in to the "Cost of Concrete" project
+- You will always **ultra think** on every task, decision or request.
