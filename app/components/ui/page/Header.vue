@@ -138,16 +138,22 @@ onUnmounted(() => {
                     >
                       <NuxtLink
                         :to="child.link"
-                        class="block rounded-md px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                        class="flex items-start gap-1 rounded-md px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
                       >
-                        <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                          {{ child.label }}
-                        </div>
-                        <div
-                          v-if="child.description"
-                          class="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
-                        >
-                          {{ child.description }}
+                        <Icon
+                          name="heroicons:arrow-small-right-20-solid"
+                          class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                        />
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                            {{ child.label }}
+                          </div>
+                          <div
+                            v-if="child.description"
+                            class="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
+                          >
+                            {{ child.description }}
+                          </div>
                         </div>
                       </NuxtLink>
                     </NavigationMenuLink>
