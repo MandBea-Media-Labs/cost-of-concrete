@@ -129,7 +129,7 @@ onUnmounted(() => {
                     />
                   </NavigationMenuTrigger>
                   <NavigationMenuContent
-                    class="NavigationMenuContent grid w-[600px] grid-cols-1 gap-1 rounded-lg border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+                    class="NavigationMenuContent grid w-[600px] grid-cols-2 gap-1 rounded-lg border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
                   >
                     <NavigationMenuLink
                       v-for="child in item.children"
