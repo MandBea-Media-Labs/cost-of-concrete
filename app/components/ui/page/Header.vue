@@ -318,21 +318,21 @@ onUnmounted(() => {
             >
               <Icon name="heroicons:arrow-left" class="h-6 w-6" />
             </button>
-            <h2 class="flex-1 text-center font-heading text-lg font-bold text-neutral-700 dark:text-neutral-100">
+            <span class="flex-1 text-center font-heading text-lg font-bold text-neutral-700 dark:text-neutral-100">
               {{ activeSubmenu }}
-            </h2>
-            <button
+            </span>
+            <!-- <button
               @click="closeMobileMenu"
               class="rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-red-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-red-400"
               aria-label="Close menu"
             >
               <Icon name="heroicons:x-mark" class="h-6 w-6" />
-            </button>
+            </button> -->
           </div>
 
           <!-- Submenu Content -->
           <div class="flex-1 overflow-y-auto p-6">
-            <ul class="space-y-2">
+            <ul class="space-y-1">
               <li
                 v-for="item in navigationItems.find(i => i.label === activeSubmenu)?.children"
                 :key="item?.label"
@@ -340,9 +340,23 @@ onUnmounted(() => {
                 <NuxtLink
                   :to="item?.link || '/search'"
                   @click="closeMobileMenu"
-                  class="block rounded-lg px-4 py-3 text-base text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-blue-600 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-blue-400"
+                  class="flex items-start gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
-                  {{ item?.label }}
+                  <Icon
+                    name="heroicons:arrow-small-right-20-solid"
+                    class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                  />
+                  <div class="flex-1">
+                    <div class="text-base font-medium text-neutral-900 dark:text-neutral-100">
+                      {{ item?.label }}
+                    </div>
+                    <div
+                      v-if="item?.description"
+                      class="text-xs leading-tight text-neutral-600 dark:text-neutral-400"
+                    >
+                      {{ item?.description }}
+                    </div>
+                  </div>
                 </NuxtLink>
               </li>
             </ul>
