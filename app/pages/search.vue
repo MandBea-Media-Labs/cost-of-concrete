@@ -131,7 +131,7 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
         <Pagination
           v-model:current-page="currentPage"
           :total-pages="totalPages"
-          size="md"
+          size="sm"
         />
       </div>
     </div>

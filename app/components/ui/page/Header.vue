@@ -59,7 +59,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-neutral-50">
+  <header class="top-0 z-50 bg-neutral-50">
     <div class="mx-auto max-w-8xl px-4 py-4 sm:px-6 lg:px-8">
       <!-- Desktop & Mobile Header -->
       <div class="flex items-center justify-between gap-4">
@@ -76,12 +76,12 @@ onUnmounted(() => {
         <div class="hidden flex-1 items-center justify-between gap-6 md:flex">
           <!-- Center: SearchInput -->
           <div class="mx-auto w-full max-w-md">
-            <SearchInput
+            <!-- <SearchInput
               placeholder="Type a city, state or zip code.."
               variant="secondary-light-outline"
               size="md"
               :backgroundColor="['#f3f4f6', '#626262']"
-            />
+            /> -->
           </div>
 
           <!-- Right: Auth Buttons -->

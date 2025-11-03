@@ -74,7 +74,8 @@ const isWebp = computed(() => {
 
 // Build contractor profile URL
 const contractorUrl = computed(() => {
-  return `/contractors/${props.contractorSlug}`
+  // return `/contractors/${props.contractorSlug}`
+  return `/`
 })
 
 // Border width classes

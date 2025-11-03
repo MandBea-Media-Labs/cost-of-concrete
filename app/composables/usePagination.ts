@@ -1,4 +1,4 @@
-import { ref, computed, watch, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, watch, nextTick, type Ref, type ComputedRef } from 'vue'
 import { consola } from 'consola'
 
 /**
@@ -99,10 +99,10 @@ export interface UsePaginationReturn<T> {
 /**
  * Composable for managing pagination
  * Supports both client-side (mock data) and server-side (API) pagination
- * 
+ *
  * @param options - Pagination configuration options
  * @returns Object containing pagination state and methods
- * 
+ *
  * @example
  * ```ts
  * // Client-side pagination (mock data)
@@ -114,7 +114,7 @@ export interface UsePaginationReturn<T> {
  *   scrollToTop: true,
  *   scrollTarget: '#results-section'
  * })
- * 
+ *
  * // Server-side pagination (API)
  * const { paginatedData, currentPage, totalPages, isLoading } = usePagination({
  *   mode: 'server',
@@ -155,7 +155,7 @@ export function usePagination<T>(options: PaginationOptions<T>): UsePaginationRe
     const pageFromUrl = Number(route.query.page)
     if (!isNaN(pageFromUrl) && pageFromUrl > 0) {
       currentPage.value = pageFromUrl
-      
+
       if (import.meta.dev) {
         consola.info('Pagination: Initialized from URL', {
           page: currentPage.value,
@@ -214,48 +214,93 @@ export function usePagination<T>(options: PaginationOptions<T>): UsePaginationRe
     return currentPage.value > 1
   })
 
+  // Watch for currentPage changes (from v-model binding) and trigger scroll + URL update
+  // This is needed because v-model updates currentPage directly, bypassing goToPage()
+  let isInternalChange = false
+  watch(currentPage, async (newPage, oldPage) => {
+    // Skip if this is an internal change from goToPage
+    if (isInternalChange) {
+      isInternalChange = false
+      return
+    }
+
+    // Skip if page hasn't actually changed
+    if (newPage === oldPage) return
+
+    // Skip if this is the initial page load from URL
+    if (oldPage === initialPage && newPage === initialPage) return
+
+    if (import.meta.dev) {
+      consola.info('Pagination: Page changed via v-model', {
+        from: oldPage,
+        to: newPage
+      })
+    }
+
+    // Trigger scroll and URL update
+    await scrollToElement()
+    updateUrl(newPage)
+  })
+
   /**
    * Scroll to target element or top of page
+   * Uses nextTick and setTimeout to ensure DOM has updated before scrolling
    */
-  const scrollToElement = () => {
+  const scrollToElement = async () => {
     if (!scrollToTop) return
 
-    if (scrollTarget) {
-      const element = document.querySelector(scrollTarget)
-      if (element) {
-        element.scrollIntoView({ behavior: scrollBehavior, block: 'start' })
-        
+    // Wait for DOM to update
+    await nextTick()
+
+    // Add a small delay to ensure everything is rendered
+    setTimeout(() => {
+      if (scrollTarget) {
+        const element = document.querySelector(scrollTarget)
+
         if (import.meta.dev) {
-          consola.success('Pagination: Scrolled to target', {
+          consola.info('Pagination: Looking for scroll target', {
             target: scrollTarget,
+            found: !!element
+          })
+        }
+
+        if (element) {
+          element.scrollIntoView({ behavior: scrollBehavior, block: 'start' })
+
+          if (import.meta.dev) {
+            consola.success('Pagination: Scrolled to target', {
+              target: scrollTarget,
+              behavior: scrollBehavior,
+              elementTop: element.getBoundingClientRect().top
+            })
+          }
+        } else {
+          if (import.meta.dev) {
+            consola.warn('Pagination: Scroll target not found', {
+              target: scrollTarget
+            })
+          }
+        }
+      } else {
+        window.scrollTo({ top: 0, behavior: scrollBehavior })
+
+        if (import.meta.dev) {
+          consola.success('Pagination: Scrolled to top', {
             behavior: scrollBehavior
           })
         }
-      } else {
-        if (import.meta.dev) {
-          consola.warn('Pagination: Scroll target not found', {
-            target: scrollTarget
-          })
-        }
       }
-    } else {
-      window.scrollTo({ top: 0, behavior: scrollBehavior })
-      
-      if (import.meta.dev) {
-        consola.success('Pagination: Scrolled to top', {
-          behavior: scrollBehavior
-        })
-      }
-    }
+    }, 100)
   }
 
   /**
    * Update URL with current page
+   * Uses replace instead of push to avoid scroll interference
    */
   const updateUrl = (page: number) => {
     if (!syncUrl) return
 
-    router.push({
+    router.replace({
       query: {
         ...route.query,
         page: page > 1 ? page.toString() : undefined // Remove page param if page is 1
@@ -304,7 +349,7 @@ export function usePagination<T>(options: PaginationOptions<T>): UsePaginationRe
   /**
    * Navigate to a specific page
    */
-  const goToPage = (page: number) => {
+  const goToPage = async (page: number) => {
     // Validate page number
     if (page < 1 || page > totalPages.value) {
       if (import.meta.dev) {
@@ -317,9 +362,21 @@ export function usePagination<T>(options: PaginationOptions<T>): UsePaginationRe
       return
     }
 
+    // Mark as internal change to prevent watcher from triggering
+    isInternalChange = true
     currentPage.value = page
+
+    // Fetch data for server-side pagination first
+    if (mode === 'server') {
+      fetchData(page)
+    }
+
+    // Wait for scroll to complete BEFORE updating URL
+    // This prevents router navigation from interfering with scroll
+    await scrollToElement()
+
+    // Update URL after scroll
     updateUrl(page)
-    scrollToElement()
 
     if (import.meta.dev) {
       consola.info('Pagination: Navigated to page', {
@@ -327,11 +384,6 @@ export function usePagination<T>(options: PaginationOptions<T>): UsePaginationRe
         itemsPerPage,
         totalPages: totalPages.value
       })
-    }
-
-    // Fetch data for server-side pagination
-    if (mode === 'server') {
-      fetchData(page)
     }
   }
 

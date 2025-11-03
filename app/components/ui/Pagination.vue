@@ -48,7 +48,7 @@ const emit = defineEmits<{
  * - Always show first and last page
  * - Show current page and surrounding pages
  * - Use ellipsis (...) for gaps
- * 
+ *
  * Examples:
  * - Page 1 of 10: [1] [2] [3] ... [10]
  * - Page 5 of 10: [1] ... [4] [5] [6] ... [10]
@@ -198,7 +198,7 @@ const pageNumberSizeClasses = computed(() => {
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
         currentPage === 1
           ? 'cursor-not-allowed bg-neutral-200 text-neutral-400 dark:bg-neutral-700 dark:text-neutral-500'
-          : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 dark:bg-blue-500 dark:hover:bg-blue-600'
+          : 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg'
       ]"
       :aria-label="currentPage === 1 ? 'No previous page' : 'Go to previous page'"
       @click="handlePrevious"
@@ -230,8 +230,8 @@ const pageNumberSizeClasses = computed(() => {
             'min-w-[2.5rem] rounded-lg font-medium transition-all duration-200',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             page === currentPage
-              ? 'bg-blue-600 text-white dark:bg-blue-500'
-              : 'text-blue-600 hover:bg-blue-50 active:bg-blue-100 dark:text-blue-400 dark:hover:bg-neutral-800 dark:active:bg-neutral-700'
+              ? 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg'
+              : 'text-blue-500 hover:bg-blue-50 active:bg-blue-100 dark:text-blue-400 dark:hover:bg-neutral-800 dark:active:bg-neutral-700'
           ]"
           :aria-label="`Go to page ${page}`"
           :aria-current="page === currentPage ? 'page' : undefined"
@@ -262,7 +262,7 @@ const pageNumberSizeClasses = computed(() => {
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
         currentPage === totalPages
           ? 'cursor-not-allowed bg-neutral-200 text-neutral-400 dark:bg-neutral-700 dark:text-neutral-500'
-          : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 dark:bg-blue-500 dark:hover:bg-blue-600'
+          : 'bg-blue-500 text-neutral-50 hover:bg-blue-600 active:bg-blue-700 shadow-md hover:shadow-lg'
       ]"
       :aria-label="currentPage === totalPages ? 'No next page' : 'Go to next page'"
       @click="handleNext"
