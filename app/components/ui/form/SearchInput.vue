@@ -104,6 +104,7 @@ const selectedIndex = ref(-1)
 const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
 const selectedService = ref<string>('')
+const isServiceDropdownOpen = ref(false)
 
 // Computed: Is button mode active
 const isButtonMode = computed(() => props.button !== null && props.button !== undefined)
@@ -452,7 +453,7 @@ watch(selectedIndex, (newIndex) => {
         <div class="hidden @md:block mr-3 h-6 w-px bg-neutral-300 dark:bg-neutral-600" />
 
         <!-- Reka UI Select Component -->
-        <SelectRoot v-model="selectedService">
+        <SelectRoot v-model="selectedService" v-model:open="isServiceDropdownOpen">
           <SelectTrigger
             class="w-full @md:w-auto cursor-pointer flex items-center justify-between gap-2 bg-transparent text-sm font-medium text-neutral-700 outline-none dark:text-neutral-300 border-0"
             aria-label="Select service type"
@@ -460,7 +461,10 @@ watch(selectedIndex, (newIndex) => {
             <SelectValue placeholder="All Services" />
             <Icon
               name="heroicons:chevron-down"
-              class="h-4 w-4 text-neutral-500 dark:text-neutral-400"
+              :class="[
+                'h-4 w-4 text-neutral-500 dark:text-neutral-400 transition-transform duration-200',
+                isServiceDropdownOpen ? 'rotate-180' : ''
+              ]"
             />
           </SelectTrigger>
 

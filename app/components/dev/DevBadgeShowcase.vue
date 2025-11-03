@@ -14,7 +14,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Standard Variants
         </h3>
-        <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
+        <div class="@5xl:grid-cols-2 grid grid-cols-1 gap-8">
           <DevBadgeVariantCard
             variant-title="Primary Outline Variant"
             variant="primary-outline"
@@ -34,7 +34,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Ghost Variant
         </h3>
-        <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
+        <div class="@5xl:grid-cols-2 grid grid-cols-1 gap-8">
           <DevBadgeVariantCard
             variant-title="Ghost Variant"
             variant="ghost"
@@ -55,7 +55,7 @@
         <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           Badges with Icons
         </h3>
-        <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
+        <div class="@5xl:grid-cols-2 grid grid-cols-1 gap-8">
           <DevBadgeVariantCard
             variant-title="Primary with Icon"
             variant="primary-outline"
@@ -73,7 +73,7 @@
       </div>
 
       <!-- Border Thickness & Custom Colors - 2 Column Layout on Desktop -->
-      <div class="grid grid-cols-1 gap-8 @5xl:grid-cols-2">
+      <div class="@5xl:grid-cols-2 grid grid-cols-1 gap-8">
         <!-- Border Thickness -->
         <div>
           <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
@@ -166,7 +166,7 @@
             <Badge text="Verified" variant="primary-outline" size="md" icon="heroicons:shield-check" borderWidth="thin" />
             <Badge text="Premium" variant="secondary-outline" size="sm" icon="heroicons:star" />
             <Badge text="Best Seller" variant="ghost" size="lg" icon="heroicons:fire" borderWidth="thin" />
-            <Badge text="Custom" :color="['#F59E0B', '#FBBF24']" size="md" icon="heroicons:lightning-bolt" />
+            <Badge text="Custom" :color="['#F59E0B', '#FBBF24']" size="md" icon="material-symbols:electric-bolt" />
             <Badge text="Custom Thin" :color="['#EC4899', '#F472B6']" size="md" borderWidth="thin" />
           </div>
         </div>
