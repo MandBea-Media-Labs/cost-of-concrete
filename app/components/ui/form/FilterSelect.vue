@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { consola } from 'consola'
 import {
   SelectRoot,
   SelectTrigger,
@@ -18,12 +19,12 @@ export interface FilterOption {
    * The value of the option (used for filtering logic)
    */
   value: string | number
-  
+
   /**
    * The display label for the option
    */
   label: string
-  
+
   /**
    * Whether the option is disabled
    * @default false
@@ -88,6 +89,16 @@ const internalValue = computed({
   set: (value: string) => {
     // Find the original option to get the correct type
     const option = props.options.find(opt => String(opt.value) === value)
+
+    // Consola log for demo (only in dev mode)
+    if (import.meta.dev && option) {
+      consola.info('FilterSelect: Option selected', {
+        value: option.value,
+        label: option.label,
+        disabled: option.disabled || false
+      })
+    }
+
     emit('update:modelValue', option ? option.value : null)
   }
 })
