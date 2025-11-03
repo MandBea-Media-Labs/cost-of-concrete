@@ -28,6 +28,22 @@ const contractors = ref(mockContractors)
 // Use the search filters composable
 const { filters, filteredResults, resultCount, resetFilters } = useSearchFilters(contractors.value)
 
+// Pagination state
+const currentPage = ref(1)
+const itemsPerPage = 8
+
+// Calculate paginated results
+const paginatedResults = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredResults.value.slice(start, end)
+})
+
+// Calculate total pages
+const totalPages = computed(() => {
+  return Math.ceil(filteredResults.value.length / itemsPerPage)
+})
+
 // Handle search submission from Hero
 const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
   console.log('Search submitted:', value)
@@ -67,10 +83,10 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
         </p>
       </div>
 
-      <!-- Results Grid -->
-      <div v-if="filteredResults.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Results Grid - 4 columns, 8 items per page (2 rows) -->
+      <div v-if="filteredResults.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ContractorCard
-          v-for="contractor in filteredResults"
+          v-for="contractor in paginatedResults"
           :key="contractor.id"
           :image="contractor.image"
           :company-name="contractor.companyName"
@@ -79,7 +95,9 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
           :review-count="contractor.reviewCount"
           :contractor-id="contractor.id"
           :contractor-slug="contractor.slug"
-        />
+        >
+          {{ contractor.description }}
+        </ContractorCard>
       </div>
 
       <!-- No Results -->

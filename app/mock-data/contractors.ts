@@ -18,7 +18,8 @@ export const contractors: ContractorResult[] = [
     availability: 'available',
     priceRange: '$$',
     image: '/images/mock-data/contractors/abc-concrete-solutions.png',
-    slug: 'abc-concrete-solutions'
+    slug: 'abc-concrete-solutions',
+    description: 'Professional driveway installation and repair with over 15 years of experience in residential and commercial projects.'
   },
   {
     id: '2',
@@ -31,7 +32,8 @@ export const contractors: ContractorResult[] = [
     availability: 'busy',
     priceRange: '$$$',
     image: '/images/mock-data/contractors/premium-patio-builders.png',
-    slug: 'premium-patio-builders'
+    slug: 'premium-patio-builders',
+    description: 'Luxury outdoor living spaces designed and built to transform your backyard into an entertainment paradise.'
   },
   {
     id: '3',
@@ -44,7 +46,8 @@ export const contractors: ContractorResult[] = [
     availability: 'available',
     priceRange: '$$',
     image: '/images/mock-data/contractors/foundation-experts-inc.png',
-    slug: 'foundation-experts-inc'
+    slug: 'foundation-experts-inc',
+    description: 'Engineered foundations, slabs, and structural concrete work built to last for generations. Family run and operated.'
   },
   {
     id: '4',
@@ -57,7 +60,8 @@ export const contractors: ContractorResult[] = [
     availability: 'available',
     priceRange: '$',
     image: '/images/mock-data/contractors/walkway-wizards.png',
-    slug: 'walkway-wizards'
+    slug: 'walkway-wizards',
+    description: 'Beautiful and durable walkways that enhance curb appeal and provide safe passage for years to come.'
   },
   {
     id: '5',
@@ -70,7 +74,8 @@ export const contractors: ContractorResult[] = [
     availability: 'busy',
     priceRange: '$$$',
     image: '/images/mock-data/contractors/decorative-concrete-co.png',
-    slug: 'decorative-concrete-co'
+    slug: 'decorative-concrete-co',
+    description: 'Decorative and stamped concrete specialists delivering clean finishes and long-lasting performance.'
   },
   {
     id: '6',
@@ -83,7 +88,260 @@ export const contractors: ContractorResult[] = [
     availability: 'available',
     priceRange: '$',
     image: '/images/mock-data/contractors/quick-driveway-pros.png',
-    slug: 'quick-driveway-pros'
+    slug: 'quick-driveway-pros',
+    description: 'Fast and affordable driveway solutions without compromising on quality or craftsmanship. Locally owned and operated.'
+  },
+  {
+    id: '7',
+    companyName: 'Elite Foundation Works',
+    serviceType: 'foundations',
+    location: 'San Diego, CA',
+    distance: 4.2,
+    rating: 4.7,
+    reviewCount: 178,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/foundation-experts-inc.png',
+    slug: 'elite-foundation-works',
+    description: 'Specialized foundation repair and installation services with cutting-edge engineering solutions.'
+  },
+  {
+    id: '8',
+    companyName: 'Sunset Patios & Decks',
+    serviceType: 'patios',
+    location: 'Santa Monica, CA',
+    distance: 7.5,
+    rating: 4.8,
+    reviewCount: 215,
+    availability: 'busy',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/premium-patio-builders.png',
+    slug: 'sunset-patios-decks',
+    description: 'Custom outdoor living spaces with stunning ocean-inspired designs and premium materials.'
+  },
+  {
+    id: '9',
+    companyName: 'Precision Concrete Masters',
+    serviceType: 'driveways',
+    location: 'Pasadena, CA',
+    distance: 9.3,
+    rating: 4.6,
+    reviewCount: 142,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/abc-concrete-solutions.png',
+    slug: 'precision-concrete-masters',
+    description: 'Meticulous attention to detail in every driveway project, ensuring perfect finishes every time.'
+  },
+  {
+    id: '10',
+    companyName: 'Artistic Stamped Concrete',
+    serviceType: 'stamped-decorative',
+    location: 'Long Beach, CA',
+    distance: 11.2,
+    rating: 4.9,
+    reviewCount: 267,
+    availability: 'busy',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/decorative-concrete-co.png',
+    slug: 'artistic-stamped-concrete',
+    description: 'Award-winning decorative concrete artistry that transforms ordinary surfaces into extraordinary works of art.'
+  },
+  {
+    id: '11',
+    companyName: 'Pathway Professionals',
+    serviceType: 'walkways',
+    location: 'Glendale, CA',
+    distance: 5.8,
+    rating: 4.7,
+    reviewCount: 189,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/walkway-wizards.png',
+    slug: 'pathway-professionals',
+    description: 'Creating elegant pathways and sidewalks that blend seamlessly with your landscape design.'
+  },
+  {
+    id: '12',
+    companyName: 'Coastal Concrete Solutions',
+    serviceType: 'driveways',
+    location: 'Malibu, CA',
+    distance: 15.7,
+    rating: 4.8,
+    reviewCount: 198,
+    availability: 'available',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/quick-driveway-pros.png',
+    slug: 'coastal-concrete-solutions',
+    description: 'Premium coastal concrete services designed to withstand harsh ocean environments and salt air.'
+  },
+  {
+    id: '13',
+    companyName: 'Modern Foundation Builders',
+    serviceType: 'foundations',
+    location: 'Burbank, CA',
+    distance: 8.9,
+    rating: 4.5,
+    reviewCount: 134,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/foundation-experts-inc.png',
+    slug: 'modern-foundation-builders',
+    description: 'Contemporary foundation solutions using the latest technology and sustainable building practices.'
+  },
+  {
+    id: '14',
+    companyName: 'Garden Patio Experts',
+    serviceType: 'patios',
+    location: 'Beverly Hills, CA',
+    distance: 6.4,
+    rating: 4.9,
+    reviewCount: 312,
+    availability: 'busy',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/premium-patio-builders.png',
+    slug: 'garden-patio-experts',
+    description: 'Luxury patio designs that seamlessly integrate with your garden and landscape architecture.'
+  },
+  {
+    id: '15',
+    companyName: 'Express Driveway Services',
+    serviceType: 'driveways',
+    location: 'Torrance, CA',
+    distance: 10.1,
+    rating: 4.4,
+    reviewCount: 87,
+    availability: 'available',
+    priceRange: '$',
+    image: '/images/mock-data/contractors/abc-concrete-solutions.png',
+    slug: 'express-driveway-services',
+    description: 'Quick turnaround times on driveway installations and repairs with competitive pricing.'
+  },
+  {
+    id: '16',
+    companyName: 'Luxury Decorative Concrete',
+    serviceType: 'stamped-decorative',
+    location: 'Newport Beach, CA',
+    distance: 18.5,
+    rating: 5.0,
+    reviewCount: 156,
+    availability: 'busy',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/decorative-concrete-co.png',
+    slug: 'luxury-decorative-concrete',
+    description: 'High-end decorative concrete installations for discerning clients who demand perfection.'
+  },
+  {
+    id: '17',
+    companyName: 'Walkway Wonders',
+    serviceType: 'walkways',
+    location: 'Culver City, CA',
+    distance: 4.9,
+    rating: 4.6,
+    reviewCount: 123,
+    availability: 'available',
+    priceRange: '$',
+    image: '/images/mock-data/contractors/walkway-wizards.png',
+    slug: 'walkway-wonders',
+    description: 'Affordable walkway solutions that enhance property value and improve accessibility.'
+  },
+  {
+    id: '18',
+    companyName: 'Superior Foundation Co',
+    serviceType: 'foundations',
+    location: 'Anaheim, CA',
+    distance: 13.2,
+    rating: 4.7,
+    reviewCount: 201,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/foundation-experts-inc.png',
+    slug: 'superior-foundation-co',
+    description: 'Trusted foundation specialists serving Orange County with reliable and durable concrete work.'
+  },
+  {
+    id: '19',
+    companyName: 'Backyard Oasis Patios',
+    serviceType: 'patios',
+    location: 'Redondo Beach, CA',
+    distance: 9.7,
+    rating: 4.8,
+    reviewCount: 234,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/premium-patio-builders.png',
+    slug: 'backyard-oasis-patios',
+    description: 'Transform your backyard into a relaxing retreat with custom patio designs and expert installation.'
+  },
+  {
+    id: '20',
+    companyName: 'Speedy Concrete Pros',
+    serviceType: 'driveways',
+    location: 'Inglewood, CA',
+    distance: 7.8,
+    rating: 4.5,
+    reviewCount: 167,
+    availability: 'available',
+    priceRange: '$',
+    image: '/images/mock-data/contractors/quick-driveway-pros.png',
+    slug: 'speedy-concrete-pros',
+    description: 'Efficient driveway services with same-week availability and budget-friendly pricing options.'
+  },
+  {
+    id: '21',
+    companyName: 'Designer Concrete Creations',
+    serviceType: 'stamped-decorative',
+    location: 'Laguna Beach, CA',
+    distance: 21.4,
+    rating: 4.9,
+    reviewCount: 289,
+    availability: 'busy',
+    priceRange: '$$$',
+    image: '/images/mock-data/contractors/decorative-concrete-co.png',
+    slug: 'designer-concrete-creations',
+    description: 'Bespoke stamped and decorative concrete designs that elevate your property to gallery-level aesthetics.'
+  },
+  {
+    id: '22',
+    companyName: 'Perfect Pathways Inc',
+    serviceType: 'walkways',
+    location: 'Manhattan Beach, CA',
+    distance: 8.3,
+    rating: 4.7,
+    reviewCount: 145,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/walkway-wizards.png',
+    slug: 'perfect-pathways-inc',
+    description: 'Precision-crafted walkways and pathways designed for both beauty and long-term durability.'
+  },
+  {
+    id: '23',
+    companyName: 'Rock Solid Foundations',
+    serviceType: 'foundations',
+    location: 'Huntington Beach, CA',
+    distance: 16.9,
+    rating: 4.8,
+    reviewCount: 223,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/foundation-experts-inc.png',
+    slug: 'rock-solid-foundations',
+    description: 'Building strong foundations for homes and businesses with uncompromising quality and integrity.'
+  },
+  {
+    id: '24',
+    companyName: 'Premium Driveway Masters',
+    serviceType: 'driveways',
+    location: 'El Segundo, CA',
+    distance: 6.1,
+    rating: 4.6,
+    reviewCount: 178,
+    availability: 'available',
+    priceRange: '$$',
+    image: '/images/mock-data/contractors/abc-concrete-solutions.png',
+    slug: 'premium-driveway-masters',
+    description: 'Expert driveway contractors specializing in high-quality finishes and customer satisfaction.'
   }
 ]
 

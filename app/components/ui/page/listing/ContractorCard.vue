@@ -104,7 +104,7 @@ const variantClasses = computed(() => {
 const cardClasses = computed(() => {
   return [
     'flex flex-col rounded-2xl transition-all duration-300',
-    'hover:shadow-lg hover:-translate-y-1',
+    'hover:shadow-lg',
     borderWidthClasses.value,
     variantClasses.value
   ].filter(Boolean).join(' ')
@@ -206,7 +206,7 @@ const starRating = computed(() => {
           <Button
             text="View Profile"
             variant="primary-outline"
-            size="md"
+            size="sm"
             icon="heroicons:arrow-right"
           />
         </div>
