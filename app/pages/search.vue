@@ -28,20 +28,19 @@ const contractors = ref(mockContractors)
 // Use the search filters composable
 const { filters, filteredResults, resultCount, resetFilters } = useSearchFilters(contractors.value)
 
-// Pagination state
-const currentPage = ref(1)
-const itemsPerPage = 8
-
-// Calculate paginated results
-const paginatedResults = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredResults.value.slice(start, end)
-})
-
-// Calculate total pages
-const totalPages = computed(() => {
-  return Math.ceil(filteredResults.value.length / itemsPerPage)
+// Use the pagination composable
+const {
+  paginatedData: paginatedResults,
+  currentPage,
+  totalPages,
+  isLoading
+} = usePagination({
+  mode: 'client',
+  data: filteredResults,
+  itemsPerPage: 8,
+  syncUrl: true,
+  scrollToTop: true,
+  scrollTarget: '#results-section'
 })
 
 // Handle search submission from Hero
@@ -74,13 +73,23 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
     </div>
 
     <!-- Results Section -->
-    <div class="container mx-auto px-4 pb-10 pt-2">
+    <div id="results-section" class="container mx-auto px-4 pb-10 pt-2">
       <!-- Results Count -->
       <div class="mb-6">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
           Showing <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ resultCount }}</span>
           of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ contractors.length }}</span> contractors
         </p>
+      </div>
+
+      <!-- Loading Overlay -->
+      <div v-if="isLoading" class="relative">
+        <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80">
+          <div class="flex flex-col items-center gap-3">
+            <Icon name="svg-spinners:ring-resize" class="h-12 w-12 text-blue-600 dark:text-blue-500" />
+            <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Loading...</p>
+          </div>
+        </div>
       </div>
 
       <!-- Results Grid - 4 columns, 8 items per page (2 rows) -->
@@ -114,6 +123,15 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
           variant="primary"
           size="md"
           @click="resetFilters"
+        />
+      </div>
+
+      <!-- Pagination Controls -->
+      <div v-if="filteredResults.length > 0 && totalPages > 1" class="mt-12">
+        <Pagination
+          v-model:current-page="currentPage"
+          :total-pages="totalPages"
+          size="md"
         />
       </div>
     </div>
