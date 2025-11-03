@@ -40,7 +40,7 @@ interface Props {
   sortByFilterOptions?: FilterOption[]
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   backgroundColor: '#E8EBF3',
   serviceOptions: () => [
     { id: null, name: 'All Services', slug: null },
@@ -91,93 +91,100 @@ const handleSearch = (value: any) => {
 </script>
 
 <template>
-  <div
-    class="rounded-3xl px-6 py-12 md:px-12 md:py-16"
-    :style="{ backgroundColor }"
-  >
-    <div class="mx-auto max-w-4xl">
-      <!-- Eyebrow -->
-      <div class="mb-6 flex justify-center">
-        <Eyebrow
-          text="Homeowners Guide to Concrete"
-          variant="white-blue"
-          size="md"
-        />
+  <div class="relative">
+    <!-- Hero Container -->
+    <div
+      class="rounded-3xl px-6 py-12 pb-20 md:px-12 md:py-16 md:pb-24"
+      :style="{ backgroundColor }"
+    >
+      <div class="mx-auto max-w-4xl">
+        <!-- Eyebrow -->
+        <div class="mb-6 flex justify-center">
+          <Eyebrow
+            text="Homeowners Guide to Concrete"
+            variant="white-blue"
+            size="md"
+          />
+        </div>
+
+        <!-- Heading -->
+        <h1 class="mb-4 text-center font-heading text-4xl font-bold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
+          Find Trusted Concrete Contractors Near You
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="mb-8 text-center text-base text-neutral-700 md:text-lg">
+          Explore verified pros for driveways, patios, foundations, and decorative concrete. Compare services, reviews, and pricing—then contact your top choices with confidence.
+        </p>
+
+        <!-- SearchInput with Service Dropdown -->
+        <div class="mx-auto max-w-2xl">
+          <SearchInput
+            placeholder="ZIP Code"
+            button="Find Contractors"
+            :service-dropdown-values="serviceOptions"
+            size="lg"
+            variant="primary-outline"
+            @submit="handleSearch"
+          />
+        </div>
       </div>
+    </div>
 
-      <!-- Heading -->
-      <h1 class="mb-4 text-center font-heading text-4xl font-bold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
-        Find Trusted Concrete Contractors Near You
-      </h1>
+    <!-- Filter Bar - Positioned to overlay the bottom of hero -->
+    <div class="absolute bottom-0 left-0 right-0 -mb-8 px-6 md:px-12">
+      <div class="mx-auto max-w-6xl">
+        <div class="rounded-3xl bg-white px-6 py-5 shadow-lg dark:bg-neutral-800">
+          <div class="flex flex-wrap items-center justify-center gap-3 md:justify-between">
+            <!-- Service Type Filter -->
+            <div class="w-full sm:w-auto sm:flex-1 sm:min-w-[140px] md:max-w-[180px]">
+              <FilterSelect
+                v-model="serviceTypeFilter"
+                :options="serviceTypeFilterOptions"
+                placeholder="Service Type"
+                size="md"
+              />
+            </div>
 
-      <!-- Subheadline -->
-      <p class="mb-8 text-center text-base text-neutral-700 md:text-lg">
-        Explore verified pros for driveways, patios, foundations, and decorative concrete. Compare services, reviews, and pricing—then contact your top choices with confidence.
-      </p>
+            <!-- Distance Filter -->
+            <div class="w-full sm:w-auto sm:flex-1 sm:min-w-[140px] md:max-w-[180px]">
+              <FilterSelect
+                v-model="distanceFilter"
+                :options="distanceFilterOptions"
+                placeholder="Distance"
+                size="md"
+              />
+            </div>
 
-      <!-- SearchInput with Service Dropdown -->
-      <div class="mx-auto mb-8 max-w-2xl">
-        <SearchInput
-          placeholder="ZIP Code"
-          button="Find Contractors"
-          :service-dropdown-values="serviceOptions"
-          size="lg"
-          variant="primary-outline"
-          @submit="handleSearch"
-        />
-      </div>
+            <!-- Rating Filter -->
+            <div class="w-full sm:w-auto sm:flex-1 sm:min-w-[140px] md:max-w-[180px]">
+              <FilterSelect
+                v-model="ratingFilter"
+                :options="ratingFilterOptions"
+                placeholder="Rating"
+                size="md"
+              />
+            </div>
 
-      <!-- Filter Bar -->
-      <div class="rounded-3xl bg-white px-6 py-5 shadow-sm dark:bg-neutral-800">
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Service Type Filter -->
-          <div class="w-full sm:w-auto sm:min-w-[140px]">
-            <FilterSelect
-              v-model="serviceTypeFilter"
-              :options="serviceTypeFilterOptions"
-              placeholder="Service Type"
-              size="md"
-            />
-          </div>
+            <!-- Availability Filter -->
+            <div class="w-full sm:w-auto sm:flex-1 sm:min-w-[140px] md:max-w-[180px]">
+              <FilterSelect
+                v-model="availabilityFilter"
+                :options="availabilityFilterOptions"
+                placeholder="Availability"
+                size="md"
+              />
+            </div>
 
-          <!-- Distance Filter -->
-          <div class="w-full sm:w-auto sm:min-w-[140px]">
-            <FilterSelect
-              v-model="distanceFilter"
-              :options="distanceFilterOptions"
-              placeholder="Distance"
-              size="md"
-            />
-          </div>
-
-          <!-- Rating Filter -->
-          <div class="w-full sm:w-auto sm:min-w-[140px]">
-            <FilterSelect
-              v-model="ratingFilter"
-              :options="ratingFilterOptions"
-              placeholder="Rating"
-              size="md"
-            />
-          </div>
-
-          <!-- Availability Filter -->
-          <div class="w-full sm:w-auto sm:min-w-[140px]">
-            <FilterSelect
-              v-model="availabilityFilter"
-              :options="availabilityFilterOptions"
-              placeholder="Availability"
-              size="md"
-            />
-          </div>
-
-          <!-- Sort By Filter -->
-          <div class="w-full sm:w-auto sm:min-w-[180px]">
-            <FilterSelect
-              v-model="sortByFilter"
-              :options="sortByFilterOptions"
-              placeholder="Search By: Top Rated"
-              size="md"
-            />
+            <!-- Sort By Filter -->
+            <div class="w-full sm:w-auto sm:flex-1 sm:min-w-[180px] md:max-w-[200px]">
+              <FilterSelect
+                v-model="sortByFilter"
+                :options="sortByFilterOptions"
+                placeholder="Search By: Top Rated"
+                size="md"
+              />
+            </div>
           </div>
         </div>
       </div>

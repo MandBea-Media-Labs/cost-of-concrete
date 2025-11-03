@@ -152,15 +152,15 @@ const sortByOptions: FilterOption[] = [
 
 // Handle search submission from Hero
 const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
-  consola.info('Search submitted:', value)
+  console.log('Search submitted:', value)
   // TODO: Implement search logic (e.g., fetch contractors based on location and service)
 }
 </script>
 
 <template>
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <!-- Hero Section -->
-    <div class="container mx-auto px-4 py-8">
+    <!-- Hero Section with overlaying filter bar -->
+    <div class="container mx-auto mb-12 px-4 py-8">
       <SearchHero
         background-color="#E8EBF3"
         :service-options="serviceOptions"
