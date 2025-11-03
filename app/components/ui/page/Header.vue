@@ -80,6 +80,7 @@ onUnmounted(() => {
               placeholder="Type a city, state or zip code.."
               variant="secondary-light-outline"
               size="md"
+              :backgroundColor="['#f3f4f6', '#626262']"
             />
           </div>
 
