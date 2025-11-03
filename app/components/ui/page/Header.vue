@@ -111,7 +111,7 @@ onUnmounted(() => {
                 >
                   <NuxtLink
                     :to="item.link"
-                    class="rounded-md px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
+                    class="text-md rounded-md px-4 py-2 font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
                   >
                     {{ item.label }}
                   </NuxtLink>
@@ -120,7 +120,7 @@ onUnmounted(() => {
                 <!-- Dropdown (has children) -->
                 <template v-else>
                   <NavigationMenuTrigger
-                    class="group flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
+                    class="text-md group flex items-center gap-1 rounded-md px-4 py-2 font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     {{ item.label }}
                     <Icon
@@ -129,7 +129,7 @@ onUnmounted(() => {
                     />
                   </NavigationMenuTrigger>
                   <NavigationMenuContent
-                    class="NavigationMenuContent grid w-[400px] grid-cols-2 gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+                    class="NavigationMenuContent grid w-[600px] grid-cols-1 gap-1 rounded-lg border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
                   >
                     <NavigationMenuLink
                       v-for="child in item.children"
@@ -138,9 +138,17 @@ onUnmounted(() => {
                     >
                       <NuxtLink
                         :to="child.link"
-                        class="block rounded-md px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-blue-600 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-blue-400"
+                        class="block rounded-md px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
                       >
-                        {{ child.label }}
+                        <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                          {{ child.label }}
+                        </div>
+                        <div
+                          v-if="child.description"
+                          class="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
+                        >
+                          {{ child.description }}
+                        </div>
                       </NuxtLink>
                     </NavigationMenuLink>
                   </NavigationMenuContent>
@@ -149,7 +157,7 @@ onUnmounted(() => {
             </NavigationMenuList>
 
             <!-- Viewport for content rendering -->
-            <NavigationMenuViewport class="NavigationMenuViewport absolute top-full mt-2 origin-top overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in" />
+            <NavigationMenuViewport class="NavigationMenuViewport data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in absolute top-full mt-2 origin-top overflow-hidden" />
           </NavigationMenuRoot>
         </div>
 
