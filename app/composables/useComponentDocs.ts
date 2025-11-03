@@ -1070,6 +1070,137 @@ export const useComponentDocs = () => {
         }
       ]
     },
+
+    ContractorCard: {
+      props: [
+        {
+          name: 'image',
+          type: 'string | null',
+          default: 'null',
+          description: 'The image URL or path to the contractor\'s image. Automatically uses NuxtImage for non-webp formats and standard img tag for webp.'
+        },
+        {
+          name: 'companyName',
+          type: 'string',
+          required: true,
+          description: 'The contractor\'s company name'
+        },
+        {
+          name: 'location',
+          type: 'string',
+          required: true,
+          description: 'The contractor\'s location (e.g., "Houston, TX")'
+        },
+        {
+          name: 'rating',
+          type: 'number',
+          required: true,
+          description: 'The contractor\'s rating (0-5)'
+        },
+        {
+          name: 'reviewCount',
+          type: 'number',
+          required: true,
+          description: 'The number of reviews'
+        },
+        {
+          name: 'contractorId',
+          type: 'string',
+          required: true,
+          description: 'The contractor\'s unique identifier (UUID)'
+        },
+        {
+          name: 'contractorSlug',
+          type: 'string',
+          required: true,
+          description: 'The contractor\'s SEO-friendly slug for URL routing'
+        },
+        {
+          name: 'border',
+          type: 'boolean',
+          default: 'true',
+          description: 'Whether to display a border around the card'
+        },
+        {
+          name: 'borderWidth',
+          type: "'thin' | 'thick'",
+          default: "'thin'",
+          description: 'The width of the border (thin = 1px, thick = 2px)'
+        },
+        {
+          name: 'variant',
+          type: "'primary' | 'secondary' | 'primary-outline' | 'secondary-outline' | 'secondary-light-outline'",
+          default: "'secondary-light-outline'",
+          description: 'The visual variant of the card'
+        }
+      ],
+      slots: [
+        {
+          name: 'default',
+          description: 'Card content area for company description or additional details'
+        }
+      ],
+      examples: [
+        {
+          title: 'Basic Usage',
+          code: `<ContractorCard
+  image="https://example.com/contractor.jpg"
+  company-name="SolidStone Concrete LLC"
+  location="Houston, TX"
+  :rating="4.9"
+  :review-count="124"
+  contractor-id="abc-123-def-456"
+  contractor-slug="solidstone-concrete-llc"
+>
+  Driveways, patios, and foundation work for residential and light commercial projects since 2008.
+</ContractorCard>`
+        },
+        {
+          title: 'With Webp Image',
+          code: `<ContractorCard
+  image="/images/contractor.webp"
+  company-name="PrimePour Contractors"
+  location="Phoenix, AZ"
+  :rating="4.8"
+  :review-count="88"
+  contractor-id="xyz-789-ghi-012"
+  contractor-slug="primepour-contractors"
+>
+  Decorative and stamped concrete specialists delivering clean finishes and long-lasting performance.
+</ContractorCard>`
+        },
+        {
+          title: 'Without Image',
+          code: `<ContractorCard
+  company-name="BluePeak Concrete"
+  location="Houston, TX"
+  :rating="4.9"
+  :review-count="42"
+  contractor-id="def-456-jkl-789"
+  contractor-slug="bluepeak-concrete"
+  variant="primary-outline"
+>
+  Engineered foundations, slabs, and garage floors—built for mountain climates.
+</ContractorCard>`
+        },
+        {
+          title: 'Different Variants',
+          code: `<ContractorCard
+  image="https://example.com/contractor.jpg"
+  company-name="Elite Concrete Works"
+  location="Dallas, TX"
+  :rating="5.0"
+  :review-count="200"
+  contractor-id="mno-345-pqr-678"
+  contractor-slug="elite-concrete-works"
+  variant="primary"
+  border-width="thick"
+>
+  Premium concrete solutions with 20+ years of experience in residential and commercial projects.
+</ContractorCard>`
+        }
+      ]
+    },
   }
 
   return { docs }
