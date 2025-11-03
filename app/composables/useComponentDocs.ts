@@ -824,6 +824,12 @@ export const useComponentDocs = () => {
           type: 'string | null',
           default: 'null',
           description: 'Button text. If provided, component shows button instead of autocomplete. On mobile, button shows icon only; on desktop, shows text.'
+        },
+        {
+          name: 'backgroundColor',
+          type: '[string, string] | null',
+          default: 'null',
+          description: 'Custom background colors as [lightMode, darkMode] hex values. When provided, overrides the default background colors. Example: ["#FFFFFF", "#1F2937"]'
         }
       ],
       events: [
@@ -863,6 +869,25 @@ export const useComponentDocs = () => {
           code: `<SearchInput
   :loading="true"
   placeholder="Searching..."
+/>`
+        },
+        {
+          title: 'With Custom Background Colors',
+          code: `<SearchInput
+  placeholder="Search by ZIP Code"
+  :backgroundColor="['#FFFFFF', '#1F2937']"
+  variant="primary-outline"
+  size="md"
+/>`
+        },
+        {
+          title: 'Button Mode with Custom Background',
+          code: `<SearchInput
+  placeholder="ZIP Code"
+  button="Search"
+  :backgroundColor="['#F3F4F6', '#374151']"
+  variant="secondary-outline"
+  size="lg"
 />`
         }
       ]

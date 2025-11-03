@@ -47,6 +47,14 @@ interface Props {
    * @default null
    */
   button?: string | null
+
+  /**
+   * Custom background colors as [lightMode, darkMode] hex values
+   * When provided, overrides the default background colors
+   * Example: ['#FFFFFF', '#1F2937']
+   * @default null
+   */
+  backgroundColor?: [string, string] | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -56,7 +64,8 @@ const props = withDefaults(defineProps<Props>(), {
   maxResults: 5,
   minCharacters: 2,
   loading: false,
-  button: null
+  button: null,
+  backgroundColor: null
 })
 
 // Emits
@@ -129,6 +138,18 @@ const variantClasses = computed(() => {
   return variants[props.variant]
 })
 
+// Custom styles for background colors
+const customStyles = computed(() => {
+  const styles: Record<string, string> = {}
+
+  if (props.backgroundColor) {
+    styles['--search-bg-light'] = props.backgroundColor[0]
+    styles['--search-bg-dark'] = props.backgroundColor[1]
+  }
+
+  return styles
+})
+
 // Container classes
 const containerClasses = computed(() => {
   // In button mode: responsive right padding to contain button properly
@@ -137,8 +158,14 @@ const containerClasses = computed(() => {
   // In autocomplete mode: standard padding
   const paddingClasses = isButtonMode.value ? 'pl-4 pr-2 @md:pr-1' : 'pl-4 pr-4'
 
+  // Background color classes
+  const bgClasses = props.backgroundColor
+    ? 'bg-[var(--search-bg-light)] dark:bg-[var(--search-bg-dark)]'
+    : 'bg-gray-100 dark:bg-neutral-900'
+
   return [
-    'relative flex items-center gap-3 rounded-full border bg-gray-100 transition-all dark:bg-neutral-900',
+    'relative flex items-center gap-3 rounded-full border transition-all',
+    bgClasses,
     paddingClasses,
     sizeClasses.value,
     variantClasses.value
@@ -297,7 +324,7 @@ watch(selectedIndex, (newIndex) => {
 <template>
   <div ref="containerRef" class="@container relative w-full">
     <!-- Input Container -->
-    <div :class="containerClasses">
+    <div :class="containerClasses" :style="customStyles">
       <!-- Search Icon -->
       <Icon name="heroicons:magnifying-glass" class="h-5 w-5 flex-shrink-0 text-neutral-400 dark:text-neutral-500" />
 
