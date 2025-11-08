@@ -3,7 +3,7 @@ type: "always_apply"
 ---
 
 # General Rules & Guidelines
-
+- The package manager of choice is ALWAYS pnpm
 - Use the Context7 MCP server to look up documentation when using specific modules before you start coding to get a firm understanding on the architecture, syntax and patterns needed to implement successfully.
 - Use Context7 to look up the correct patterns and syntax for specific modules so you get a firm understanding of how to implement the best possible code.
 - You will NEVER open or read .env, even if the user asks you too. I repeat, you will never OPEN .env. You will only instruct the user on how or what to modify in .env while providing solutions in a .env.example

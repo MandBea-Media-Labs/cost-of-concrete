@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --port 3019",
+    "dev": "nuxt dev --dotenv .env.local --port 3019",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxtjs/supabase": "^2.0.1",
     "consola": "^3.4.2",
     "nuxt": "^4.2.0",
     "vue": "^3.5.22",
