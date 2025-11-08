@@ -4,7 +4,7 @@ type Page = Database['public']['Tables']['pages']['Row']
 
 /**
  * Composable for generating SEO meta tags from page data
- * 
+ *
  * Features:
  * - Generates all SEO meta tags using useHead() and useSeoMeta()
  * - Supports Schema.org JSON-LD from database metadata
@@ -12,9 +12,9 @@ type Page = Database['public']['Tables']['pages']['Row']
  * - Supports Twitter Card tags from database metadata
  * - Falls back to basic page fields if metadata not present
  * - SSR-compatible
- * 
+ *
  * @param page - Page object from database
- * 
+ *
  * @example
  * ```ts
  * const { data: page } = await useFetch('/api/pages/by-path', { query: { path } })
@@ -34,7 +34,7 @@ export function usePageSeo(page: Page) {
   const schemaMetadata = seoMetadata.schema
 
   // Generate full URL for canonical and OG
-  const fullUrl = page.canonical_url 
+  const fullUrl = page.canonical_url
     ? `${siteUrl}${page.canonical_url}`
     : `${siteUrl}${page.full_path}`
 
@@ -92,36 +92,6 @@ export function usePageSeo(page: Page) {
     })
   }
 
-  // Add breadcrumb schema if depth > 0
-  // This will be enhanced when we have breadcrumbs data
-  if (page.depth > 0) {
-    const breadcrumbSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      'itemListElement': [
-        {
-          '@type': 'ListItem',
-          'position': 1,
-          'name': 'Home',
-          'item': siteUrl
-        },
-        {
-          '@type': 'ListItem',
-          'position': 2,
-          'name': page.title,
-          'item': fullUrl
-        }
-      ]
-    }
-
-    useHead({
-      script: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(breadcrumbSchema)
-        }
-      ]
-    })
-  }
+  // Note: Breadcrumb schema is now handled by the Breadcrumbs.vue component
 }
 

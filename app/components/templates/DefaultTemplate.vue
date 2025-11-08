@@ -54,20 +54,9 @@ const publishedDate = computed(() => {
 <template>
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
     <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Breadcrumbs (if enabled and available) -->
-      <div v-if="showBreadcrumbs && breadcrumbs && breadcrumbs.length > 0" class="mb-6">
-        <!-- Breadcrumbs component will be created in Batch 2 -->
-        <nav class="flex items-center space-x-2 text-sm text-neutral-600 dark:text-neutral-400">
-          <NuxtLink
-            v-for="(crumb, index) in breadcrumbs"
-            :key="crumb.id"
-            :to="crumb.full_path"
-            class="hover:text-neutral-900 dark:hover:text-neutral-100"
-          >
-            {{ crumb.title }}
-            <span v-if="index < breadcrumbs.length - 1" class="mx-2">/</span>
-          </NuxtLink>
-        </nav>
+      <!-- Breadcrumbs (if enabled) -->
+      <div v-if="showBreadcrumbs" class="mb-6">
+        <Breadcrumbs :items="breadcrumbs" />
       </div>
 
       <!-- Main Content -->
