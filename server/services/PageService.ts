@@ -1,0 +1,589 @@
+/**
+ * Page Service
+ *
+ * Business logic layer for page management.
+ * Handles slug generation, path management, template validation, and SEO operations.
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '~/types/supabase'
+import { PageRepository } from '../repositories/PageRepository'
+import {
+  getDefaultTemplateForDepth,
+  getAvailableTemplatesForDepth,
+  isTemplateAllowedAtDepth,
+  getTemplateConfig,
+  getDefaultMetadata,
+  type TemplateType
+} from '../config/templates'
+import type {
+  SEOMetadata,
+  OpenGraphMetadata,
+  TwitterCardMetadata,
+  SchemaOrgData,
+  SchemaOrgArticle,
+  SchemaOrgBreadcrumbList
+} from '../config/seo-schemas'
+
+type Page = Database['public']['Tables']['pages']['Row']
+type PageInsert = Database['public']['Tables']['pages']['Insert']
+type PageUpdate = Database['public']['Tables']['pages']['Update']
+
+export interface ValidationResult {
+  valid: boolean
+  errors: string[]
+}
+
+export interface CreatePageData {
+  parentId?: string | null
+  slug?: string
+  title: string
+  description?: string
+  content: string
+  template?: TemplateType
+  status?: 'draft' | 'published' | 'archived'
+  metaTitle?: string
+  metaKeywords?: string[]
+  ogImage?: string
+  focusKeyword?: string
+  metaRobots?: string[]
+  sitemapPriority?: number
+  sitemapChangefreq?: string
+  redirectUrl?: string
+  redirectType?: number
+  metadata?: any
+}
+
+export interface UpdatePageData {
+  slug?: string
+  title?: string
+  description?: string
+  content?: string
+  template?: TemplateType
+  status?: 'draft' | 'published' | 'archived'
+  metaTitle?: string
+  metaKeywords?: string[]
+  ogImage?: string
+  focusKeyword?: string
+  metaRobots?: string[]
+  sitemapPriority?: number
+  sitemapChangefreq?: string
+  canonicalUrl?: string
+  redirectUrl?: string
+  redirectType?: number
+  metadata?: any
+  publishedAt?: string | null
+}
+
+export class PageService {
+  private repository: PageRepository
+
+  constructor(client: SupabaseClient<Database>) {
+    this.repository = new PageRepository(client)
+  }
+
+  // =====================================================
+  // SLUG MANAGEMENT
+  // =====================================================
+
+  /**
+   * Generate a URL-friendly slug from a title
+   */
+  generateSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+  }
+
+  /**
+   * Validate slug format
+   */
+  validateSlug(slug: string): ValidationResult {
+    const errors: string[] = []
+
+    if (!slug || slug.length === 0) {
+      errors.push('Slug cannot be empty')
+    }
+
+    if (slug.length > 100) {
+      errors.push('Slug cannot exceed 100 characters')
+    }
+
+    // Check format: lowercase letters, numbers, and hyphens only
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+      errors.push('Slug must contain only lowercase letters, numbers, and hyphens')
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    }
+  }
+
+  /**
+   * Check if slug is available under a parent
+   */
+  async isSlugAvailable(slug: string, parentId: string | null, excludeId?: string): Promise<boolean> {
+    return !(await this.repository.slugExists(slug, parentId, excludeId))
+  }
+
+  // =====================================================
+  // PATH MANAGEMENT
+  // =====================================================
+
+  /**
+   * Generate full path for a page
+   */
+  async generateFullPath(slug: string, parentId?: string | null): Promise<string> {
+    if (!parentId) {
+      return `/${slug}`
+    }
+
+    const parent = await this.repository.findById(parentId)
+    if (!parent) {
+      throw new Error(`Parent page not found: ${parentId}`)
+    }
+
+    return `${parent.full_path}/${slug}`
+  }
+
+  /**
+   * Calculate depth based on parent
+   */
+  async calculateDepth(parentId?: string | null): Promise<number> {
+    if (!parentId) {
+      return 0
+    }
+
+    const parent = await this.repository.findById(parentId)
+    if (!parent) {
+      throw new Error(`Parent page not found: ${parentId}`)
+    }
+
+    return parent.depth + 1
+  }
+
+  // =====================================================
+  // TEMPLATE MANAGEMENT
+  // =====================================================
+
+  /**
+   * Determine default template for a depth
+   */
+  determineDefaultTemplate(depth: number): TemplateType {
+    return getDefaultTemplateForDepth(depth)
+  }
+
+  /**
+   * Validate template type
+   */
+  validateTemplate(template: string): ValidationResult {
+    const validTemplates: TemplateType[] = ['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default']
+
+    if (!validTemplates.includes(template as TemplateType)) {
+      return {
+        valid: false,
+        errors: [`Invalid template: ${template}. Must be one of: ${validTemplates.join(', ')}`]
+      }
+    }
+
+    return { valid: true, errors: [] }
+  }
+
+  /**
+   * Validate template for a specific depth
+   */
+  validateTemplateDepth(template: TemplateType, depth: number): ValidationResult {
+    if (!isTemplateAllowedAtDepth(template, depth)) {
+      const config = getTemplateConfig(template)
+      const allowedDepths = config?.allowedDepths === 'any' ? 'any depth' : config?.allowedDepths.join(', ')
+      return {
+        valid: false,
+        errors: [`Template '${template}' is not allowed at depth ${depth}. Allowed at: ${allowedDepths}`]
+      }
+    }
+
+    return { valid: true, errors: [] }
+  }
+
+  /**
+   * Get available templates for a depth
+   */
+  getAvailableTemplatesForDepth(depth: number): TemplateType[] {
+    return getAvailableTemplatesForDepth(depth)
+  }
+
+  /**
+   * Validate template metadata against schema
+   * TODO: Implement JSON Schema validation with ajv
+   */
+  validateTemplateMetadata(template: TemplateType, metadata: any): ValidationResult {
+    // For now, just check if metadata is an object
+    if (metadata && typeof metadata !== 'object') {
+      return {
+        valid: false,
+        errors: ['Template metadata must be an object']
+      }
+    }
+
+    // TODO: Add ajv validation against template schema
+    return { valid: true, errors: [] }
+  }
+
+  // =====================================================
+  // SEO OPERATIONS
+  // =====================================================
+
+  /**
+   * Generate canonical URL (defaults to full_path)
+   */
+  generateCanonicalUrl(fullPath: string): string {
+    return fullPath
+  }
+
+  /**
+   * Validate meta robots directives
+   */
+  validateMetaRobots(robots: string[]): ValidationResult {
+    const validDirectives = [
+      'index', 'noindex', 'follow', 'nofollow',
+      'noarchive', 'nosnippet', 'noimageindex',
+      'notranslate', 'none', 'all'
+    ]
+
+    const errors: string[] = []
+
+    for (const directive of robots) {
+      if (!validDirectives.includes(directive)) {
+        errors.push(`Invalid meta robots directive: ${directive}`)
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    }
+  }
+
+  /**
+   * Generate sitemap priority based on depth
+   */
+  generateSitemapPriority(depth: number): number {
+    if (depth === 0) return 1.0
+    if (depth === 1) return 0.8
+    if (depth === 2) return 0.6
+    return 0.5
+  }
+
+  /**
+   * Validate SEO metadata structure
+   */
+  validateSEOMetadata(seoData: SEOMetadata): ValidationResult {
+    const errors: string[] = []
+
+    // Validate Open Graph if present
+    if (seoData.og) {
+      if (seoData.og.type && !['website', 'article', 'book', 'profile', 'video', 'music'].includes(seoData.og.type)) {
+        errors.push(`Invalid Open Graph type: ${seoData.og.type}`)
+      }
+    }
+
+    // Validate Twitter Card if present
+    if (seoData.twitter) {
+      if (seoData.twitter.card && !['summary', 'summary_large_image', 'app', 'player'].includes(seoData.twitter.card)) {
+        errors.push(`Invalid Twitter card type: ${seoData.twitter.card}`)
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    }
+  }
+
+  /**
+   * Generate Schema.org Article structured data
+   */
+  generateSchemaOrgArticle(page: Page): SchemaOrgArticle {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: page.meta_title || page.title,
+      description: page.description || undefined,
+      image: page.og_image || undefined,
+      datePublished: page.published_at || page.created_at || undefined,
+      dateModified: page.updated_at || undefined,
+      author: {
+        '@type': 'Organization',
+        name: 'Cost of Concrete'
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Cost of Concrete',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://example.com/logo.png' // TODO: Make configurable
+        }
+      }
+    }
+  }
+
+  /**
+   * Generate breadcrumb structured data
+   */
+  async generateBreadcrumbSchema(pageId: string): Promise<SchemaOrgBreadcrumbList> {
+    const breadcrumbs = await this.repository.getBreadcrumbs(pageId)
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbs.map((page, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: page.title,
+        item: `https://example.com${page.full_path}` // TODO: Make base URL configurable
+      }))
+    }
+  }
+
+  /**
+   * Generate Open Graph tags from page data
+   */
+  generateOpenGraphTags(page: Page): OpenGraphMetadata {
+    return {
+      title: page.meta_title || page.title,
+      description: page.description || undefined,
+      type: page.depth === 0 ? 'website' : 'article',
+      url: `https://example.com${page.full_path}`, // TODO: Make base URL configurable
+      site_name: 'Cost of Concrete', // TODO: Make configurable
+      locale: 'en_US',
+      image: page.og_image || undefined
+    }
+  }
+
+  /**
+   * Generate Twitter Card tags from page data
+   */
+  generateTwitterCardTags(page: Page): TwitterCardMetadata {
+    return {
+      card: 'summary_large_image',
+      title: page.meta_title || page.title,
+      description: page.description || undefined,
+      image: page.og_image || undefined
+    }
+  }
+
+  // =====================================================
+  // CRUD OPERATIONS
+  // =====================================================
+
+  /**
+   * Create a new page
+   */
+  async createPage(data: CreatePageData): Promise<Page> {
+    // Generate slug if not provided
+    const slug = data.slug || this.generateSlug(data.title)
+
+    // Validate slug
+    const slugValidation = this.validateSlug(slug)
+    if (!slugValidation.valid) {
+      throw new Error(`Invalid slug: ${slugValidation.errors.join(', ')}`)
+    }
+
+    // Check if slug is available
+    const isAvailable = await this.isSlugAvailable(slug, data.parentId || null)
+    if (!isAvailable) {
+      throw new Error(`Slug '${slug}' already exists under this parent`)
+    }
+
+    // Calculate depth and full path
+    const depth = await this.calculateDepth(data.parentId)
+    const fullPath = await this.generateFullPath(slug, data.parentId)
+
+    // Determine template
+    const template = data.template || this.determineDefaultTemplate(depth)
+
+    // Validate template
+    const templateValidation = this.validateTemplate(template)
+    if (!templateValidation.valid) {
+      throw new Error(`Invalid template: ${templateValidation.errors.join(', ')}`)
+    }
+
+    // Validate template for depth
+    const depthValidation = this.validateTemplateDepth(template, depth)
+    if (!depthValidation.valid) {
+      throw new Error(`Template not allowed at depth: ${depthValidation.errors.join(', ')}`)
+    }
+
+    // Prepare metadata
+    const defaultMetadata = getDefaultMetadata(template)
+    const metadata = {
+      template: { ...defaultMetadata, ...(data.metadata?.template || {}) },
+      seo: data.metadata?.seo || {}
+    }
+
+    // Generate SEO defaults
+    const sitemapPriority = data.sitemapPriority ?? this.generateSitemapPriority(depth)
+    const canonicalUrl = this.generateCanonicalUrl(fullPath)
+
+    // Validate meta robots if provided
+    if (data.metaRobots) {
+      const robotsValidation = this.validateMetaRobots(data.metaRobots)
+      if (!robotsValidation.valid) {
+        throw new Error(`Invalid meta robots: ${robotsValidation.errors.join(', ')}`)
+      }
+    }
+
+    // Create page data
+    const pageData: PageInsert = {
+      parent_id: data.parentId || null,
+      slug,
+      full_path: fullPath,
+      depth,
+      template,
+      title: data.title,
+      description: data.description || null,
+      content: data.content,
+      status: data.status || 'draft',
+      meta_title: data.metaTitle || null,
+      meta_keywords: data.metaKeywords || null,
+      og_image: data.ogImage || null,
+      focus_keyword: data.focusKeyword || null,
+      meta_robots: data.metaRobots || ['index', 'follow'],
+      sitemap_priority: sitemapPriority,
+      sitemap_changefreq: data.sitemapChangefreq || 'weekly',
+      canonical_url: canonicalUrl,
+      redirect_url: data.redirectUrl || null,
+      redirect_type: data.redirectType || null,
+      metadata,
+      published_at: data.status === 'published' ? new Date().toISOString() : null
+    }
+
+    return await this.repository.create(pageData)
+  }
+
+  /**
+   * Update an existing page
+   */
+  async updatePage(id: string, data: UpdatePageData): Promise<Page> {
+    // Get existing page
+    const existingPage = await this.repository.findById(id)
+    if (!existingPage) {
+      throw new Error(`Page not found: ${id}`)
+    }
+
+    const updateData: PageUpdate = {}
+
+    // Handle slug change
+    if (data.slug && data.slug !== existingPage.slug) {
+      const slugValidation = this.validateSlug(data.slug)
+      if (!slugValidation.valid) {
+        throw new Error(`Invalid slug: ${slugValidation.errors.join(', ')}`)
+      }
+
+      const isAvailable = await this.isSlugAvailable(data.slug, existingPage.parent_id, id)
+      if (!isAvailable) {
+        throw new Error(`Slug '${data.slug}' already exists under this parent`)
+      }
+
+      updateData.slug = data.slug
+      updateData.full_path = await this.generateFullPath(data.slug, existingPage.parent_id)
+      updateData.canonical_url = this.generateCanonicalUrl(updateData.full_path)
+    }
+
+    // Handle template change
+    if (data.template && data.template !== existingPage.template) {
+      const templateValidation = this.validateTemplate(data.template)
+      if (!templateValidation.valid) {
+        throw new Error(`Invalid template: ${templateValidation.errors.join(', ')}`)
+      }
+
+      const depthValidation = this.validateTemplateDepth(data.template, existingPage.depth)
+      if (!depthValidation.valid) {
+        throw new Error(`Template not allowed at depth: ${depthValidation.errors.join(', ')}`)
+      }
+
+      updateData.template = data.template
+    }
+
+    // Handle other fields
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.description !== undefined) updateData.description = data.description
+    if (data.content !== undefined) updateData.content = data.content
+    if (data.status !== undefined) {
+      updateData.status = data.status
+      // Set published_at when publishing
+      if (data.status === 'published' && !existingPage.published_at) {
+        updateData.published_at = new Date().toISOString()
+      }
+    }
+    if (data.metaTitle !== undefined) updateData.meta_title = data.metaTitle
+    if (data.metaKeywords !== undefined) updateData.meta_keywords = data.metaKeywords
+    if (data.ogImage !== undefined) updateData.og_image = data.ogImage
+    if (data.focusKeyword !== undefined) updateData.focus_keyword = data.focusKeyword
+    if (data.sitemapPriority !== undefined) updateData.sitemap_priority = data.sitemapPriority
+    if (data.sitemapChangefreq !== undefined) updateData.sitemap_changefreq = data.sitemapChangefreq
+    if (data.canonicalUrl !== undefined) updateData.canonical_url = data.canonicalUrl
+    if (data.redirectUrl !== undefined) updateData.redirect_url = data.redirectUrl
+    if (data.redirectType !== undefined) updateData.redirect_type = data.redirectType
+    if (data.publishedAt !== undefined) updateData.published_at = data.publishedAt
+
+    // Validate and update meta robots
+    if (data.metaRobots) {
+      const robotsValidation = this.validateMetaRobots(data.metaRobots)
+      if (!robotsValidation.valid) {
+        throw new Error(`Invalid meta robots: ${robotsValidation.errors.join(', ')}`)
+      }
+      updateData.meta_robots = data.metaRobots
+    }
+
+    // Handle metadata update
+    if (data.metadata !== undefined) {
+      updateData.metadata = data.metadata
+    }
+
+    return await this.repository.update(id, updateData)
+  }
+
+  /**
+   * Get page by ID
+   */
+  async getPageById(id: string): Promise<Page | null> {
+    return await this.repository.findById(id)
+  }
+
+  /**
+   * Get page by path
+   */
+  async getPageByPath(path: string): Promise<Page | null> {
+    return await this.repository.findByPath(path)
+  }
+
+  /**
+   * Delete page (soft delete)
+   */
+  async deletePage(id: string): Promise<void> {
+    await this.repository.softDelete(id)
+  }
+
+  /**
+   * Get breadcrumbs for a page
+   */
+  async getBreadcrumbs(pageId: string): Promise<Page[]> {
+    return await this.repository.getBreadcrumbs(pageId)
+  }
+
+  /**
+   * Get children of a page
+   */
+  async getChildren(pageId: string, includeDescendants = false): Promise<Page[]> {
+    if (includeDescendants) {
+      return await this.repository.getDescendants(pageId)
+    }
+    return await this.repository.getChildren(pageId)
+  }
+}
+
