@@ -1108,7 +1108,7 @@ const handleSubmit = (data) => {
           name: 'image',
           type: 'string | null',
           default: 'null',
-          description: 'The image URL or path to the contractor\'s image. Automatically uses NuxtImage for non-webp formats and standard img tag for webp.'
+          description: 'The image URL or path to the contractor\'s image. Automatically uses standard img tag for webp/png formats and NuxtImage for other formats (jpg, jpeg, etc.) to avoid IPX processing issues.'
         },
         {
           name: 'companyName',

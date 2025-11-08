@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // ContractorCard component for displaying contractor listings
 // Features clickable card with image, company info, rating, and CTA button
-// Supports intelligent image rendering (NuxtImage vs standard img for webp)
+// Supports intelligent image rendering (standard img for webp/png, NuxtImage for other formats)
 
 interface Props {
   /**
@@ -66,10 +66,12 @@ const props = withDefaults(defineProps<Props>(), {
   variant: 'secondary-light-outline'
 })
 
-// Check if image is webp format
-const isWebp = computed(() => {
+// Check if image should use standard img tag (webp or png)
+// Use standard img for webp and png to avoid IPX processing issues
+const useStandardImg = computed(() => {
   if (!props.image) return false
-  return props.image.toLowerCase().endsWith('.webp')
+  const lowerImage = props.image.toLowerCase()
+  return lowerImage.endsWith('.webp') || lowerImage.endsWith('.png')
 })
 
 // Build contractor profile URL
@@ -131,16 +133,16 @@ const starRating = computed(() => {
     <div class="flex flex-col gap-4 p-5">
       <!-- Image Section -->
       <div v-if="image" class="aspect-[16/9] w-full overflow-hidden rounded-2xl">
-        <!-- Use NuxtImage for non-webp images -->
-        <NuxtImg
-          v-if="!isWebp"
+        <!-- Use standard img tag for webp and png to avoid IPX issues -->
+        <img
+          v-if="useStandardImg"
           :src="image"
           :alt="`${companyName} - ${location}`"
           class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
         />
-        <!-- Use standard img tag for webp images -->
-        <img
+        <!-- Use NuxtImage for other formats (jpg, jpeg, etc.) -->
+        <NuxtImg
           v-else
           :src="image"
           :alt="`${companyName} - ${location}`"
