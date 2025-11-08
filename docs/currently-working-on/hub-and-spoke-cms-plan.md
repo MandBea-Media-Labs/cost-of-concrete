@@ -2,7 +2,7 @@
 
 **Project:** Cost of Concrete - Dynamic Page Management System
 **Started:** 2025-11-08
-**Status:** ✅ Phase 1, 1.5, 2 & 3 Complete - 🔄 Phase 4 In Progress (Batches 1, 2, 3 & 4 Complete)
+**Status:** ✅ Phase 1, 1.5, 2 & 3 Complete - 🔄 Phase 4 In Progress (Batches 1, 2, 3, 4, 5 & 6 Complete)
 
 ---
 
@@ -588,7 +588,7 @@ class PageService {
 
 **Goal:** Implement catch-all route for page rendering with template-based layouts
 
-**Status:** Batches 1 & 2 Complete ✅ | Batches 3-7 Pending
+**Status:** Batches 1-6 Complete ✅ | Batch 7 Pending
 
 ---
 
@@ -902,20 +902,288 @@ All 4 pages tested with Playwright DOM inspection:
 
 ---
 
-#### 🔜 Batch 5: Article Template (PENDING)
+#### ✅ Batch 5: Article Template (COMPLETE)
+
+**Completed:** 2025-11-08
 
 **Tasks:**
-- [ ] Create `app/components/templates/ArticleTemplate.vue`
-- [ ] Test Article template rendering
+- [x] Create `app/components/templates/ArticleTemplate.vue`
+- [x] Update catch-all route to use ArticleTemplate
+- [x] Test Article template rendering
+- [x] Verify all features (TOC, reading time, social sharing)
+- [x] Verify SEO meta tags and Schema.org markup
+
+**What Was Built:**
+
+1. **ArticleTemplate.vue Component** (268 lines)
+   - Reusable template for depth-3+ article pages
+   - Centered content layout (max-width 4xl) for optimal readability
+   - No sidebar (content-focused design)
+   - Auto-generated Table of Contents from H2/H3 headings
+   - Reading time calculation (200 words/min average)
+   - Social sharing buttons (Twitter, Facebook, LinkedIn)
+   - Optional features via metadata flags
+   - Eyebrow badge from metadata category
+   - Markdown content rendering with useMarkdown
+   - Breadcrumbs integration
+   - Optional CTA section from metadata
+   - Full responsive design with dark mode support
+
+2. **Updated `[...slug].vue` Catch-All Route** (141 lines total)
+   - Imported ArticleTemplate component
+   - Updated template switch to use ArticleTemplate for 'article' template type
+   - Now properly routes all 5 templates:
+     - depth 0 → HubTemplate
+     - depth 1 → SpokeTemplate
+     - depth 2 → SubSpokeTemplate
+     - depth 3+ → ArticleTemplate
+     - fallback → DefaultTemplate
+
+**Features Implemented:**
+
+✅ **Auto-Generated Table of Contents**
+- Extracts H2 and H3 headings from rendered markdown HTML
+- Creates clickable navigation with smooth scrolling
+- Indents H3 items for visual hierarchy
+- Automatically adds IDs to headings for anchor links
+- Displays in bordered card above content
+- Can be disabled via `metadata.showTableOfContents: false`
+
+✅ **Reading Time Calculation**
+- Calculates based on 200 words per minute average
+- Displays as "X min read" next to published date
+- Optional via `metadata.showReadingTime: false`
+
+✅ **Social Sharing Buttons**
+- Twitter, Facebook, and LinkedIn sharing
+- Pre-populated with page title and URL
+- Clean icon-based design with hover states
+- Opens in new tab with `rel="noopener noreferrer"` for security
+- Optional via `metadata.showSocialSharing: false`
+
+✅ **Related Articles Support**
+- Metadata field `relatedArticles` ready for array of page IDs
+- Can be implemented in future enhancement (fetch and display)
+- SEO Benefit: Internal linking is excellent for SEO
+
+✅ **Article Schema.org Type**
+- Schema type defined in database `metadata.seo.schema`
+- Supports Article, NewsArticle, or BlogPosting types
+- Includes author, publisher, datePublished, dateModified
+- Injected via usePageSeo composable
+
+✅ **Flexible Layout**
+- Centered content (max-width 4xl) for readability
+- No sidebar (simpler than Sub-Spoke)
+- Responsive design with dark mode support
+- Optional CTA section from metadata
+
+**Files Created:**
+- `app/components/templates/ArticleTemplate.vue` (268 lines)
+
+**Files Modified:**
+- `app/pages/[...slug].vue` (141 lines total, added ArticleTemplate import and switch case)
+
+**Database Changes:**
+- Updated `/concrete-basics/types-of-concrete/decorative-concrete/stamped-concrete-guide`:
+  - Changed template from 'default' to 'article'
+  - Added comprehensive markdown content with H2/H3 headings (for TOC testing)
+  - Added metadata with all Article features enabled:
+    - `category: "Decorative Concrete"`
+    - `showTableOfContents: true`
+    - `showReadingTime: true`
+    - `showSocialSharing: true`
+  - Added complete SEO metadata:
+    - Open Graph with article tags
+    - Twitter Card
+    - Schema.org Article type with author, publisher, dates
+
+**Testing Completed:**
+
+Tested `/concrete-basics/types-of-concrete/decorative-concrete/stamped-concrete-guide` with Playwright DOM inspection:
+
+1. **ArticleTemplate Rendering**
+   - ✅ ArticleTemplate rendering correctly
+   - ✅ Centered content layout (max-width 4xl)
+   - ✅ No sidebar (correct for Article)
+   - ✅ Eyebrow badge: "Decorative Concrete"
+   - ✅ Published date: "Published November 8, 2025"
+   - ✅ Reading time: "3 min read"
+
+2. **Table of Contents**
+   - ✅ TOC displayed in bordered card
+   - ✅ 21 headings extracted (H2 and H3)
+   - ✅ Clickable navigation with smooth scrolling
+   - ✅ H3 items properly indented
+   - ✅ All headings have IDs for anchor links
+
+3. **Social Sharing**
+   - ✅ "Share this article:" label displayed
+   - ✅ 3 social buttons (Twitter, Facebook, LinkedIn)
+   - ✅ Proper URLs generated with page title and URL
+   - ✅ Icons displayed correctly
+   - ✅ Opens in new tab with security attributes
+
+4. **SEO Verification**
+   - ✅ Title: "Stamped Concrete Installation Guide - Step-by-Step Process & Costs | Cost of Concrete"
+   - ✅ Meta description present
+   - ✅ Meta keywords present
+   - ✅ Canonical URL: Correct full URL
+   - ✅ Robots: "index, follow"
+   - ✅ Open Graph tags (og:type: "article", og:title, og:description, og:url, og:site_name, og:locale)
+   - ✅ Article-specific OG tags (article:published_time, article:modified_time, article:section)
+   - ✅ Twitter Card tags (twitter:card, twitter:title, twitter:description)
+   - ✅ Schema.org WebSite + WebPage schemas with ReadAction
+   - ✅ Schema.org Article schema from database metadata
+
+5. **UI/UX Verification**
+   - ✅ Breadcrumbs working correctly
+   - ✅ Markdown content rendering correctly
+   - ✅ Dark mode styling working
+   - ✅ Responsive design working
+   - ✅ All typography and spacing correct
+
+**User Confirmation:**
+- User confirmed: "I can see the schema."
+- All features working as expected
+
+**Deliverable:** ✅ Production-ready ArticleTemplate with all requested features
 
 ---
 
-#### 🔜 Batch 6: Error Handling & 404 (PENDING)
+#### ✅ Batch 6: Error Handling & 404 (COMPLETE)
+
+**Completed:** 2025-11-08
 
 **Tasks:**
-- [ ] Create custom `error.vue` page
-- [ ] Create custom 404 template
-- [ ] Test error pages
+- [x] Create custom `error.vue` page
+- [x] Create custom 404 template
+- [x] Test error pages
+
+**What Was Built:**
+
+1. **Custom Error Page** (`app/error.vue` - 182 lines)
+   - Comprehensive error handling for all error types (404, 403, 500+)
+   - Dynamic error messaging based on status code
+   - Beautiful, user-friendly design with dark mode support
+   - Development-only error details section with collapsible stack trace
+   - Action buttons: "Go to Homepage" and "Go Back"
+   - 404-specific features:
+     - Suggested pages section with 3 helpful links
+     - Search input for finding content
+     - "Need Help?" support section
+   - Follows Nuxt 4 error handling best practices
+   - Uses `clearError()` for proper error recovery
+   - Responsive design with mobile-first approach
+   - Consistent styling with existing templates
+
+**Features Implemented:**
+
+1. **Error Type Detection:**
+   - 404: Page Not Found with search and suggestions
+   - 403: Access Denied (for draft pages, permissions)
+   - 500+: Server Error with generic message
+   - Custom error messages for each type
+
+2. **User Experience:**
+   - Large, clear error code display (e.g., "404")
+   - Friendly error titles and descriptions
+   - Helpful action buttons with icons
+   - Suggested pages for 404 errors (Home, Concrete Basics, Search)
+   - Search functionality to find content
+   - Support contact information
+
+3. **Developer Experience:**
+   - Development-only error details section
+   - Collapsible stack trace display
+   - Error logging to console (dev only)
+   - Full error object inspection
+   - Proper TypeScript typing with `NuxtError`
+
+4. **Design:**
+   - Centered layout with max-width 4xl
+   - Neutral color scheme (neutral-50/900 backgrounds)
+   - Blue accent colors for buttons and links
+   - Consistent spacing and typography
+   - Dark mode support throughout
+   - Responsive grid for suggested pages
+   - Hover states and transitions
+
+**Files Created:**
+- `app/error.vue` (182 lines)
+
+**Testing Results:**
+
+✅ **404 Error Page:**
+- Tested by navigating to `/this-page-does-not-exist-test`
+- Error page displayed correctly with:
+  - "404" large display
+  - "Page Not Found" title
+  - Friendly description
+  - Error details section (dev only) - collapsible
+  - "Go to Homepage" button - tested, works correctly
+  - "Go Back" button - present and functional
+  - 3 suggested pages with links (Home, Concrete Basics, Search)
+  - Search input with placeholder text
+  - "Need Help?" support section
+- Page title: "404 - The page "/this-page-does-not-exist-test" could not be found. | Cost of Concrete"
+- Screenshot saved: `batch-6-404-error-page.png`
+
+✅ **Navigation:**
+- "Go to Homepage" button successfully navigates to `/`
+- Home page loads correctly after error recovery
+- `clearError()` properly clears error state
+
+✅ **Console Logging:**
+- Error logged to console in development:
+  ```
+  Error page displayed: {
+    statusCode: 404,
+    statusMessage: "Page Not Found",
+    message: "The page \"/this-page-does-not-exist-test\" could not be found.",
+    url: "/this-page-does-not-exist-test"
+  }
+  ```
+
+✅ **Design Verification:**
+- Responsive layout works on all screen sizes
+- Dark mode styling applied correctly
+- Buttons have proper hover states
+- Icons display correctly (lucide:home, lucide:arrow-left, lucide:search)
+- Typography hierarchy clear and readable
+- Spacing consistent with design system
+
+**Technical Implementation:**
+
+1. **Nuxt 4 Error Handling:**
+   - Uses `defineProps` with `NuxtError` type
+   - Implements `clearError({ redirect: '/' })` for error recovery
+   - Computed properties for error type detection
+   - Development mode detection with `import.meta.dev`
+
+2. **Error Type Logic:**
+   ```typescript
+   const errorType = computed(() => {
+     const code = props.error?.statusCode || 500
+     // Returns object with title, description, icon, showSearch, showSuggestions
+   })
+   ```
+
+3. **Suggested Pages:**
+   - Static array of helpful pages
+   - Includes title, path, and description
+   - Rendered as clickable cards with hover effects
+
+4. **Search Functionality:**
+   - Input field with Enter key handler
+   - Navigates to `/search` on Enter
+   - Only shown for 404 errors
+
+**User Confirmation:**
+- Error page tested and verified working
+- All features functional as expected
+- Design matches existing templates
+- No TypeScript errors or warnings
 
 ---
 
@@ -984,9 +1252,9 @@ All 4 pages tested with Playwright DOM inspection:
 ### Current Phase: Phase 4 - Dynamic Routing
 
 **Started:** 2025-11-08
-**Status:** 🔄 In Progress - Batches 1, 2, 3 & 4 Complete ✅
+**Status:** 🔄 In Progress - Batches 1, 2, 3, 4, 5 & 6 Complete ✅
 **Blocked By:** None
-**Next Steps:** Batch 5 - Create ArticleTemplate component
+**Next Steps:** Batch 7 - Polish & Testing
 
 ---
 
@@ -1098,40 +1366,35 @@ All 4 pages tested with Playwright DOM inspection:
 
 **2025-11-08 - Phase 4 Batch 4 Complete (Spoke & Sub-Spoke Templates):**
 - ✅ Created SpokeTemplate.vue component (216 lines) - reusable template for depth-1 spoke pages
-- ✅ Implemented configurable sidebar position (left or right)
-- ✅ Implemented sidebar navigation auto-generated from child pages
-- ✅ Implemented topic cards grid for children (configurable 2, 3, or 4 columns)
-- ✅ Integrated eyebrow badge from metadata category
-- ✅ Integrated markdown content rendering with useMarkdown composable
-- ✅ Integrated breadcrumbs component
-- ✅ Added optional CTA section from metadata
-- ✅ Added optional sidebar (can be hidden via metadata)
-- ✅ Added optional child list (can be hidden via metadata)
-- ✅ Full responsive design with dark mode support
 - ✅ Created SubSpokeTemplate.vue component (165 lines) - reusable template for depth-2 sub-spoke pages
-- ✅ Implemented centered content layout (max-width 4xl) for better readability
-- ✅ No sidebar (simpler layout focused on content)
-- ✅ Implemented topic cards grid for children (defaults to 2 columns)
-- ✅ "Related Articles" heading for child pages
-- ✅ Integrated eyebrow badge, markdown rendering, breadcrumbs, optional CTA
-- ✅ Full responsive design with dark mode support
 - ✅ Updated `[...slug].vue` to import and use SpokeTemplate and SubSpokeTemplate
-- ✅ Updated template switch to properly route all 4 templates (Hub, Spoke, Sub-Spoke, Default)
 - ✅ Tested all 4 pages with Playwright DOM inspection
-- ✅ Verified SEO meta tags on all 4 pages (title, description, canonical, OG, Twitter)
-- ✅ Verified Schema.org structured data on all 4 pages (WebSite + WebPage schemas)
-- ✅ Verified breadcrumbs on all 4 pages (including full hierarchy on depth-3 page)
-- ✅ Verified UI/UX on all 4 pages (sidebar, topic cards, markdown, dark mode, responsive)
+- ✅ Verified SEO meta tags, Schema.org structured data, breadcrumbs, and UI/UX on all 4 pages
 - ✅ All tests passed - User tested all 4 URLs via Playwright
 - 📝 Files: 2 new files (SpokeTemplate.vue - 216 lines, SubSpokeTemplate.vue - 165 lines), 1 modified file ([...slug].vue - 141 lines)
-- 📝 Test Results: All 4 templates (✅), All SEO tags (✅), All Schema.org markup (✅), All breadcrumbs (✅), All UI/UX features (✅)
-- 📝 Template Differentiation: Hub (sidebar + 3-col grid), Spoke (sidebar left + content), Sub-Spoke (centered + 2-col grid), Article (simple centered)
+
+**2025-11-08 - Phase 4 Batch 5 Complete (Article Template):**
+- ✅ Created ArticleTemplate.vue component (268 lines) - reusable template for depth-3+ article pages
+- ✅ Implemented auto-generated Table of Contents from H2/H3 headings with smooth scrolling
+- ✅ Implemented reading time calculation (200 words/min average)
+- ✅ Implemented social sharing buttons (Twitter, Facebook, LinkedIn)
+- ✅ All features optional via metadata flags (showTableOfContents, showReadingTime, showSocialSharing)
+- ✅ Centered content layout (max-width 4xl) for optimal readability
+- ✅ No sidebar (content-focused design)
+- ✅ Updated `[...slug].vue` to import and use ArticleTemplate
+- ✅ Updated database test page with article template and comprehensive content
+- ✅ Tested ArticleTemplate with Playwright DOM inspection
+- ✅ Verified TOC (21 headings extracted), reading time (3 min read), social sharing (3 buttons)
+- ✅ Verified all SEO meta tags, Schema.org Article schema, breadcrumbs, and UI/UX
+- ✅ User confirmed: "I can see the schema."
+- 📝 Files: 1 new file (ArticleTemplate.vue - 268 lines), 1 modified file ([...slug].vue - 141 lines)
+- 📝 Database: Updated stamped-concrete-guide page with article template and full metadata
 
 ---
 
 ## 📈 Overall Progress Summary
 
-### ✅ Completed (Phases 0-3 + Phase 4 Batches 1-4)
+### ✅ Completed (Phases 0-3 + Phase 4 Batches 1-5)
 
 **Database & Infrastructure:**
 - ✅ Complete database schema with 20+ columns
@@ -1152,34 +1415,39 @@ All 4 pages tested with Playwright DOM inspection:
 **Frontend (Routing & Templates):**
 - ✅ Catch-all route with dynamic template loading
 - ✅ 3 composables (useMarkdown, usePageSeo, usePage)
-- ✅ 4 templates (DefaultTemplate, HubTemplate, SpokeTemplate, SubSpokeTemplate)
+- ✅ 5 templates (DefaultTemplate, HubTemplate, SpokeTemplate, SubSpokeTemplate, ArticleTemplate)
 - ✅ Reusable Breadcrumbs component with Schema.org support
 - ✅ Full SEO meta tag generation
 - ✅ Markdown rendering with marked library
 - ✅ Dark mode support throughout
 - ✅ Responsive design
-- ✅ Template differentiation: Hub (sidebar + 3-col grid), Spoke (sidebar + content), Sub-Spoke (centered + 2-col grid)
+- ✅ Template differentiation:
+  - Hub (sidebar + 3-col grid)
+  - Spoke (sidebar + content)
+  - Sub-Spoke (centered + 2-col grid)
+  - Article (centered + TOC + reading time + social sharing)
 
 **Testing & Validation:**
 - ✅ 4 test pages with full hierarchy (depth 0-3)
 - ✅ All database constraints verified
 - ✅ All API endpoints tested
-- ✅ All 4 templates tested with Playwright DOM inspection
+- ✅ All 5 templates tested with Playwright DOM inspection
 - ✅ SEO verification on all templates (meta tags, Schema.org, breadcrumbs)
 - ✅ UI/UX verification on all templates (sidebar, topic cards, markdown, dark mode, responsive)
+- ✅ ArticleTemplate features verified (TOC with 21 headings, reading time, social sharing)
+- ✅ Error page tested with 404 errors (navigation, design, functionality)
 
-### 🔄 In Progress (Phase 4 Batch 5)
+### 🔄 In Progress (Phase 4 Batch 7)
 
 **Next Tasks:**
-- Create ArticleTemplate.vue component (depth-3+ pages)
-- Test ArticleTemplate with existing test page
-- Update catch-all route to use ArticleTemplate
+- Enhance loading states across all templates
+- Comprehensive testing across all templates
+- Performance testing and optimization
+- Documentation updates
 
-### 📋 Remaining (Phase 4 Batches 6-7)
+### 📋 Remaining (Phase 4 Batch 7)
 
-**Batch 5:** ArticleTemplate.vue (depth-3+ pages)
-**Batch 6:** Error handling & custom 404 page
-**Batch 7:** Polish, comprehensive testing, performance optimization
+**Batch 7:** Polish, comprehensive testing, performance optimization, documentation
 
 ---
 
@@ -1203,6 +1471,6 @@ All 4 pages tested with Playwright DOM inspection:
 
 ---
 
-**Last Updated:** 2025-11-08
-**Next Review:** After Phase 4 completion
+**Last Updated:** 2025-11-08 (Batch 6 Complete - Error Handling & 404 Pages)
+**Next Review:** After Phase 4 Batch 7 completion
 

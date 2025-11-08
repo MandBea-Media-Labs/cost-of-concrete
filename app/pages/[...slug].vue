@@ -6,6 +6,7 @@ import DefaultTemplate from '~/components/templates/DefaultTemplate.vue'
 import HubTemplate from '~/components/templates/HubTemplate.vue'
 import SpokeTemplate from '~/components/templates/SpokeTemplate.vue'
 import SubSpokeTemplate from '~/components/templates/SubSpokeTemplate.vue'
+import ArticleTemplate from '~/components/templates/ArticleTemplate.vue'
 
 // Get route params
 const route = useRoute()
@@ -83,8 +84,7 @@ const templateComponent = computed(() => {
     case 'sub-spoke':
       return SubSpokeTemplate
     case 'article':
-      // return ArticleTemplate // Will be created in Batch 5
-      return DefaultTemplate // Fallback for now
+      return ArticleTemplate
     case 'custom':
       return DefaultTemplate // Custom templates use default for now
     case 'default':
