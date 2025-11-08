@@ -3,6 +3,7 @@
 // Handles all page paths and renders appropriate template based on database data
 
 import DefaultTemplate from '~/components/templates/DefaultTemplate.vue'
+import HubTemplate from '~/components/templates/HubTemplate.vue'
 
 // Get route params
 const route = useRoute()
@@ -14,9 +15,9 @@ const path = computed(() => {
 })
 
 // Fetch page data from database
-// This will fetch the page, and optionally children and breadcrumbs
+// We'll fetch children for all pages and let the template decide whether to use them
 const { page, children, breadcrumbs, pending, error } = await usePage(path.value, {
-  fetchChildren: false, // Will enable this in Batch 3 for Hub/Spoke templates
+  fetchChildren: true, // Always fetch children, templates will decide whether to display them
   fetchBreadcrumbs: true
 })
 
@@ -25,7 +26,7 @@ if (error.value) {
   if (import.meta.dev) {
     console.error('Error loading page:', error.value)
   }
-  
+
   // Check if it's a 404 error
   if (error.value.message?.includes('not found') || error.value.message?.includes('404')) {
     throw createError({
@@ -35,7 +36,7 @@ if (error.value) {
       fatal: true
     })
   }
-  
+
   // Check if it's a 403 error (draft page, no access)
   if (error.value.message?.includes('permission') || error.value.message?.includes('403')) {
     throw createError({
@@ -45,7 +46,7 @@ if (error.value) {
       fatal: true
     })
   }
-  
+
   // Generic server error
   throw createError({
     statusCode: 500,
@@ -69,15 +70,12 @@ if (!page.value) {
 usePageSeo(page.value)
 
 // Dynamic template component selection based on page.template from database
-// For now, we only have DefaultTemplate
-// In Batch 3, we'll add Hub, Spoke, SubSpoke, Article templates
 const templateComponent = computed(() => {
   const template = page.value?.template || 'default'
-  
+
   switch (template) {
     case 'hub':
-      // return HubTemplate // Will be created in Batch 3
-      return DefaultTemplate // Fallback for now
+      return HubTemplate
     case 'spoke':
       // return SpokeTemplate // Will be created in Batch 4
       return DefaultTemplate // Fallback for now
