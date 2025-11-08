@@ -6,7 +6,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '~/types/supabase'
+import type { Database } from '../../app/types/supabase'
 import { PageRepository } from '../repositories/PageRepository'
 import {
   getDefaultTemplateForDepth,

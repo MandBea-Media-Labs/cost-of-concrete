@@ -1,12 +1,12 @@
 /**
  * Page Repository
- * 
+ *
  * Data access layer for pages table.
  * Handles all database operations using Supabase client.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '~/types/supabase'
+import type { Database } from '../../app/types/supabase'
 
 // Type aliases for cleaner code
 type Page = Database['public']['Tables']['pages']['Row']

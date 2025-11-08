@@ -26,6 +26,9 @@ export default defineNuxtConfig({
     // Redirect configuration (set to false if you want to handle auth redirects manually)
     redirect: false,
 
+    // Database types configuration
+    types: '~/types/supabase.ts',
+
     // Optional: Uncomment and configure if you want automatic auth redirects
     // redirectOptions: {
     //   login: '/login',
