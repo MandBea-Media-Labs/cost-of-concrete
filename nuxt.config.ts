@@ -19,10 +19,6 @@ export default defineNuxtConfig({
   ],
 
   supabase: {
-    // Explicitly set credentials from environment variables
-    url: process.env.SUPABASE_URL,
-    key: process.env.SUPABASE_KEY,
-
     // Redirect configuration (set to false if you want to handle auth redirects manually)
     redirect: false,
 
