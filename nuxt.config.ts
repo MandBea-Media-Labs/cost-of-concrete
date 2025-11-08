@@ -81,6 +81,13 @@ export default defineNuxtConfig({
     name: process.env.NUXT_SITE_NAME,
   },
 
+  runtimeConfig: {
+    public: {
+      siteUrl: process.env.NUXT_SITE_URL || 'https://costofconcrete.com',
+      siteName: process.env.NUXT_SITE_NAME || 'Cost of Concrete',
+    },
+  },
+
   nitro: {
     experimental: {
       openAPI: true,
