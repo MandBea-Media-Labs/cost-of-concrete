@@ -8,6 +8,7 @@
  */
 
 import { consola } from 'consola'
+import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
 
 export default defineEventHandler(async (event) => {

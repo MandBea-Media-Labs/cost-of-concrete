@@ -76,7 +76,7 @@ export interface UpdatePageData {
 }
 
 export class PageService {
-  private repository: PageRepository
+  public repository: PageRepository
 
   constructor(client: SupabaseClient<Database>) {
     this.repository = new PageRepository(client)
