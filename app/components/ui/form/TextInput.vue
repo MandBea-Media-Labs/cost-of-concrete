@@ -5,7 +5,7 @@ interface Props {
   /**
    * The current value (use with v-model)
    */
-  modelValue: string
+  modelValue: string | null
 
   /**
    * Placeholder text for the input
@@ -63,14 +63,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
+  'update:modelValue': [value: string | null]
   'clear': []
 }>()
 
 // Local value for v-model
 const internalValue = computed({
-  get: () => props.modelValue,
-  set: (value: string) => emit('update:modelValue', value)
+  get: () => props.modelValue ?? '',
+  set: (value: string) => emit('update:modelValue', value || null)
 })
 
 // Size classes for the input container
@@ -101,13 +101,13 @@ const iconSizeClasses = computed(() => {
 
 // Handle clear button click
 const handleClear = () => {
-  internalValue.value = ''
+  emit('update:modelValue', null)
   emit('clear')
 }
 
 // Show clear button
 const showClearButton = computed(() => {
-  return props.clearable && internalValue.value.length > 0 && !props.disabled
+  return props.clearable && (props.modelValue?.length ?? 0) > 0 && !props.disabled
 })
 </script>
 

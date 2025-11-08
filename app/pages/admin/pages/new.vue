@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import consola from 'consola'
-import type { CoreFieldsFormData } from '~/schemas/admin/page-form.schema'
+import type { PageFormData } from '~/schemas/admin/page-form.schema'
 
 // =====================================================
 // PAGE METADATA
@@ -32,7 +32,7 @@ const errorMessage = ref<string | null>(null)
  * Handle form submission
  * TODO: Implement API call in Batch 5
  */
-async function handleSubmit(formData: CoreFieldsFormData) {
+async function handleSubmit(formData: PageFormData) {
   try {
     isSubmitting.value = true
     errorMessage.value = null
@@ -135,10 +135,10 @@ function handleCancel() {
         <div class="p-6 sm:p-8">
           <div class="mb-6">
             <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              Core Page Information
+              Page Information
             </h2>
             <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              Fill in the basic details for your new page. Content editor and advanced options will be available in the next steps.
+              Fill in all the details for your new page including content, template settings, and SEO options.
             </p>
           </div>
 
@@ -157,12 +157,13 @@ function handleCancel() {
           <Icon name="heroicons:information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
           <div class="flex-1">
             <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">
-              What's Next?
+              Form Sections
             </h3>
             <ul class="mt-2 text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-              <li>After creating the page, you'll be able to add content using the WYSIWYG editor</li>
-              <li>Template-specific metadata fields will be available based on your template selection</li>
-              <li>SEO settings can be configured in the advanced section</li>
+              <li><strong>Core Fields:</strong> Title, slug, parent page, template, status, and description</li>
+              <li><strong>Content:</strong> Rich text editor with formatting options</li>
+              <li><strong>Template Settings:</strong> Template-specific options (varies by template)</li>
+              <li><strong>SEO Settings:</strong> Meta tags, social media, and structured data</li>
             </ul>
           </div>
         </div>

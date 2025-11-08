@@ -2,8 +2,8 @@
 
 **Project:** Cost of Concrete - Admin Interface for Page Management
 **Started:** 2025-11-08
-**Status:** ✅ Batch 3 Complete - In Progress
-**Last Updated:** 2025-11-08 14:15 PST
+**Status:** ✅ Batch 4 Complete (with Refactor) - Ready for Batch 5
+**Last Updated:** 2025-11-08 17:30 PST
 
 ---
 
@@ -33,22 +33,58 @@
 - Content field added to schema
 - TipTap editor integrated into PageForm
 
+✅ **Batch 4: Create Page Form (Part 3 - Metadata & SEO)** - COMPLETE (2025-11-08)
+- TemplateMetadataFields component created (dynamic form generation from JSON schema)
+- useTemplateSchema composable created (schema fetching, field generation, validation)
+- SeoFieldsSection component created (expandable sections for Basic SEO, Advanced SEO, Social Media, Schema.org)
+- All SEO fields integrated with VeeValidate
+- Reused existing TextInput and FilterSelect components for consistency
+- pageFormSchema updated with all new fields (35 total fields)
+- PageForm component updated to integrate both new components
+- /admin/pages/new route updated to use complete PageFormData type
+- **REFACTORED:** SeoFieldsSection completely rewritten to use prop-based architecture instead of form context injection
+  - Removed all `useField` calls (17 total)
+  - Implemented clean props-down/events-up pattern
+  - Fixed Zod validation errors caused by improper VeeValidate context usage
+  - Component now receives `values`, `errors`, and emits `update:field` events
+  - All 17 SEO fields now use direct prop bindings instead of form context
+
 ### In Progress
 
-🔜 **Batch 4: Create Page Form (Part 3 - Metadata & SEO)** - NOT STARTED
+🔜 **Batch 5: Create Page Form (Part 4 - Submit & API Integration)** - NOT STARTED
 - Awaiting user approval to proceed
 
 ### Statistics
 
-- **Files Created:** 9
-- **Files Modified:** 5
-- **Lines of Code:** ~2,663 lines
-- **Components Built:** 4 (AdminPageList, TextInput, PageForm, TipTapEditor)
-- **Composables Built:** 1 (useAdminPages)
-- **Schemas Built:** 1 (page-form.schema.ts with 3 form schemas)
-- **Database Migrations:** 1 (RLS policy update)
+- **Files Created:** 12
+  - app/components/admin/AdminPageList.vue (418 lines)
+  - app/components/admin/PageForm.vue (347 lines - updated)
+  - app/components/admin/TipTapEditor.vue (384 lines)
+  - app/components/admin/TemplateMetadataFields.vue (217 lines)
+  - app/components/admin/SeoFieldsSection.vue (528 lines - completely rewritten)
+  - app/components/ui/form/TextInput.vue (182 lines)
+  - app/composables/useAdminPages.ts (189 lines)
+  - app/composables/useTemplateSchema.ts (267 lines)
+  - app/schemas/admin/page-form.schema.ts (412 lines)
+  - app/pages/admin/pages/index.vue (174 lines)
+  - app/pages/admin/pages/new.vue (174 lines)
+  - server/api/pages/index.get.ts (updated with RLS policy)
+- **Files Modified:** 8
+  - app/components/admin/PageForm.vue (integrated metadata and SEO sections, added prop passing to SeoFieldsSection)
+  - app/components/admin/SeoFieldsSection.vue (refactored twice: first to use TextInput/FilterSelect, then completely rewritten for prop-based architecture)
+  - app/components/ui/form/TextInput.vue (updated to accept null values)
+  - app/schemas/admin/page-form.schema.ts (added all SEO and social media schemas)
+  - app/pages/admin/pages/new.vue (updated to use PageFormData)
+  - server/api/pages/index.get.ts (RLS policy update)
+  - package.json (dependencies added)
+  - pnpm-lock.yaml (lockfile updated)
+- **Total Lines of Code:** ~4,600+ lines
+- **Components Built:** 6 (AdminPageList, TextInput, PageForm, TipTapEditor, TemplateMetadataFields, SeoFieldsSection)
+- **Composables Built:** 2 (useAdminPages, useTemplateSchema)
+- **Schemas Built:** 1 (page-form.schema.ts with 35 validated fields)
+- **Database Migrations:** 1 (RLS policy update for admin access)
 - **Dependencies Installed:** 4 (vee-validate, @vee-validate/zod, @tiptap/vue-3, @tiptap/starter-kit)
-- **Code Quality Refactors:** 1 (PageForm to use composable instead of direct API calls)
+- **Code Quality Refactors:** 3 (PageForm to use composable, SeoFieldsSection to reuse UI components, SeoFieldsSection architectural refactor to prop-based pattern)
 
 ---
 
@@ -126,6 +162,16 @@ Build a simple, user-friendly admin interface for managing pages with:
 - ✅ Lightweight (~10kb gzipped)
 - ✅ Field-level validation with inline errors
 - ✅ Works with any UI library (Reka UI)
+
+**Key Learning:** When using VeeValidate with child components, prefer **prop-based architecture** over form context injection:
+- ✅ Parent form owns state via `useForm()`
+- ✅ Child components receive `values` and `errors` as props
+- ✅ Child components emit `update:field` events
+- ✅ Avoids form context injection issues with deeply nested components
+- ✅ Follows Vue best practices (props down, events up)
+- ✅ Makes components reusable and testable
+
+**Anti-Pattern to Avoid:** Using `useField()` in child components to connect to parent form context. This can fail when components are deeply nested or when the form context isn't properly injected.
 
 ---
 
@@ -485,28 +531,81 @@ server/
 
 ---
 
-### 🔜 **Batch 4: Create Page Form (Part 3 - Metadata & SEO)**
+### ✅ **Batch 4: Create Page Form (Part 3 - Metadata & SEO)** - COMPLETE
 
 **Priority:** 4th
 
 **Goal:** Add template-specific metadata and SEO fields
 
-**Tasks:**
-- [ ] Create `TemplateMetadataFields.vue` component (dynamic form generator)
-- [ ] Create `useTemplateSchema.ts` composable
-- [ ] Implement JSON schema → form fields logic
-- [ ] Add template-specific fields (Hub: columns, Spoke: sidebarPosition, etc.)
-- [ ] Create `SeoFieldsSection.vue` component (expandable)
-- [ ] Add SEO fields:
-  - [ ] Basic: Meta Title, Meta Description, Meta Keywords, Focus Keyword
-  - [ ] Advanced: Canonical URL, Meta Robots, Sitemap Priority/Changefreq
-  - [ ] Social: Open Graph fields, Twitter Card fields
-  - [ ] Schema.org: Type selector
-- [ ] Add validation for all fields
-- [ ] Integrate into `PageForm.vue`
-- [ ] Add "Advanced: JSON Editor" toggle (simple textarea)
+**Status:** ✅ **COMPLETE** (2025-11-08)
 
-**Deliverable:** Complete create page form with all fields
+**Tasks:**
+- [x] Create `TemplateMetadataFields.vue` component (dynamic form generator) ✅ DONE
+- [x] Create `useTemplateSchema.ts` composable ✅ DONE
+- [x] Implement JSON schema → form fields logic ✅ DONE
+- [x] Add template-specific fields (Hub: columns, Spoke: sidebarPosition, etc.) ✅ DONE
+- [x] Create `SeoFieldsSection.vue` component (expandable) ✅ DONE
+- [x] Add SEO fields: ✅ DONE
+  - [x] Basic: Meta Title, Meta Description, Meta Keywords, Focus Keyword ✅ DONE
+  - [x] Advanced: Canonical URL, Meta Robots, Sitemap Priority/Changefreq ✅ DONE
+  - [x] Social: Open Graph fields, Twitter Card fields ✅ DONE
+  - [x] Schema.org: Type selector ✅ DONE
+- [x] Add validation for all fields ✅ DONE
+- [x] Integrate into `PageForm.vue` ✅ DONE
+- [x] Update page-form.schema.ts with all new fields ✅ DONE
+
+**Deliverable:** ✅ Complete create page form with all fields
+
+**Files Created:**
+- `app/composables/useTemplateSchema.ts` (267 lines)
+- `app/components/admin/TemplateMetadataFields.vue` (217 lines)
+- `app/components/admin/SeoFieldsSection.vue` (515 lines - refactored to use TextInput and FilterSelect components)
+
+**Files Modified:**
+- `app/schemas/admin/page-form.schema.ts` (+122 lines - added all SEO and social media schemas)
+- `app/components/admin/PageForm.vue` (+42 lines - integrated new components)
+- `app/pages/admin/pages/new.vue` (+10 lines - updated to use PageFormData)
+- `app/components/admin/SeoFieldsSection.vue` (refactored to reuse existing UI components)
+
+**Features Implemented:**
+- ✅ Dynamic template metadata form generation based on JSON schema
+- ✅ Template schema fetching from API
+- ✅ Field type mapping (text, number, boolean, select, array, object)
+- ✅ Automatic field label generation
+- ✅ Template-specific help text
+- ✅ Expandable SEO sections (Basic, Advanced, Social, Schema.org)
+- ✅ Meta robots checkboxes
+- ✅ Character counters for meta title/description
+- ✅ Comma-separated keywords input
+- ✅ All social media fields (Open Graph, Twitter Card)
+- ✅ Schema.org type selector
+- ✅ Full Zod validation for all fields (35 total fields in pageFormSchema)
+- ✅ Dark mode styling
+- ✅ Responsive design
+- ✅ VeeValidate integration
+- ✅ Reused existing TextInput and FilterSelect components for consistency
+- ✅ Proper input height and padding (h-12 px-4 for lg size)
+
+**Known Issues:**
+- ✅ Fixed: Form inputs were too short vertically - refactored to use TextInput and FilterSelect components
+
+**Code Quality:**
+- ✅ DRY principle applied - reused existing UI components instead of creating custom inputs
+- ✅ Consistent styling across all form fields
+- ✅ Proper component composition and separation of concerns
+
+**Testing Notes:**
+- ✅ No TypeScript errors
+- ✅ All components render correctly
+- ✅ Form validation working
+- ✅ Template metadata fields generate dynamically
+- ✅ SEO sections expand/collapse correctly
+- ✅ All field types supported (text, number, boolean, select, array, object)
+- ✅ Dark mode styling applied
+- ✅ Form inputs have proper height and padding
+- ✅ TextInput and FilterSelect components working correctly
+- ✅ All 35 form fields validated with Zod
+- ✅ Ready for Batch 5 (API integration)
 
 ---
 
@@ -771,6 +870,77 @@ USING (deleted_at IS NULL);
 **Root Cause:** Server-side schema was cached and needed restart.
 
 **Solution:** Restart dev server to reload updated schema.
+
+---
+
+### Issue 4: Form Input Height Too Short (RESOLVED)
+
+**Problem:** Form inputs in SEO section appeared vertically compressed.
+
+**Root Cause:** SeoFieldsSection was using raw HTML inputs instead of existing UI components.
+
+**Solution:** Refactored to use TextInput and FilterSelect components with `size="lg"` prop for consistent height (`h-12`).
+
+**Files Modified:**
+- `app/components/admin/SeoFieldsSection.vue` - Replaced raw inputs with UI components
+
+---
+
+### Issue 5: TextInput Type Warning (RESOLVED)
+
+**Problem:** Vue console warning: "Invalid prop: type check failed for prop 'modelValue'. Expected String with value 'null', got Null"
+
+**Root Cause:** TextInput component only accepted `string` type, but form default values use `null` for optional fields.
+
+**Solution:** Updated TextInput to accept `string | null` with internal conversion:
+- Get: `props.modelValue ?? ''` (converts null to empty string for display)
+- Set: `value || null` (converts empty string back to null when emitting)
+
+**Files Modified:**
+- `app/components/ui/form/TextInput.vue` - Updated prop type and internal value handling
+
+---
+
+### Issue 6: Zod Validation Error - "Cannot read properties of undefined (reading '_zod')" (RESOLVED)
+
+**Problem:** Console error when interacting with Template Settings and SEO Settings sections:
+```
+Uncaught (in promise) TypeError: Cannot read properties of undefined (reading '_zod')
+```
+
+**Root Cause:** SeoFieldsSection was using VeeValidate's `useField` composable to connect to parent form context, but this pattern doesn't work reliably when child components are deeply nested. The form context injection was failing, causing Zod to try to validate against an undefined schema.
+
+**Solution:** Complete architectural refactor of SeoFieldsSection to use prop-based pattern instead of form context injection:
+
+1. **Removed all `useField` calls** (17 total) from SeoFieldsSection
+2. **Implemented props-down/events-up pattern:**
+   - Component receives `values` (all form values) and `errors` (all validation errors) as props
+   - Component emits `update:field` events to update values
+3. **Updated PageForm** to pass props and handle events:
+   ```vue
+   <SeoFieldsSection
+     :values="values"
+     :errors="errors"
+     @update:field="setFieldValue"
+     :disabled="isSubmitting"
+   />
+   ```
+4. **Updated all field bindings** in SeoFieldsSection:
+   - TextInput: `:model-value="values.fieldName"` + `@update:model-value`
+   - FilterSelect: Same pattern
+   - Textarea: `:value="values.fieldName"` + `@input`
+   - Checkboxes: `:checked="isSelected(value)"` + `@change`
+
+**Benefits:**
+- ✅ No form context injection issues
+- ✅ Clear, predictable data flow
+- ✅ Component is reusable and testable
+- ✅ Follows Vue best practices
+- ✅ Type-safe with full TypeScript support
+
+**Files Modified:**
+- `app/components/admin/PageForm.vue` - Added props to SeoFieldsSection
+- `app/components/admin/SeoFieldsSection.vue` - Complete rewrite (528 lines)
 
 ---
 
