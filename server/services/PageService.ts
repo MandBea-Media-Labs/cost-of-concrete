@@ -42,15 +42,36 @@ export interface CreatePageData {
   content: string
   template?: TemplateType
   status?: 'draft' | 'published' | 'archived'
+
+  // Basic SEO fields
   metaTitle?: string
+  metaDescription?: string
   metaKeywords?: string[]
-  ogImage?: string
   focusKeyword?: string
+
+  // Open Graph fields
+  ogTitle?: string
+  ogDescription?: string
+  ogImage?: string
+  ogType?: string
+
+  // Twitter Card fields
+  twitterCard?: string
+  twitterTitle?: string
+  twitterDescription?: string
+  twitterImage?: string
+
+  // Schema.org fields
+  schemaType?: string
+
+  // Advanced SEO fields
   metaRobots?: string[]
   sitemapPriority?: number
   sitemapChangefreq?: string
+  canonicalUrl?: string
   redirectUrl?: string
   redirectType?: number
+
   metadata?: any
 }
 
@@ -420,9 +441,46 @@ export class PageService {
 
     // Prepare metadata
     const defaultMetadata = getDefaultMetadata(template)
+
+    // Build SEO metadata structure
+    const seoMetadata: any = {
+      ...(data.metadata?.seo || {})
+    }
+
+    // Add Open Graph data if provided
+    if (data.ogTitle || data.ogDescription || data.ogImage || data.ogType) {
+      seoMetadata.og = {
+        ...(seoMetadata.og || {}),
+        ...(data.ogTitle && { title: data.ogTitle }),
+        ...(data.ogDescription && { description: data.ogDescription }),
+        ...(data.ogImage && { image: data.ogImage }),
+        ...(data.ogType && { type: data.ogType })
+      }
+    }
+
+    // Add Twitter Card data if provided
+    if (data.twitterCard || data.twitterTitle || data.twitterDescription || data.twitterImage) {
+      seoMetadata.twitter = {
+        ...(seoMetadata.twitter || {}),
+        ...(data.twitterCard && { card: data.twitterCard }),
+        ...(data.twitterTitle && { title: data.twitterTitle }),
+        ...(data.twitterDescription && { description: data.twitterDescription }),
+        ...(data.twitterImage && { image: data.twitterImage })
+      }
+    }
+
+    // Add Schema.org data if provided
+    if (data.schemaType) {
+      seoMetadata.schema = {
+        ...(seoMetadata.schema || {}),
+        '@context': 'https://schema.org',
+        '@type': data.schemaType
+      }
+    }
+
     const metadata = {
       template: { ...defaultMetadata, ...(data.metadata?.template || {}) },
-      seo: data.metadata?.seo || {}
+      seo: seoMetadata
     }
 
     // Generate SEO defaults
@@ -445,7 +503,7 @@ export class PageService {
       depth,
       template,
       title: data.title,
-      description: data.description || null,
+      description: data.metaDescription || data.description || null, // metaDescription takes priority
       content: data.content,
       status: data.status || 'draft',
       meta_title: data.metaTitle || null,
@@ -455,7 +513,7 @@ export class PageService {
       meta_robots: data.metaRobots || ['index', 'follow'],
       sitemap_priority: sitemapPriority,
       sitemap_changefreq: data.sitemapChangefreq || 'weekly',
-      canonical_url: canonicalUrl,
+      canonical_url: data.canonicalUrl || canonicalUrl,
       redirect_url: data.redirectUrl || null,
       redirect_type: data.redirectType || null,
       metadata,

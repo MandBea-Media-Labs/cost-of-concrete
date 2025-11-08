@@ -90,110 +90,85 @@ function getFieldValue(fieldName: string) {
     <div v-else-if="formFields.length > 0" class="space-y-4">
       <div v-for="field in formFields" :key="field.name" class="space-y-2">
         <!-- Boolean Field (Checkbox) -->
-        <div v-if="field.type === 'boolean'" class="flex items-start">
-          <div class="flex items-center h-5">
+        <div v-if="field.type === 'boolean'" class="flex items-start gap-3">
+          <div class="flex items-center h-6">
             <input
               :id="`metadata-${field.name}`"
               type="checkbox"
               :checked="getFieldValue(field.name)"
               :disabled="disabled"
               @change="updateField(field.name, ($event.target as HTMLInputElement).checked)"
-              class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-5 w-5 rounded border-neutral-300 dark:border-neutral-600 text-blue-600 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900/30 focus:ring-offset-0 dark:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
             />
           </div>
-          <div class="ml-3 text-sm">
-            <label :for="`metadata-${field.name}`" class="font-medium text-gray-700 dark:text-gray-300">
+          <div class="flex-1">
+            <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer">
               {{ field.label }}
               <span v-if="field.required" class="text-red-500">*</span>
             </label>
-            <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-gray-500 dark:text-gray-400">
+            <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               {{ field.helpText || getFieldHelpText(template, field.name) }}
             </p>
           </div>
         </div>
 
         <!-- Select Field (Dropdown) -->
-        <div v-else-if="field.type === 'select'" class="space-y-1">
-          <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ field.label }}
-            <span v-if="field.required" class="text-red-500">*</span>
-          </label>
-          <select
-            :id="`metadata-${field.name}`"
-            :value="getFieldValue(field.name)"
-            :disabled="disabled"
-            @change="updateField(field.name, ($event.target as HTMLSelectElement).value)"
-            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value="">Select {{ field.label.toLowerCase() }}</option>
-            <option v-for="option in field.options" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-gray-500 dark:text-gray-400">
-            {{ field.helpText || getFieldHelpText(template, field.name) }}
-          </p>
-        </div>
+        <FilterSelect
+          v-else-if="field.type === 'select'"
+          :label="field.label"
+          :model-value="getFieldValue(field.name) || ''"
+          :options="field.options || []"
+          :placeholder="`Select ${field.label.toLowerCase()}`"
+          :required="field.required"
+          :disabled="disabled"
+          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          @update:model-value="updateField(field.name, $event)"
+        />
 
         <!-- Number Field -->
-        <div v-else-if="field.type === 'number'" class="space-y-1">
-          <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ field.label }}
-            <span v-if="field.required" class="text-red-500">*</span>
-          </label>
-          <input
-            :id="`metadata-${field.name}`"
-            type="number"
-            :value="getFieldValue(field.name)"
-            :placeholder="field.placeholder"
-            :disabled="disabled"
-            @input="updateField(field.name, Number(($event.target as HTMLInputElement).value))"
-            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-gray-500 dark:text-gray-400">
-            {{ field.helpText || getFieldHelpText(template, field.name) }}
-          </p>
-        </div>
+        <TextInput
+          v-else-if="field.type === 'number'"
+          :label="field.label"
+          :model-value="getFieldValue(field.name)"
+          type="number"
+          :placeholder="field.placeholder"
+          :required="field.required"
+          :disabled="disabled"
+          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          @update:model-value="updateField(field.name, Number($event))"
+        />
 
         <!-- Text Field -->
-        <div v-else-if="field.type === 'text'" class="space-y-1">
-          <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ field.label }}
-            <span v-if="field.required" class="text-red-500">*</span>
-          </label>
-          <input
-            :id="`metadata-${field.name}`"
-            type="text"
-            :value="getFieldValue(field.name)"
-            :placeholder="field.placeholder"
-            :disabled="disabled"
-            @input="updateField(field.name, ($event.target as HTMLInputElement).value)"
-            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-gray-500 dark:text-gray-400">
-            {{ field.helpText || getFieldHelpText(template, field.name) }}
-          </p>
-        </div>
+        <TextInput
+          v-else-if="field.type === 'text'"
+          :label="field.label"
+          :model-value="getFieldValue(field.name)"
+          :placeholder="field.placeholder"
+          :required="field.required"
+          :disabled="disabled"
+          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          @update:model-value="updateField(field.name, $event)"
+        />
 
         <!-- Array/Object Fields - Show as JSON textarea for now -->
-        <div v-else-if="field.type === 'array' || field.type === 'object'" class="space-y-1">
-          <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div v-else-if="field.type === 'array' || field.type === 'object'" class="space-y-2">
+          <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
             {{ field.label }}
             <span v-if="field.required" class="text-red-500">*</span>
           </label>
           <textarea
             :id="`metadata-${field.name}`"
             :value="JSON.stringify(getFieldValue(field.name) || (field.type === 'array' ? [] : {}), null, 2)"
-            :placeholder="`Enter ${field.label.toLowerCase()} as JSON`"
+            :placeholder="`Enter valid JSON format`"
             :disabled="disabled"
             rows="4"
             @input="updateField(field.name, JSON.parse(($event.target as HTMLTextAreaElement).value || (field.type === 'array' ? '[]' : '{}')))"
-            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-neutral-300 bg-white text-neutral-700 transition-all outline-none px-4 py-3 text-sm font-mono hover:border-neutral-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/30 dark:disabled:bg-neutral-900"
           ></textarea>
-          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-gray-500 dark:text-gray-400">
+          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-neutral-500 dark:text-neutral-400">
             {{ field.helpText || getFieldHelpText(template, field.name) }}
           </p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Enter valid JSON format</p>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">Enter valid JSON format</p>
         </div>
       </div>
     </div>

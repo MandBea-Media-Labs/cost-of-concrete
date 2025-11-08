@@ -23,49 +23,133 @@ useHead({
 const router = useRouter()
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
 
 // =====================================================
 // FORM SUBMISSION
 // =====================================================
 
 /**
+ * Map PageFormData to CreatePageInput for API
+ * All SEO fields are now supported by the API
+ */
+function mapFormDataToApiInput(formData: PageFormData) {
+  return {
+    // Required fields
+    title: formData.title,
+    content: formData.content,
+
+    // Optional core fields
+    parentId: formData.parentId || undefined,
+    slug: formData.slug || undefined,
+    template: formData.template,
+    description: formData.description || undefined,
+    status: formData.status,
+
+    // Basic SEO fields
+    metaTitle: formData.metaTitle || undefined,
+    metaDescription: formData.metaDescription || undefined,
+    metaKeywords: formData.metaKeywords || undefined,
+    focusKeyword: formData.focusKeyword || undefined,
+
+    // Open Graph fields
+    ogTitle: formData.ogTitle || undefined,
+    ogDescription: formData.ogDescription || undefined,
+    ogImage: formData.ogImage || undefined, // API only accepts ogImage, not other OG fields
+    ogType: formData.ogType || undefined,
+
+    // Twitter Card fields
+    twitterCard: formData.twitterCard || undefined,
+    twitterTitle: formData.twitterTitle || undefined,
+    twitterDescription: formData.twitterDescription || undefined,
+    twitterImage: formData.twitterImage || undefined,
+
+    // Schema.org fields
+    schemaType: formData.schemaType || undefined,
+
+    // Advanced SEO fields
+    metaRobots: formData.metaRobots || undefined,
+    sitemapPriority: formData.sitemapPriority || undefined,
+    sitemapChangefreq: formData.sitemapChangefreq || undefined,
+    canonicalUrl: formData.canonicalUrl || undefined,
+    redirectUrl: formData.redirectUrl || undefined,
+    redirectType: formData.redirectType || undefined,
+
+    // Template metadata
+    metadata: formData.metadata || undefined
+  }
+}
+
+/**
  * Handle form submission
- * TODO: Implement API call in Batch 5
  */
 async function handleSubmit(formData: PageFormData) {
   try {
     isSubmitting.value = true
     errorMessage.value = null
+    fieldErrors.value = {}
 
     if (import.meta.dev) {
       consola.info('📝 Form submitted with data:', formData)
     }
 
-    // TODO: Implement API call in Batch 5
-    // const response = await $fetch('/api/pages', {
-    //   method: 'POST',
-    //   body: {
-    //     ...formData,
-    //     content: '' // Will be added in Batch 3
-    //   }
-    // })
-
-    // Simulate API call for now
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Map form data to API input format
+    const apiInput = mapFormDataToApiInput(formData)
 
     if (import.meta.dev) {
-      consola.success('✅ Page created successfully (simulated)')
+      consola.info('📤 Sending to API:', apiInput)
     }
 
-    // TODO: Show success toast in Batch 5
-    // TODO: Redirect to edit page or list page
-    // router.push(`/admin/pages/${response.id}/edit`)
-    router.push('/admin/pages')
+    // Call API to create page
+    const response = await $fetch('/api/pages', {
+      method: 'POST',
+      body: apiInput
+    })
+
+    if (import.meta.dev) {
+      consola.success('✅ Page created successfully:', response)
+    }
+
+    // Redirect to page list with success indicator
+    // Note: Toast component will be added in future (see Linear ticket BAM-22)
+    router.push({
+      path: '/admin/pages',
+      query: { created: 'true' }
+    })
   } catch (error: any) {
     if (import.meta.dev) {
       consola.error('❌ Error creating page:', error)
     }
-    errorMessage.value = error.message || 'Failed to create page. Please try again.'
+
+    // Extract error message from various possible locations
+    const errorMsg = error.data?.message || error.message || error.statusMessage
+    const statusCode = error.statusCode || error.status
+
+    // Handle different error types
+    if (statusCode === 400 && error.data?.issues) {
+      // Zod validation errors from server
+      const issues = error.data.issues as Array<{ path: string[]; message: string }>
+      fieldErrors.value = issues.reduce((acc, issue) => {
+        const fieldName = issue.path.join('.')
+        acc[fieldName] = issue.message
+        return acc
+      }, {} as Record<string, string>)
+
+      errorMessage.value = 'Please fix the validation errors below.'
+
+      if (import.meta.dev) {
+        consola.warn('Validation errors:', fieldErrors.value)
+      }
+    } else if (statusCode === 409) {
+      // Conflict error (e.g., slug already exists)
+      errorMessage.value = errorMsg || 'A page with this slug already exists under the selected parent.'
+    } else if (statusCode === 401 || statusCode === 403) {
+      // Authentication/authorization error
+      errorMessage.value = 'You do not have permission to create pages. Please log in.'
+    } else {
+      // Generic error
+      errorMessage.value = errorMsg || 'Failed to create page. Please try again.'
+    }
   } finally {
     isSubmitting.value = false
   }

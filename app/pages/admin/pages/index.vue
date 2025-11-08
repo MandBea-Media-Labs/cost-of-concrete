@@ -9,6 +9,28 @@ definePageMeta({
 // Use admin pages composable
 const { pages, pagination, pending, error, fetchPages, deletePage } = useAdminPages()
 
+// Success message state (from query params)
+const route = useRoute()
+const showSuccessMessage = ref(false)
+const successMessage = ref('')
+
+// Check for success query parameter
+onMounted(() => {
+  if (route.query.created === 'true') {
+    showSuccessMessage.value = true
+    successMessage.value = 'Page created successfully!'
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      showSuccessMessage.value = false
+    }, 5000)
+
+    // Remove query parameter from URL
+    const router = useRouter()
+    router.replace({ query: {} })
+  }
+})
+
 // Filter state
 const filters = ref<AdminPagesFilters>({
   status: null,
@@ -154,6 +176,30 @@ const handleCreatePage = () => {
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Success Message -->
+      <div
+        v-if="showSuccessMessage"
+        class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+      >
+        <div class="flex items-start gap-3">
+          <Icon name="heroicons:check-circle" class="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          <div class="flex-1">
+            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+              Success
+            </h3>
+            <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+              {{ successMessage }}
+            </p>
+          </div>
+          <button
+            @click="showSuccessMessage = false"
+            class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+          >
+            <Icon name="heroicons:x-mark" class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
       <!-- Filters Section -->
       <div class="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

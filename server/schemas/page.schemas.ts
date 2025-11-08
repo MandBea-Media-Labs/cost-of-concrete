@@ -44,7 +44,10 @@ export const sitemapChangefreqSchema = z.enum(['always', 'hourly', 'daily', 'wee
 /**
  * Valid redirect types
  */
-export const redirectTypeSchema = z.enum([301, 302, 307, 308]).optional()
+export const redirectTypeSchema = z.number().refine(
+  (val) => [301, 302, 307, 308].includes(val),
+  { message: 'Redirect type must be 301, 302, 307, or 308' }
+).optional()
 
 // =====================================================
 // CREATE PAGE SCHEMA
@@ -73,9 +76,26 @@ export const createPageSchema = z.object({
 
   // Optional SEO fields
   metaTitle: z.string().max(60, 'Meta title must be 60 characters or less').optional().nullable(),
+  metaDescription: z.string().max(160, 'Meta description must be 160 characters or less').optional().nullable(),
   metaKeywords: z.array(z.string()).optional().nullable(),
-  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
   focusKeyword: z.string().max(100, 'Focus keyword must be 100 characters or less').optional().nullable(),
+
+  // Open Graph fields
+  ogTitle: z.string().max(60, 'OG title must be 60 characters or less').optional().nullable(),
+  ogDescription: z.string().max(160, 'OG description must be 160 characters or less').optional().nullable(),
+  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
+  ogType: z.string().optional().nullable(),
+
+  // Twitter Card fields
+  twitterCard: z.enum(['summary', 'summary_large_image', 'app', 'player']).optional().nullable(),
+  twitterTitle: z.string().max(60, 'Twitter title must be 60 characters or less').optional().nullable(),
+  twitterDescription: z.string().max(160, 'Twitter description must be 160 characters or less').optional().nullable(),
+  twitterImage: z.string().url('Invalid Twitter image URL').optional().nullable(),
+
+  // Schema.org fields
+  schemaType: z.string().optional().nullable(),
+
+  // Advanced SEO fields
   metaRobots: metaRobotsSchema,
   sitemapPriority: z.number().min(0).max(1).optional().nullable(),
   sitemapChangefreq: sitemapChangefreqSchema,
@@ -113,9 +133,26 @@ export const updatePageSchema = z.object({
 
   // SEO fields
   metaTitle: z.string().max(60, 'Meta title must be 60 characters or less').optional().nullable(),
+  metaDescription: z.string().max(160, 'Meta description must be 160 characters or less').optional().nullable(),
   metaKeywords: z.array(z.string()).optional().nullable(),
-  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
   focusKeyword: z.string().max(100, 'Focus keyword must be 100 characters or less').optional().nullable(),
+
+  // Open Graph fields
+  ogTitle: z.string().max(60, 'OG title must be 60 characters or less').optional().nullable(),
+  ogDescription: z.string().max(160, 'OG description must be 160 characters or less').optional().nullable(),
+  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
+  ogType: z.string().optional().nullable(),
+
+  // Twitter Card fields
+  twitterCard: z.enum(['summary', 'summary_large_image', 'app', 'player']).optional().nullable(),
+  twitterTitle: z.string().max(60, 'Twitter title must be 60 characters or less').optional().nullable(),
+  twitterDescription: z.string().max(160, 'Twitter description must be 160 characters or less').optional().nullable(),
+  twitterImage: z.string().url('Invalid Twitter image URL').optional().nullable(),
+
+  // Schema.org fields
+  schemaType: z.string().optional().nullable(),
+
+  // Advanced SEO fields
   metaRobots: metaRobotsSchema,
   sitemapPriority: z.number().min(0).max(1).optional().nullable(),
   sitemapChangefreq: sitemapChangefreqSchema,
