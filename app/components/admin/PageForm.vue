@@ -1,0 +1,325 @@
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import { contentFormSchema, contentFormDefaultValues, type ContentFormData } from '~/schemas/admin/page-form.schema'
+
+interface Props {
+  /**
+   * Initial form data (for edit mode)
+   */
+  initialData?: Partial<ContentFormData>
+
+  /**
+   * Whether the form is in edit mode
+   * @default false
+   */
+  isEditMode?: boolean
+
+  /**
+   * Whether the form is submitting
+   * @default false
+   */
+  isSubmitting?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  initialData: undefined,
+  isEditMode: false,
+  isSubmitting: false
+})
+
+const emit = defineEmits<{
+  'submit': [data: ContentFormData]
+  'cancel': []
+}>()
+
+// =====================================================
+// FORM SETUP
+// =====================================================
+
+const { values, errors, defineField, handleSubmit, setFieldValue } = useForm({
+  validationSchema: toTypedSchema(contentFormSchema),
+  initialValues: props.initialData || contentFormDefaultValues
+})
+
+// Define form fields with VeeValidate
+const [title, titleAttrs] = defineField('title')
+const [slug, slugAttrs] = defineField('slug')
+const [parentId, parentIdAttrs] = defineField('parentId')
+const [template, templateAttrs] = defineField('template')
+const [status, statusAttrs] = defineField('status')
+const [description, descriptionAttrs] = defineField('description')
+const [content, contentAttrs] = defineField('content')
+
+// =====================================================
+// AUTO-GENERATE SLUG FROM TITLE
+// =====================================================
+
+const isSlugManuallyEdited = ref(false)
+
+/**
+ * Generate URL-friendly slug from title
+ */
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+}
+
+/**
+ * Auto-generate slug when title changes (only if slug hasn't been manually edited)
+ */
+watch(title, (newTitle) => {
+  if (!isSlugManuallyEdited.value && newTitle) {
+    setFieldValue('slug', generateSlug(newTitle))
+  }
+})
+
+/**
+ * Mark slug as manually edited when user types in slug field
+ */
+function onSlugInput() {
+  isSlugManuallyEdited.value = true
+}
+
+// =====================================================
+// PARENT PAGE OPTIONS
+// =====================================================
+
+// Use existing composable for data fetching (DRY principle)
+const { pages: availablePages, pending: isLoadingParentPages, fetchPages } = useAdminPages()
+
+// Transform pages into dropdown options with hierarchical indentation
+const parentPageOptions = computed(() => {
+  const pageOptions = availablePages.value.map((page) => ({
+    value: page.id,
+    label: `${'  '.repeat(page.depth)}${page.title}` // Indent based on depth
+  }))
+
+  return [
+    { value: null, label: 'None (Top-level page)' },
+    ...pageOptions
+  ]
+})
+
+// Fetch parent pages on component mount
+onMounted(async () => {
+  await fetchPages({
+    limit: 100,
+    orderBy: 'full_path',
+    orderDirection: 'asc'
+  })
+})
+
+// =====================================================
+// TEMPLATE OPTIONS
+// =====================================================
+
+const templateOptions = [
+  { value: 'hub', label: 'Hub Template - Top-level category with child grid (Depth 0)' },
+  { value: 'spoke', label: 'Spoke Template - Mid-level content with sidebar (Depth 1)' },
+  { value: 'sub-spoke', label: 'Sub-Spoke Template - Detailed content with TOC (Depth 2)' },
+  { value: 'article', label: 'Article Template - Deep-level article (Depth 3+)' },
+  { value: 'custom', label: 'Custom Template - Fully customizable' },
+  { value: 'default', label: 'Default Template - Basic fallback' }
+]
+
+// =====================================================
+// STATUS OPTIONS
+// =====================================================
+
+const statusOptions = [
+  { value: 'draft', label: 'Draft - Not visible to public' },
+  { value: 'published', label: 'Published - Visible to public' },
+  { value: 'archived', label: 'Archived - Hidden from public and admin lists' }
+]
+
+// =====================================================
+// FORM SUBMISSION
+// =====================================================
+
+const onSubmit = handleSubmit((formData) => {
+  emit('submit', formData)
+})
+
+function onCancel() {
+  emit('cancel')
+}
+</script>
+
+<template>
+  <form @submit.prevent="onSubmit" class="space-y-6">
+    <!-- Title Field -->
+    <div>
+      <label for="title" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Title <span class="text-red-500">*</span>
+      </label>
+      <TextInput
+        id="title"
+        v-model="title"
+        v-bind="titleAttrs"
+        placeholder="Enter page title"
+        :disabled="isSubmitting"
+        size="lg"
+      />
+      <p v-if="errors.title" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.title }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        The main heading for this page (max 200 characters)
+      </p>
+    </div>
+
+    <!-- Slug Field -->
+    <div>
+      <label for="slug" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Slug <span class="text-red-500">*</span>
+      </label>
+      <TextInput
+        id="slug"
+        v-model="slug"
+        v-bind="slugAttrs"
+        placeholder="page-url-slug"
+        :disabled="isSubmitting"
+        size="lg"
+        @input="onSlugInput"
+      />
+      <p v-if="errors.slug" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.slug }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        URL-friendly identifier (auto-generated from title, or customize manually)
+      </p>
+    </div>
+
+    <!-- Parent Page Field -->
+    <div>
+      <label for="parentId" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Parent Page
+      </label>
+      <FilterSelect
+        id="parentId"
+        v-model="parentId"
+        v-bind="parentIdAttrs"
+        :options="parentPageOptions"
+        placeholder="Select parent page"
+        :disabled="isSubmitting"
+      />
+      <p v-if="errors.parentId" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.parentId }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        Optional: Select a parent page to create a hierarchical structure
+      </p>
+    </div>
+
+    <!-- Template Field -->
+    <div>
+      <label for="template" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Template <span class="text-red-500">*</span>
+      </label>
+      <FilterSelect
+        id="template"
+        v-model="template"
+        v-bind="templateAttrs"
+        :options="templateOptions"
+        placeholder="Select template"
+        :disabled="isSubmitting"
+      />
+      <p v-if="errors.template" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.template }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        Choose the template that best fits your content type
+      </p>
+    </div>
+
+    <!-- Status Field -->
+    <div>
+      <label for="status" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Status <span class="text-red-500">*</span>
+      </label>
+      <FilterSelect
+        id="status"
+        v-model="status"
+        v-bind="statusAttrs"
+        :options="statusOptions"
+        placeholder="Select status"
+        :disabled="isSubmitting"
+      />
+      <p v-if="errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.status }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        Control the visibility of this page
+      </p>
+    </div>
+
+    <!-- Description Field -->
+    <div>
+      <label for="description" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Description
+      </label>
+      <textarea
+        id="description"
+        v-model="description"
+        v-bind="descriptionAttrs"
+        placeholder="Enter a brief description of this page"
+        :disabled="isSubmitting"
+        rows="4"
+        class="w-full px-4 py-3 text-sm rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-y"
+      />
+      <p v-if="errors.description" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.description }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        Optional: A short summary of the page content (max 500 characters)
+      </p>
+    </div>
+
+    <!-- Content Field (TipTap Editor) -->
+    <div>
+      <label for="content" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        Content
+      </label>
+      <TipTapEditor
+        v-model="content"
+        v-bind="contentAttrs"
+        placeholder="Start writing your page content..."
+        :disabled="isSubmitting"
+      />
+      <p v-if="errors.content" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ errors.content }}
+      </p>
+      <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        The main content of your page (supports rich text formatting)
+      </p>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex items-center justify-end gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-700">
+      <button
+        type="button"
+        @click="onCancel"
+        :disabled="isSubmitting"
+        class="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        :disabled="isSubmitting"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <Icon v-if="isSubmitting" name="heroicons:arrow-path" class="h-4 w-4 animate-spin mr-2" />
+        {{ isEditMode ? 'Update Page' : 'Create Page' }}
+      </button>
+    </div>
+  </form>
+</template>
+

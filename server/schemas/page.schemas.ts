@@ -1,6 +1,6 @@
 /**
  * Zod Validation Schemas for Page API
- * 
+ *
  * Defines validation schemas for all page-related API requests.
  */
 
@@ -55,22 +55,22 @@ export const createPageSchema = z.object({
   title: z.string()
     .min(1, 'Title is required')
     .max(200, 'Title must be 200 characters or less'),
-  
+
   content: z.string()
     .min(1, 'Content is required'),
-  
+
   // Optional hierarchy
   parentId: z.string().uuid('Invalid parent ID').optional().nullable(),
-  
+
   // Optional slug (auto-generated if not provided)
   slug: slugSchema.optional(),
-  
+
   // Optional template (auto-assigned based on depth if not provided)
   template: templateSchema.optional(),
-  
+
   // Optional content fields
   description: z.string().max(500, 'Description must be 500 characters or less').optional().nullable(),
-  
+
   // Optional SEO fields
   metaTitle: z.string().max(60, 'Meta title must be 60 characters or less').optional().nullable(),
   metaKeywords: z.array(z.string()).optional().nullable(),
@@ -82,10 +82,10 @@ export const createPageSchema = z.object({
   canonicalUrl: z.string().optional().nullable(),
   redirectUrl: z.string().url('Invalid redirect URL').optional().nullable(),
   redirectType: redirectTypeSchema,
-  
+
   // Optional metadata (JSONB)
   metadata: z.record(z.any()).optional().nullable(),
-  
+
   // Optional status
   status: statusSchema.optional()
 })
@@ -102,15 +102,15 @@ export const updatePageSchema = z.object({
     .min(1, 'Title cannot be empty')
     .max(200, 'Title must be 200 characters or less')
     .optional(),
-  
+
   content: z.string()
     .min(1, 'Content cannot be empty')
     .optional(),
-  
+
   slug: slugSchema.optional(),
   template: templateSchema.optional(),
   description: z.string().max(500, 'Description must be 500 characters or less').optional().nullable(),
-  
+
   // SEO fields
   metaTitle: z.string().max(60, 'Meta title must be 60 characters or less').optional().nullable(),
   metaKeywords: z.array(z.string()).optional().nullable(),
@@ -122,7 +122,7 @@ export const updatePageSchema = z.object({
   canonicalUrl: z.string().optional().nullable(),
   redirectUrl: z.string().url('Invalid redirect URL').optional().nullable(),
   redirectType: redirectTypeSchema,
-  
+
   metadata: z.record(z.any()).optional().nullable(),
   status: statusSchema.optional()
 })
@@ -144,7 +144,7 @@ export const listPagesQuerySchema = z.object({
   includeDeleted: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
-  orderBy: z.enum(['created_at', 'updated_at', 'title', 'depth']).optional().default('created_at'),
+  orderBy: z.enum(['created_at', 'updated_at', 'title', 'depth', 'full_path']).optional().default('created_at'),
   orderDirection: z.enum(['asc', 'desc']).optional().default('desc')
 })
 
