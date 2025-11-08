@@ -166,6 +166,92 @@ export const redirectTypeSchema = z
   .optional()
   .nullable()
 
+/**
+ * Meta description validation
+ */
+export const metaDescriptionSchema = z
+  .string()
+  .max(160, 'Meta description should be 160 characters or less for optimal SEO')
+  .optional()
+  .nullable()
+
+// =====================================================
+// SOCIAL MEDIA SCHEMAS
+// =====================================================
+
+/**
+ * Open Graph title validation
+ */
+export const ogTitleSchema = z
+  .string()
+  .max(95, 'OG title should be 95 characters or less')
+  .optional()
+  .nullable()
+
+/**
+ * Open Graph description validation
+ */
+export const ogDescriptionSchema = z
+  .string()
+  .max(200, 'OG description should be 200 characters or less')
+  .optional()
+  .nullable()
+
+/**
+ * Open Graph type validation
+ */
+export const ogTypeSchema = z
+  .enum(['website', 'article', 'product', 'profile'])
+  .optional()
+  .nullable()
+
+/**
+ * Twitter card type validation
+ */
+export const twitterCardSchema = z
+  .enum(['summary', 'summary_large_image', 'app', 'player'])
+  .optional()
+  .nullable()
+
+/**
+ * Twitter title validation
+ */
+export const twitterTitleSchema = z
+  .string()
+  .max(70, 'Twitter title should be 70 characters or less')
+  .optional()
+  .nullable()
+
+/**
+ * Twitter description validation
+ */
+export const twitterDescriptionSchema = z
+  .string()
+  .max(200, 'Twitter description should be 200 characters or less')
+  .optional()
+  .nullable()
+
+/**
+ * Twitter image validation
+ */
+export const twitterImageSchema = z
+  .string()
+  .url('Must be a valid URL')
+  .optional()
+  .nullable()
+
+// =====================================================
+// SCHEMA.ORG SCHEMAS
+// =====================================================
+
+/**
+ * Schema.org type validation
+ */
+export const schemaTypeSchema = z
+  .enum(['WebPage', 'Article', 'HowTo', 'FAQPage', 'LocalBusiness', 'Product', 'Organization'])
+  .optional()
+  .nullable()
+
 // =====================================================
 // CORE FIELDS FORM SCHEMA (Batch 2)
 // =====================================================
@@ -244,20 +330,37 @@ export const pageFormSchema = z.object({
   // Content field (Batch 3)
   content: contentSchema,
 
-  // SEO fields (Batch 4)
+  // Basic SEO fields (Batch 4)
   metaTitle: metaTitleSchema,
+  metaDescription: metaDescriptionSchema,
   metaKeywords: metaKeywordsSchema,
-  ogImage: ogImageSchema,
   focusKeyword: focusKeywordSchema,
+
+  // Advanced SEO fields (Batch 4)
+  canonicalUrl: canonicalUrlSchema,
   metaRobots: metaRobotsSchema,
   sitemapPriority: sitemapPrioritySchema,
   sitemapChangefreq: sitemapChangefreqSchema,
-  canonicalUrl: canonicalUrlSchema,
   redirectUrl: redirectUrlSchema,
   redirectType: redirectTypeSchema,
 
-  // Metadata (Batch 4)
-  metadata: z.record(z.any()).optional().nullable()
+  // Social Media - Open Graph (Batch 4)
+  ogTitle: ogTitleSchema,
+  ogDescription: ogDescriptionSchema,
+  ogImage: ogImageSchema,
+  ogType: ogTypeSchema,
+
+  // Social Media - Twitter Card (Batch 4)
+  twitterCard: twitterCardSchema,
+  twitterTitle: twitterTitleSchema,
+  twitterDescription: twitterDescriptionSchema,
+  twitterImage: twitterImageSchema,
+
+  // Schema.org (Batch 4)
+  schemaType: schemaTypeSchema,
+
+  // Template Metadata (Batch 4)
+  metadata: z.record(z.string(), z.unknown()).optional().nullable()
 })
 
 export type PageFormData = z.infer<typeof pageFormSchema>
@@ -272,16 +375,37 @@ export type PageFormData = z.infer<typeof pageFormSchema>
 export const pageFormDefaultValues: PageFormData = {
   ...coreFieldsDefaultValues,
   content: '',
+
+  // Basic SEO
   metaTitle: null,
+  metaDescription: null,
   metaKeywords: null,
-  ogImage: null,
   focusKeyword: null,
+
+  // Advanced SEO
+  canonicalUrl: null,
   metaRobots: null,
   sitemapPriority: null,
   sitemapChangefreq: null,
-  canonicalUrl: null,
   redirectUrl: null,
   redirectType: null,
+
+  // Social Media - Open Graph
+  ogTitle: null,
+  ogDescription: null,
+  ogImage: null,
+  ogType: null,
+
+  // Social Media - Twitter Card
+  twitterCard: null,
+  twitterTitle: null,
+  twitterDescription: null,
+  twitterImage: null,
+
+  // Schema.org
+  schemaType: null,
+
+  // Template Metadata
   metadata: null
 }
 

@@ -84,7 +84,7 @@ export const createPageSchema = z.object({
   redirectType: redirectTypeSchema,
 
   // Optional metadata (JSONB)
-  metadata: z.record(z.any()).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 
   // Optional status
   status: statusSchema.optional()
@@ -123,7 +123,7 @@ export const updatePageSchema = z.object({
   redirectUrl: z.string().url('Invalid redirect URL').optional().nullable(),
   redirectType: redirectTypeSchema,
 
-  metadata: z.record(z.any()).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
   status: statusSchema.optional()
 })
 

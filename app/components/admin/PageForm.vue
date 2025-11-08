@@ -2,13 +2,14 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
-import { contentFormSchema, contentFormDefaultValues, type ContentFormData } from '~/schemas/admin/page-form.schema'
+import { consola } from 'consola'
+import { pageFormSchema, pageFormDefaultValues, type PageFormData } from '~/schemas/admin/page-form.schema'
 
 interface Props {
   /**
    * Initial form data (for edit mode)
    */
-  initialData?: Partial<ContentFormData>
+  initialData?: Partial<PageFormData>
 
   /**
    * Whether the form is in edit mode
@@ -30,7 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'submit': [data: ContentFormData]
+  'submit': [data: PageFormData]
   'cancel': []
 }>()
 
@@ -39,8 +40,8 @@ const emit = defineEmits<{
 // =====================================================
 
 const { values, errors, defineField, handleSubmit, setFieldValue } = useForm({
-  validationSchema: toTypedSchema(contentFormSchema),
-  initialValues: props.initialData || contentFormDefaultValues
+  validationSchema: toTypedSchema(pageFormSchema),
+  initialValues: props.initialData || pageFormDefaultValues
 })
 
 // Define form fields with VeeValidate
@@ -51,6 +52,23 @@ const [template, templateAttrs] = defineField('template')
 const [status, statusAttrs] = defineField('status')
 const [description, descriptionAttrs] = defineField('description')
 const [content, contentAttrs] = defineField('content')
+const [metadata, metadataAttrs] = defineField('metadata')
+
+// =====================================================
+// METADATA UPDATE HANDLER
+// =====================================================
+
+function handleMetadataUpdate(val: Record<string, any>) {
+  if (import.meta.client && import.meta.dev) {
+    consola.info('[PageForm] Received metadata update:', {
+      val,
+      valType: typeof val,
+      isPlainObject: Object.prototype.toString.call(val) === '[object Object]',
+      currentMetadata: values.metadata
+    })
+  }
+  setFieldValue('metadata', val)
+}
 
 // =====================================================
 // AUTO-GENERATE SLUG FROM TITLE
@@ -285,7 +303,7 @@ function onCancel() {
     <!-- Content Field (TipTap Editor) -->
     <div>
       <label for="content" class="block text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
-        Content
+        Content <span class="text-red-500">*</span>
       </label>
       <TipTapEditor
         v-model="content"
@@ -299,6 +317,32 @@ function onCancel() {
       <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
         The main content of your page (supports rich text formatting)
       </p>
+    </div>
+
+    <!-- Template Metadata Section -->
+    <div v-if="template" class="border-t border-neutral-200 dark:border-neutral-700 pt-6">
+      <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-4">
+        Template Settings
+      </h3>
+      <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+        Configure template-specific options for the {{ template }} template
+      </p>
+      <TemplateMetadataFields
+        :template="template"
+        :metadata="values.metadata"
+        @update:metadata="handleMetadataUpdate"
+        :disabled="isSubmitting"
+      />
+    </div>
+
+    <!-- SEO Settings Section -->
+    <div class="border-t border-neutral-200 dark:border-neutral-700 pt-6">
+      <SeoFieldsSection
+        :values="values"
+        :errors="errors"
+        @update:field="setFieldValue"
+        :disabled="isSubmitting"
+      />
     </div>
 
     <!-- Form Actions -->
