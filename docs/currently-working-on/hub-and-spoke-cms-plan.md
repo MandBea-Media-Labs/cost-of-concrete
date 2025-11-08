@@ -2,7 +2,7 @@
 
 **Project:** Cost of Concrete - Dynamic Page Management System
 **Started:** 2025-11-08
-**Status:** ✅ Phase 1, 1.5, 2 & 3 Complete - 🔄 Phase 4 In Progress (Batches 1, 2 & 3 Complete)
+**Status:** ✅ Phase 1, 1.5, 2 & 3 Complete - 🔄 Phase 4 In Progress (Batches 1, 2, 3 & 4 Complete)
 
 ---
 
@@ -764,13 +764,141 @@ class PageService {
 
 ---
 
-#### 🔜 Batch 4: Spoke & Sub-Spoke Templates (PENDING)
+#### ✅ Batch 4: Spoke & Sub-Spoke Templates (COMPLETE)
+
+**Completed:** 2025-11-08
 
 **Tasks:**
-- [ ] Create `app/components/templates/SpokeTemplate.vue`
-- [ ] Create `app/components/templates/SubSpokeTemplate.vue`
-- [ ] Test Spoke template rendering
-- [ ] Test Sub-Spoke template rendering
+- [x] Create `app/components/templates/SpokeTemplate.vue`
+- [x] Create `app/components/templates/SubSpokeTemplate.vue`
+- [x] Update `[...slug].vue` to use new templates
+- [x] Test Spoke template rendering
+- [x] Test Sub-Spoke template rendering
+- [x] Verify SEO meta tags on all templates
+- [x] Verify Schema.org structured data
+- [x] Verify breadcrumbs on all templates
+
+**What Was Built:**
+
+1. **SpokeTemplate.vue Component** (216 lines)
+   - Reusable template for depth-1 spoke pages
+   - Configurable sidebar position (left or right)
+   - Sidebar navigation auto-generated from child pages
+   - Topic cards grid for children (configurable 2, 3, or 4 columns)
+   - Eyebrow badge from metadata category
+   - Markdown content rendering with useMarkdown
+   - Breadcrumbs integration
+   - Optional CTA section from metadata
+   - Optional sidebar (can be hidden via metadata)
+   - Optional child list (can be hidden via metadata)
+   - Grid or list layout options
+   - Full responsive design with dark mode support
+
+2. **SubSpokeTemplate.vue Component** (165 lines)
+   - Reusable template for depth-2 sub-spoke pages
+   - Centered content layout (max-width 4xl) for better readability
+   - No sidebar (simpler layout focused on content)
+   - Topic cards grid for child pages (defaults to 2 columns)
+   - "Related Articles" heading for child pages
+   - Eyebrow badge from metadata category
+   - Markdown content rendering with useMarkdown
+   - Breadcrumbs integration
+   - Optional CTA section from metadata
+   - Optional child list (can be hidden via metadata)
+   - Full responsive design with dark mode support
+
+3. **Updated `[...slug].vue` Catch-All Route** (141 lines total)
+   - Imported SpokeTemplate and SubSpokeTemplate components
+   - Updated template switch to use new templates
+   - Removed fallback comments for spoke and sub-spoke
+   - Now properly routes:
+     - depth 0 → HubTemplate
+     - depth 1 → SpokeTemplate
+     - depth 2 → SubSpokeTemplate
+     - depth 3+ → DefaultTemplate (until ArticleTemplate is created)
+
+**Files Created:**
+- `app/components/templates/SpokeTemplate.vue` (216 lines)
+- `app/components/templates/SubSpokeTemplate.vue` (165 lines)
+
+**Files Modified:**
+- `app/pages/[...slug].vue` (141 lines total, added 2 imports and updated switch statement)
+
+**Testing Completed:**
+
+All 4 pages tested with Playwright DOM inspection:
+
+1. **Hub Template** (`/concrete-basics` - depth 0)
+   - ✅ HubTemplate rendering correctly
+   - ✅ Sidebar navigation with "Topics" section
+   - ✅ Topic cards grid displaying 1 child
+   - ✅ Eyebrow badge: "Concrete Guide"
+   - ✅ Markdown content rendered
+   - ✅ SEO: Title, description, canonical, OG tags, Twitter cards
+   - ✅ Schema.org: WebSite + WebPage schemas
+   - ✅ Breadcrumbs: Home only (depth 0)
+
+2. **Spoke Template** (`/concrete-basics/types-of-concrete` - depth 1)
+   - ✅ SpokeTemplate rendering correctly
+   - ✅ Sidebar navigation on LEFT side with "Topics" section
+   - ✅ Topic cards grid displaying 1 child
+   - ✅ Markdown content rendered
+   - ✅ Updated date: "Last updated: November 8, 2025"
+   - ✅ Layout: Sidebar (1/4) + Content (3/4) grid
+   - ✅ SEO: All meta tags present and correct
+   - ✅ Schema.org: WebSite + WebPage schemas
+   - ✅ Breadcrumbs: Home link
+
+3. **Sub-Spoke Template** (`/concrete-basics/types-of-concrete/decorative-concrete` - depth 2)
+   - ✅ SubSpokeTemplate rendering correctly
+   - ✅ NO sidebar (correct for Sub-Spoke)
+   - ✅ Centered content layout (max-width 4xl)
+   - ✅ Topic cards grid with "Related Articles" heading
+   - ✅ Markdown content rendered
+   - ✅ Updated date: "Last updated: November 8, 2025"
+   - ✅ SEO: All meta tags present and correct
+   - ✅ Schema.org: WebSite + WebPage schemas
+   - ✅ Breadcrumbs: Home link
+
+4. **Article Template** (`/concrete-basics/types-of-concrete/decorative-concrete/stamped-concrete-guide` - depth 3)
+   - ✅ DefaultTemplate rendering correctly (fallback as expected)
+   - ✅ Full breadcrumb trail with 4 parent links
+   - ✅ Markdown content rendered
+   - ✅ Published date: "Published November 8, 2025"
+   - ✅ SEO: All meta tags present and correct
+   - ✅ Schema.org: WebSite + WebPage schemas
+   - ✅ Breadcrumbs: Full hierarchy visible
+
+**SEO Verification:**
+- ✅ All pages have proper title tags
+- ✅ All pages have meta descriptions
+- ✅ All pages have canonical URLs
+- ✅ All pages have Open Graph tags (type, title, description, url, site_name, locale, image)
+- ✅ All pages have Twitter Card tags (card, title, description, image:alt)
+- ✅ All pages have Schema.org WebSite + WebPage schemas with ReadAction
+- ✅ All pages have proper meta robots tags
+
+**UI/UX Verification:**
+- ✅ Breadcrumbs working on all pages
+- ✅ Sidebar navigation on Hub and Spoke templates
+- ✅ Topic cards grid on all templates with children
+- ✅ Markdown content rendering correctly
+- ✅ Dark mode styling working
+- ✅ Responsive design working
+- ✅ Updated/Published dates displaying
+
+**Template Differentiation:**
+- ✅ Hub: Sidebar + 3-column grid
+- ✅ Spoke: Sidebar (left) + content area
+- ✅ Sub-Spoke: Centered content, no sidebar, 2-column grid for children
+- ✅ Article: Simple centered content with full breadcrumb trail
+
+**User Confirmation:**
+- User tested all 4 URLs via Playwright
+- All templates rendering correctly
+- All SEO tags verified
+- All Schema.org markup verified
+- All breadcrumbs verified
 
 ---
 
@@ -856,9 +984,9 @@ class PageService {
 ### Current Phase: Phase 4 - Dynamic Routing
 
 **Started:** 2025-11-08
-**Status:** 🔄 In Progress - Batches 1, 2 & 3 Complete ✅
+**Status:** 🔄 In Progress - Batches 1, 2, 3 & 4 Complete ✅
 **Blocked By:** None
-**Next Steps:** Batch 4 - Create SpokeTemplate and SubSpokeTemplate components
+**Next Steps:** Batch 5 - Create ArticleTemplate component
 
 ---
 
@@ -968,11 +1096,42 @@ class PageService {
 - 📝 Bugs Fixed: Double-fetch error, useMarkdown usage, placeholder image routing
 - 📝 Test Results: Hub template (✅), Sidebar navigation (✅), Topic cards grid (✅), Breadcrumbs (✅), Markdown rendering (✅), SEO (✅), Dark mode (✅), Responsive (✅)
 
+**2025-11-08 - Phase 4 Batch 4 Complete (Spoke & Sub-Spoke Templates):**
+- ✅ Created SpokeTemplate.vue component (216 lines) - reusable template for depth-1 spoke pages
+- ✅ Implemented configurable sidebar position (left or right)
+- ✅ Implemented sidebar navigation auto-generated from child pages
+- ✅ Implemented topic cards grid for children (configurable 2, 3, or 4 columns)
+- ✅ Integrated eyebrow badge from metadata category
+- ✅ Integrated markdown content rendering with useMarkdown composable
+- ✅ Integrated breadcrumbs component
+- ✅ Added optional CTA section from metadata
+- ✅ Added optional sidebar (can be hidden via metadata)
+- ✅ Added optional child list (can be hidden via metadata)
+- ✅ Full responsive design with dark mode support
+- ✅ Created SubSpokeTemplate.vue component (165 lines) - reusable template for depth-2 sub-spoke pages
+- ✅ Implemented centered content layout (max-width 4xl) for better readability
+- ✅ No sidebar (simpler layout focused on content)
+- ✅ Implemented topic cards grid for children (defaults to 2 columns)
+- ✅ "Related Articles" heading for child pages
+- ✅ Integrated eyebrow badge, markdown rendering, breadcrumbs, optional CTA
+- ✅ Full responsive design with dark mode support
+- ✅ Updated `[...slug].vue` to import and use SpokeTemplate and SubSpokeTemplate
+- ✅ Updated template switch to properly route all 4 templates (Hub, Spoke, Sub-Spoke, Default)
+- ✅ Tested all 4 pages with Playwright DOM inspection
+- ✅ Verified SEO meta tags on all 4 pages (title, description, canonical, OG, Twitter)
+- ✅ Verified Schema.org structured data on all 4 pages (WebSite + WebPage schemas)
+- ✅ Verified breadcrumbs on all 4 pages (including full hierarchy on depth-3 page)
+- ✅ Verified UI/UX on all 4 pages (sidebar, topic cards, markdown, dark mode, responsive)
+- ✅ All tests passed - User tested all 4 URLs via Playwright
+- 📝 Files: 2 new files (SpokeTemplate.vue - 216 lines, SubSpokeTemplate.vue - 165 lines), 1 modified file ([...slug].vue - 141 lines)
+- 📝 Test Results: All 4 templates (✅), All SEO tags (✅), All Schema.org markup (✅), All breadcrumbs (✅), All UI/UX features (✅)
+- 📝 Template Differentiation: Hub (sidebar + 3-col grid), Spoke (sidebar left + content), Sub-Spoke (centered + 2-col grid), Article (simple centered)
+
 ---
 
 ## 📈 Overall Progress Summary
 
-### ✅ Completed (Phases 0-3 + Phase 4 Batches 1-3)
+### ✅ Completed (Phases 0-3 + Phase 4 Batches 1-4)
 
 **Database & Infrastructure:**
 - ✅ Complete database schema with 20+ columns
@@ -993,29 +1152,30 @@ class PageService {
 **Frontend (Routing & Templates):**
 - ✅ Catch-all route with dynamic template loading
 - ✅ 3 composables (useMarkdown, usePageSeo, usePage)
-- ✅ 2 templates (DefaultTemplate, HubTemplate)
+- ✅ 4 templates (DefaultTemplate, HubTemplate, SpokeTemplate, SubSpokeTemplate)
 - ✅ Reusable Breadcrumbs component with Schema.org support
 - ✅ Full SEO meta tag generation
 - ✅ Markdown rendering with marked library
 - ✅ Dark mode support throughout
 - ✅ Responsive design
+- ✅ Template differentiation: Hub (sidebar + 3-col grid), Spoke (sidebar + content), Sub-Spoke (centered + 2-col grid)
 
 **Testing & Validation:**
 - ✅ 4 test pages with full hierarchy (depth 0-3)
 - ✅ All database constraints verified
 - ✅ All API endpoints tested
-- ✅ All templates tested and rendering correctly
-- ✅ SEO verification (meta tags, Schema.org, breadcrumbs)
+- ✅ All 4 templates tested with Playwright DOM inspection
+- ✅ SEO verification on all templates (meta tags, Schema.org, breadcrumbs)
+- ✅ UI/UX verification on all templates (sidebar, topic cards, markdown, dark mode, responsive)
 
-### 🔄 In Progress (Phase 4 Batch 4)
+### 🔄 In Progress (Phase 4 Batch 5)
 
 **Next Tasks:**
-- Create SpokeTemplate.vue component (depth-1 pages)
-- Create SubSpokeTemplate.vue component (depth-2 pages)
-- Test both templates with existing test pages
-- Update catch-all route to use new templates
+- Create ArticleTemplate.vue component (depth-3+ pages)
+- Test ArticleTemplate with existing test page
+- Update catch-all route to use ArticleTemplate
 
-### 📋 Remaining (Phase 4 Batches 5-7)
+### 📋 Remaining (Phase 4 Batches 6-7)
 
 **Batch 5:** ArticleTemplate.vue (depth-3+ pages)
 **Batch 6:** Error handling & custom 404 page

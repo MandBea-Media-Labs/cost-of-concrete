@@ -4,6 +4,8 @@
 
 import DefaultTemplate from '~/components/templates/DefaultTemplate.vue'
 import HubTemplate from '~/components/templates/HubTemplate.vue'
+import SpokeTemplate from '~/components/templates/SpokeTemplate.vue'
+import SubSpokeTemplate from '~/components/templates/SubSpokeTemplate.vue'
 
 // Get route params
 const route = useRoute()
@@ -77,11 +79,9 @@ const templateComponent = computed(() => {
     case 'hub':
       return HubTemplate
     case 'spoke':
-      // return SpokeTemplate // Will be created in Batch 4
-      return DefaultTemplate // Fallback for now
+      return SpokeTemplate
     case 'sub-spoke':
-      // return SubSpokeTemplate // Will be created in Batch 4
-      return DefaultTemplate // Fallback for now
+      return SubSpokeTemplate
     case 'article':
       // return ArticleTemplate // Will be created in Batch 5
       return DefaultTemplate // Fallback for now
