@@ -9,7 +9,7 @@ import type { PageFormData } from '~/schemas/admin/page-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: false // Will use admin layout in Batch 7
+  layout: 'admin'
 })
 
 useHead({
@@ -164,32 +164,29 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              Create New Page
-            </h1>
-            <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              Add a new page to your website
-            </p>
-          </div>
-          <NuxtLink
-            to="/admin/pages"
-            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-          >
-            <Icon name="heroicons:arrow-left" class="h-4 w-4" />
-            Back to Pages
-          </NuxtLink>
+  <div class="p-6">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            Create New Page
+          </h1>
+          <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Add a new page to your website
+          </p>
         </div>
+        <NuxtLink
+          to="/admin/pages"
+          class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+        >
+          <Icon name="heroicons:arrow-left" class="h-4 w-4" />
+          Back to Pages
+        </NuxtLink>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Content -->
       <!-- Error Message -->
       <div
         v-if="errorMessage"
@@ -252,7 +249,6 @@ function handleCancel() {
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 

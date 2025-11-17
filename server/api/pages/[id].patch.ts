@@ -26,12 +26,8 @@ import { updatePageSchema } from '../../schemas/page.schemas'
 
 export default defineEventHandler(async (event) => {
   try {
-    // TODO: Re-enable authentication in Batch 7
-    // Temporarily disabled for testing edit functionality
-    // Steps to re-enable:
-    // 1. Uncomment the line below: const userId = await requireAuth(event)
-    // 2. Test with actual auth session
-    // const userId = await requireAuth(event)
+    // Require authentication for updates
+    const userId = await requireAuth(event)
 
     // Get page ID from route params
     const id = getRouterParam(event, 'id')

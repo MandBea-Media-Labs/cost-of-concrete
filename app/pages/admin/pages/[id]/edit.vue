@@ -9,7 +9,7 @@ import type { PageFormData } from '~/schemas/admin/page-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: false // Will use admin layout in Batch 7
+  layout: 'admin'
 })
 
 useHead({
@@ -497,7 +497,7 @@ async function handleUnarchive() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="p-6">
     <!-- Loading State -->
     <div v-if="isLoading" class="max-w-5xl mx-auto">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">

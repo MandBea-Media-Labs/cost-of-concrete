@@ -24,15 +24,11 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // TODO: Re-enable authentication in Batch 7
-    // Temporarily disabled for testing edit functionality
-    // Steps to re-enable:
-    // 1. Uncomment the lines below for auth check
-    // 2. Test with actual auth session
-    // const userId = await optionalAuth(event)
+    // Optional auth - allows both authenticated and anonymous access
+    const userId = await optionalAuth(event)
 
     if (import.meta.dev) {
-      consola.info(`GET /api/pages/${id} - Fetching page (auth temporarily disabled for testing)`)
+      consola.info(`GET /api/pages/${id} - Fetching page (userId: ${userId || 'anonymous'})`)
     }
 
     // Get Supabase client and create service

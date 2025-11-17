@@ -3,7 +3,7 @@ import type { AdminPagesFilters } from '~/composables/useAdminPages'
 
 // Page metadata
 definePageMeta({
-  layout: false // We'll add admin layout in Batch 7
+  layout: 'admin'
 })
 
 // Use admin pages composable
@@ -149,40 +149,37 @@ const handleCreatePage = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              Pages
-            </h1>
-            <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-              Manage your website pages
-            </p>
-          </div>
-
-          <Button
-            text="Create Page"
-            variant="primary"
-            size="md"
-            icon="heroicons:plus"
-            @click="handleCreatePage"
-          />
+  <div class="p-6">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            Pages
+          </h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+            Manage your website pages
+          </p>
         </div>
+
+        <Button
+          text="Create Page"
+          variant="primary"
+          size="md"
+          icon="heroicons:plus"
+          @click="handleCreatePage"
+        />
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Content -->
       <!-- Success Message -->
       <div
         v-if="showSuccessMessage"
-        class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+        class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
       >
         <div class="flex items-start gap-3">
-          <Icon name="heroicons:check-circle" class="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          <Icon name="heroicons:check-circle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
           <div class="flex-1">
             <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
               Success
@@ -193,7 +190,7 @@ const handleCreatePage = () => {
           </div>
           <button
             @click="showSuccessMessage = false"
-            class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
           >
             <Icon name="heroicons:x-mark" class="h-5 w-5" />
           </button>
@@ -201,8 +198,8 @@ const handleCreatePage = () => {
       </div>
 
       <!-- Filters Section -->
-      <div class="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="mb-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <!-- Search Input -->
           <div class="md:col-span-1">
             <TextInput
@@ -241,12 +238,12 @@ const handleCreatePage = () => {
       <!-- Error State -->
       <div
         v-if="error"
-        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6"
+        class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
       >
         <div class="flex items-start gap-3">
           <Icon
             name="heroicons:exclamation-triangle"
-            class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+            class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400"
           />
           <div>
             <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
@@ -260,7 +257,7 @@ const handleCreatePage = () => {
       </div>
 
       <!-- Page List -->
-      <div class="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+      <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
         <AdminPageList
           :pages="pages"
           :loading="pending"
@@ -285,15 +282,14 @@ const handleCreatePage = () => {
         />
       </div>
 
-      <!-- Results Summary -->
-      <div
-        v-if="!pending && pages.length > 0"
-        class="mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400"
-      >
-        Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
-        {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
-        {{ pagination.total }} pages
-      </div>
+    <!-- Results Summary -->
+    <div
+      v-if="!pending && pages.length > 0"
+      class="mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400"
+    >
+      Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
+      {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
+      {{ pagination.total }} pages
     </div>
 
     <!-- Delete Confirmation Dialog -->

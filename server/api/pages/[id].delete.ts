@@ -17,9 +17,8 @@ import { PageService } from '../../services/PageService'
 
 export default defineEventHandler(async (event) => {
   try {
-    // TODO: Re-enable authentication in Batch 7
-    // const userId = await requireAuth(event)
-    const userId = 'test-user-id' // Temporary for testing
+    // Require authentication for deletes
+    const userId = await requireAuth(event)
 
     // Get page ID from route params
     const id = getRouterParam(event, 'id')
