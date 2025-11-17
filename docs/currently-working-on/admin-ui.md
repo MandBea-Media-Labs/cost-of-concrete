@@ -2,7 +2,7 @@
 
 **Project:** Cost of Concrete - Admin Interface for Page Management
 **Started:** 2025-11-08
-**Status:** ✅ Batch 6A Complete - Edit Page Form Fully Tested and Working - Ready for Batch 6B
+**Status:** ✅ Batch 6B Complete - Archive, Delete, and Unarchive Functionality Fully Tested and Working - Ready for Batch 7
 **Last Updated:** 2025-11-17
 
 ---
@@ -83,14 +83,46 @@
 - Edit button in AdminPageList already wired to edit route
 - **Authentication Temporarily Disabled**: GET and PATCH endpoints have auth checks commented out for testing (will re-enable in Batch 7)
 
+✅ **Batch 6B: Archive, Delete & Unarchive Functionality** - COMPLETE (2025-11-17)
+- Updated `/admin/pages/[id]/edit.vue` route (691 lines) with archive/delete/unarchive functionality
+- **Temporarily Disabled Auth**: DELETE endpoint auth check commented out for testing (will re-enable in Batch 7)
+- Implemented smart button logic based on page state:
+  - Archive button shows for non-archived pages WITH children (cascade archive)
+  - Delete button shows for non-archived pages WITHOUT children (soft delete)
+  - Unarchive button shows for archived pages (restore to draft status)
+- Added `fetchChildrenCount()` function using GET /api/pages/[id]/children endpoint
+- Implemented three confirmation dialogs:
+  - Archive confirmation (shows children count)
+  - Delete confirmation (permanent action warning)
+  - Unarchive confirmation (restore to draft)
+- Archive functionality:
+  - Uses PATCH endpoint with `status: 'archived'`
+  - Cascades to all descendants automatically
+  - Success message includes children count
+- Delete functionality:
+  - Uses DELETE endpoint for soft delete (sets deleted_at timestamp)
+  - Only available for pages without children
+  - Permanent action with confirmation
+- Unarchive functionality:
+  - Uses PATCH endpoint with `status: 'draft'`
+  - Restores page from archive
+  - Success message confirms restoration
+- **Testing Complete**: Manual testing via Playwright MCP server (all tests passed)
+  - Archive functionality verified (page with 1 child)
+  - Unarchive functionality verified (restored to draft status)
+  - Delete functionality verified (page without children)
+  - Smart button logic working correctly
+  - All confirmation dialogs working correctly
+  - Success redirects and messages working correctly
+
 ### In Progress
 
-🔜 **Batch 6B: Archive & Delete Functionality** - NOT STARTED
+🔜 **Batch 7: Admin Layout & Navigation** - NOT STARTED
 - Awaiting implementation
 
 ### Statistics
 
-- **Files Created:** 15 (+2 from Batch 6A)
+- **Files Created:** 15 (no new files in Batch 6B)
   - app/components/admin/AdminPageList.vue (418 lines)
   - app/components/admin/PageForm.vue (444 lines - updated with edit mode support)
   - app/components/admin/TipTapEditor.vue (384 lines)
@@ -102,11 +134,11 @@
   - app/schemas/admin/page-form.schema.ts (412 lines)
   - app/pages/admin/pages/index.vue (305 lines - updated with success message)
   - app/pages/admin/pages/new.vue (217 lines - updated with API integration)
-  - **app/pages/admin/pages/[id]/edit.vue (335 lines - NEW in Batch 6A)**
+  - **app/pages/admin/pages/[id]/edit.vue (691 lines - NEW in Batch 6A, updated in Batch 6B with archive/delete/unarchive)**
   - server/api/pages/index.get.ts (updated with RLS policy)
   - docs/currently-working-on/batch-5-testing-procedures.md (417 lines - comprehensive testing guide)
   - **tests/batch-6a-edit-page.spec.ts (277 lines - NEW in Batch 6A, not actively used)**
-- **Files Modified:** 17 (+3 from Batch 6A)
+- **Files Modified:** 18 (+1 from Batch 6B)
   - app/components/admin/PageForm.vue (added edit mode support, change detection, inline warnings)
   - app/components/admin/SeoFieldsSection.vue (refactored twice: first to use TextInput/FilterSelect, then completely rewritten for prop-based architecture)
   - app/components/ui/form/TextInput.vue (updated to accept null values)
@@ -118,6 +150,7 @@
   - server/api/pages/index.post.ts (updated to accept all SEO fields)
   - **server/api/pages/[id].get.ts (temporarily disabled auth for testing)**
   - **server/api/pages/[id].patch.ts (temporarily disabled auth for testing)**
+  - **server/api/pages/[id].delete.ts (temporarily disabled auth for testing in Batch 6B)**
   - server/schemas/page.schemas.ts (added 9 missing SEO fields)
   - server/services/PageService.ts (updated to transform SEO fields into metadata.seo structure)
   - supabase/migrations/temporarily_disable_rls_for_testing.sql (temporary RLS disable for testing)
@@ -125,7 +158,7 @@
   - docs/currently-working-on/batch-5-testing-procedures.md (updated with all test results)
   - package.json (dependencies added)
   - pnpm-lock.yaml (lockfile updated)
-- **Total Lines of Code:** ~6,100+ lines (+335 from Batch 6A edit page)
+- **Total Lines of Code:** ~6,450+ lines (+356 from Batch 6B archive/delete/unarchive functionality)
 - **Components Built:** 6 (AdminPageList, TextInput, PageForm, TipTapEditor, TemplateMetadataFields, SeoFieldsSection)
 - **Composables Built:** 2 (useAdminPages, useTemplateSchema)
 - **Schemas Built:** 1 (page-form.schema.ts with 35 validated fields)
@@ -133,7 +166,7 @@
 - **Dependencies Installed:** 4 (vee-validate, @vee-validate/zod, @tiptap/vue-3, @tiptap/starter-kit)
 - **Code Quality Refactors:** 5 (+2 from Batch 6A: PageForm edit mode enhancement, useFetch → $fetch fix)
 - **Linear Tickets Created:** 3 (BAM-22: Toast/Notification Component, BAM-23: Textarea/Checkbox/Number Input Components, BAM-24: JSON-LD Schema.org Rendering)
-- **Tests Completed:** 17 (7 manual tests in Batch 1-4, 5 automated tests in Batch 5, 5 manual tests in Batch 6A via Playwright MCP)
+- **Tests Completed:** 20 (7 manual tests in Batch 1-4, 5 automated tests in Batch 5, 5 manual tests in Batch 6A via Playwright MCP, 3 manual tests in Batch 6B via Playwright MCP)
 - **Test Pass Rate:** 100%
 
 ---
@@ -160,10 +193,12 @@
 Build a simple, user-friendly admin interface for managing pages with:
 - ✅ **Page List View** - View all pages with filtering, search, and pagination
 - ✅ **Create Page Form** - Create new pages with all fields (core, content, metadata, SEO)
-- ✅ **Edit Page Form** - Edit existing pages
-- ✅ **Delete Functionality** - Delete pages with confirmation
+- ✅ **Edit Page Form** - Edit existing pages with change detection and warnings
+- ✅ **Archive Functionality** - Archive pages with children (cascade archive)
+- ✅ **Delete Functionality** - Delete pages without children (soft delete)
+- ✅ **Unarchive Functionality** - Restore archived pages to draft status
 - ✅ **Validation** - Client-side and server-side validation
-- ✅ **Admin Layout** - Collapsible sidebar navigation
+- 🔜 **Admin Layout** - Collapsible sidebar navigation (Batch 7)
 
 ### Key Features
 

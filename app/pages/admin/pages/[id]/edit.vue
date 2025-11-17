@@ -29,6 +29,20 @@ const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
 const initialFormData = ref<Partial<PageFormData> | null>(null)
+const currentPageStatus = ref<string>('draft')
+const childrenCount = ref<number>(0)
+const showArchiveDialog = ref(false)
+const showDeleteDialog = ref(false)
+const showUnarchiveDialog = ref(false)
+const isArchiving = ref(false)
+const isDeleting = ref(false)
+
+// Smart button logic
+const hasChildren = computed(() => childrenCount.value > 0)
+const isArchived = computed(() => currentPageStatus.value === 'archived')
+const showArchiveButton = computed(() => !isArchived.value && hasChildren.value)
+const showDeleteButton = computed(() => !isArchived.value && !hasChildren.value)
+const showUnarchiveButton = computed(() => isArchived.value)
 
 // =====================================================
 // FETCH PAGE DATA
@@ -64,8 +78,14 @@ async function fetchPageData() {
       consola.success('📥 Page data fetched:', page.title)
     }
 
+    // Store current page status for smart button logic
+    currentPageStatus.value = page.status
+
     // Map API response to form data structure
     initialFormData.value = mapApiResponseToFormData(page)
+
+    // Fetch children count for smart button logic
+    await fetchChildrenCount()
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Error fetching page:', err)
@@ -73,6 +93,26 @@ async function fetchPageData() {
     errorMessage.value = err instanceof Error ? err.message : 'Failed to load page'
   } finally {
     isLoading.value = false
+  }
+}
+
+/**
+ * Fetch children count to determine which button to show
+ */
+async function fetchChildrenCount() {
+  try {
+    const response = await $fetch(`/api/pages/${pageId.value}/children`)
+    const data = (response as any).data ?? response
+    childrenCount.value = Array.isArray(data) ? data.length : (response as any).total ?? 0
+
+    if (import.meta.dev) {
+      consola.info(`📊 Children count: ${childrenCount.value}`)
+    }
+  } catch (err) {
+    if (import.meta.dev) {
+      consola.warn('Failed to fetch children count:', err)
+    }
+    childrenCount.value = 0
   }
 }
 
@@ -271,6 +311,189 @@ async function handleSubmit(formData: PageFormData) {
 function handleCancel() {
   router.push('/admin/pages')
 }
+
+// =====================================================
+// ARCHIVE / DELETE / UNARCHIVE HANDLERS
+// =====================================================
+
+/**
+ * Open archive confirmation dialog
+ */
+function openArchiveDialog() {
+  showArchiveDialog.value = true
+}
+
+/**
+ * Open delete confirmation dialog
+ */
+function openDeleteDialog() {
+  showDeleteDialog.value = true
+}
+
+/**
+ * Open unarchive confirmation dialog
+ */
+function openUnarchiveDialog() {
+  showUnarchiveDialog.value = true
+}
+
+/**
+ * Handle archive action (cascade to descendants)
+ */
+async function handleArchive() {
+  try {
+    isArchiving.value = true
+    errorMessage.value = null
+
+    if (import.meta.dev) {
+      consola.info(`🗄️ Archiving page: ${pageId.value}`)
+    }
+
+    // Use PATCH endpoint to set status to 'archived'
+    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
+      method: 'PATCH',
+      body: { status: 'archived' }
+    })
+
+    if (error.value) {
+      if (import.meta.dev) {
+        consola.error('❌ Archive error:', error.value)
+      }
+      errorMessage.value = error.value.message || 'Failed to archive page'
+      showArchiveDialog.value = false
+      return
+    }
+
+    if (!data.value?.success) {
+      errorMessage.value = 'Failed to archive page. Please try again.'
+      showArchiveDialog.value = false
+      return
+    }
+
+    if (import.meta.dev) {
+      consola.success('✅ Page archived successfully!')
+    }
+
+    // Redirect to page list with success message
+    router.push({
+      path: '/admin/pages',
+      query: { success: `Page archived successfully! ${childrenCount.value > 0 ? `${childrenCount.value} child page(s) also archived.` : ''}` }
+    })
+  } catch (err) {
+    if (import.meta.dev) {
+      consola.error('❌ Unexpected archive error:', err)
+    }
+    errorMessage.value = 'An unexpected error occurred while archiving.'
+    showArchiveDialog.value = false
+  } finally {
+    isArchiving.value = false
+  }
+}
+
+/**
+ * Handle delete action (soft delete)
+ */
+async function handleDelete() {
+  try {
+    isDeleting.value = true
+    errorMessage.value = null
+
+    if (import.meta.dev) {
+      consola.info(`🗑️ Deleting page: ${pageId.value}`)
+    }
+
+    // Use DELETE endpoint for soft delete
+    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
+      method: 'DELETE'
+    })
+
+    if (error.value) {
+      if (import.meta.dev) {
+        consola.error('❌ Delete error:', error.value)
+      }
+      errorMessage.value = error.value.message || 'Failed to delete page'
+      showDeleteDialog.value = false
+      return
+    }
+
+    if (!data.value?.success) {
+      errorMessage.value = 'Failed to delete page. Please try again.'
+      showDeleteDialog.value = false
+      return
+    }
+
+    if (import.meta.dev) {
+      consola.success('✅ Page deleted successfully!')
+    }
+
+    // Redirect to page list with success message
+    router.push({
+      path: '/admin/pages',
+      query: { success: 'Page deleted successfully!' }
+    })
+  } catch (err) {
+    if (import.meta.dev) {
+      consola.error('❌ Unexpected delete error:', err)
+    }
+    errorMessage.value = 'An unexpected error occurred while deleting.'
+    showDeleteDialog.value = false
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+/**
+ * Handle unarchive action
+ */
+async function handleUnarchive() {
+  try {
+    isArchiving.value = true
+    errorMessage.value = null
+
+    if (import.meta.dev) {
+      consola.info(`📂 Unarchiving page: ${pageId.value}`)
+    }
+
+    // Use PATCH endpoint to set status to 'draft'
+    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
+      method: 'PATCH',
+      body: { status: 'draft' }
+    })
+
+    if (error.value) {
+      if (import.meta.dev) {
+        consola.error('❌ Unarchive error:', error.value)
+      }
+      errorMessage.value = error.value.message || 'Failed to unarchive page'
+      showUnarchiveDialog.value = false
+      return
+    }
+
+    if (!data.value?.success) {
+      errorMessage.value = 'Failed to unarchive page. Please try again.'
+      showUnarchiveDialog.value = false
+      return
+    }
+
+    if (import.meta.dev) {
+      consola.success('✅ Page unarchived successfully!')
+    }
+
+    // Redirect to page list with success message
+    router.push({
+      path: '/admin/pages',
+      query: { success: 'Page unarchived successfully!' }
+    })
+  } catch (err) {
+    if (import.meta.dev) {
+      consola.error('❌ Unexpected unarchive error:', err)
+    }
+    errorMessage.value = 'An unexpected error occurred while unarchiving.'
+    showUnarchiveDialog.value = false
+  } finally {
+    isArchiving.value = false
+  }
+}
 </script>
 
 <template>
@@ -328,6 +551,141 @@ function handleCancel() {
         @submit="handleSubmit"
         @cancel="handleCancel"
       />
+
+      <!-- Archive / Delete / Unarchive Section -->
+      <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Danger Zone</h2>
+        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <!-- Archive Button (for pages with children) -->
+          <div v-if="showArchiveButton" class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Archive this page</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                This page has {{ childrenCount }} child page(s). Archiving will also archive all descendants.
+              </p>
+            </div>
+            <Button
+              text="Archive Page"
+              variant="danger"
+              @click="openArchiveDialog"
+            />
+          </div>
+
+          <!-- Delete Button (for pages without children) -->
+          <div v-if="showDeleteButton" class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete this page</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Permanently delete this page. This action cannot be undone.
+              </p>
+            </div>
+            <Button
+              text="Delete Page"
+              variant="danger"
+              @click="openDeleteDialog"
+            />
+          </div>
+
+          <!-- Unarchive Button (for archived pages) -->
+          <div v-if="showUnarchiveButton" class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Unarchive this page</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Restore this page from the archive and set it back to draft status.
+              </p>
+            </div>
+            <Button
+              text="Unarchive Page"
+              variant="primary"
+              @click="openUnarchiveDialog"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Archive Confirmation Dialog -->
+      <div
+        v-if="showArchiveDialog"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        @click.self="showArchiveDialog = false"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Archive Page?</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Are you sure you want to archive this page? This will also archive {{ childrenCount }} child page(s).
+          </p>
+          <div class="flex justify-end gap-3">
+            <Button
+              text="Cancel"
+              variant="secondary"
+              @click="showArchiveDialog = false"
+              :disabled="isArchiving"
+            />
+            <Button
+              text="Archive"
+              variant="danger"
+              @click="handleArchive"
+              :disabled="isArchiving"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Dialog -->
+      <div
+        v-if="showDeleteDialog"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        @click.self="showDeleteDialog = false"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Page?</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Are you sure you want to delete this page? This action cannot be undone.
+          </p>
+          <div class="flex justify-end gap-3">
+            <Button
+              text="Cancel"
+              variant="secondary"
+              @click="showDeleteDialog = false"
+              :disabled="isDeleting"
+            />
+            <Button
+              text="Delete"
+              variant="danger"
+              @click="handleDelete"
+              :disabled="isDeleting"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Unarchive Confirmation Dialog -->
+      <div
+        v-if="showUnarchiveDialog"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        @click.self="showUnarchiveDialog = false"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Unarchive Page?</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Are you sure you want to unarchive this page? It will be restored to draft status.
+          </p>
+          <div class="flex justify-end gap-3">
+            <Button
+              text="Cancel"
+              variant="secondary"
+              @click="showUnarchiveDialog = false"
+              :disabled="isArchiving"
+            />
+            <Button
+              text="Unarchive"
+              variant="primary"
+              @click="handleUnarchive"
+              :disabled="isArchiving"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
