@@ -83,14 +83,18 @@ export const createPageSchema = z.object({
   // Open Graph fields
   ogTitle: z.string().max(60, 'OG title must be 60 characters or less').optional().nullable(),
   ogDescription: z.string().max(160, 'OG description must be 160 characters or less').optional().nullable(),
-  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
+  ogImage: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid OG image URL'
+  }).optional().nullable(),
   ogType: z.string().optional().nullable(),
 
   // Twitter Card fields
   twitterCard: z.enum(['summary', 'summary_large_image', 'app', 'player']).optional().nullable(),
   twitterTitle: z.string().max(60, 'Twitter title must be 60 characters or less').optional().nullable(),
   twitterDescription: z.string().max(160, 'Twitter description must be 160 characters or less').optional().nullable(),
-  twitterImage: z.string().url('Invalid Twitter image URL').optional().nullable(),
+  twitterImage: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid Twitter image URL'
+  }).optional().nullable(),
 
   // Schema.org fields
   schemaType: z.string().optional().nullable(),
@@ -100,7 +104,9 @@ export const createPageSchema = z.object({
   sitemapPriority: z.number().min(0).max(1).optional().nullable(),
   sitemapChangefreq: sitemapChangefreqSchema,
   canonicalUrl: z.string().optional().nullable(),
-  redirectUrl: z.string().url('Invalid redirect URL').optional().nullable(),
+  redirectUrl: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid redirect URL'
+  }).optional().nullable(),
   redirectType: redirectTypeSchema,
 
   // Optional metadata (JSONB)
@@ -140,14 +146,18 @@ export const updatePageSchema = z.object({
   // Open Graph fields
   ogTitle: z.string().max(60, 'OG title must be 60 characters or less').optional().nullable(),
   ogDescription: z.string().max(160, 'OG description must be 160 characters or less').optional().nullable(),
-  ogImage: z.string().url('Invalid OG image URL').optional().nullable(),
+  ogImage: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid OG image URL'
+  }).optional().nullable(),
   ogType: z.string().optional().nullable(),
 
   // Twitter Card fields
   twitterCard: z.enum(['summary', 'summary_large_image', 'app', 'player']).optional().nullable(),
   twitterTitle: z.string().max(60, 'Twitter title must be 60 characters or less').optional().nullable(),
   twitterDescription: z.string().max(160, 'Twitter description must be 160 characters or less').optional().nullable(),
-  twitterImage: z.string().url('Invalid Twitter image URL').optional().nullable(),
+  twitterImage: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid Twitter image URL'
+  }).optional().nullable(),
 
   // Schema.org fields
   schemaType: z.string().optional().nullable(),
@@ -157,7 +167,9 @@ export const updatePageSchema = z.object({
   sitemapPriority: z.number().min(0).max(1).optional().nullable(),
   sitemapChangefreq: sitemapChangefreqSchema,
   canonicalUrl: z.string().optional().nullable(),
-  redirectUrl: z.string().url('Invalid redirect URL').optional().nullable(),
+  redirectUrl: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Invalid redirect URL'
+  }).optional().nullable(),
   redirectType: redirectTypeSchema,
 
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),

@@ -252,12 +252,12 @@ function isMetaRobotSelected(value: string): boolean {
             :model-value="values.canonicalUrl"
             @update:model-value="(val) => updateField('canonicalUrl', val)"
             label="Canonical URL"
-            type="url"
+            type="text"
             :disabled="disabled"
             placeholder="https://example.com/canonical-page"
             size="lg"
           />
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Preferred URL for this page</p>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Preferred URL for this page (optional)</p>
           <p v-if="errors.canonicalUrl" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.canonicalUrl }}</p>
         </div>
 
@@ -387,12 +387,12 @@ function isMetaRobotSelected(value: string): boolean {
               :model-value="values.ogImage"
               @update:model-value="(val) => updateField('ogImage', val)"
               label="OG Image URL"
-              type="url"
+              type="text"
               :disabled="disabled"
               placeholder="https://example.com/image.jpg"
               size="lg"
             />
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Recommended: 1200x630px</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Recommended: 1200x630px (optional)</p>
             <p v-if="errors.ogImage" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.ogImage }}</p>
           </div>
 
@@ -468,12 +468,12 @@ function isMetaRobotSelected(value: string): boolean {
               :model-value="values.twitterImage"
               @update:model-value="(val) => updateField('twitterImage', val)"
               label="Twitter Image URL"
-              type="url"
+              type="text"
               :disabled="disabled"
               placeholder="https://example.com/image.jpg"
               size="lg"
             />
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Recommended: 1200x675px for summary_large_image</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Recommended: 1200x675px for summary_large_image (optional)</p>
             <p v-if="errors.twitterImage" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.twitterImage }}</p>
           </div>
         </div>

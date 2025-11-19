@@ -22,6 +22,7 @@ useHead({
 
 const router = useRouter()
 const route = useRoute()
+const toast = useToast()
 const pageId = computed(() => route.params.id as string)
 
 const isLoading = ref(true)
@@ -265,24 +266,33 @@ async function handleSubmit(formData: PageFormData) {
 
       if (statusCode === 400) {
         // Validation errors
-        errorMessage.value = 'Please check the form for errors'
-        // TODO: Map field-level errors if available
+        const validationMsg = 'Please check the form for errors'
+        errorMessage.value = validationMsg
+        toast.error('Validation errors', { message: validationMsg })
       } else if (statusCode === 409) {
         // Conflict (slug already exists)
-        errorMessage.value = error.value.message || 'A page with this slug already exists'
+        const conflictMsg = error.value.message || 'A page with this slug already exists'
+        errorMessage.value = conflictMsg
+        toast.error('Page already exists', { message: conflictMsg })
       } else if (statusCode === 401 || statusCode === 403) {
         // Auth errors
-        errorMessage.value = 'You do not have permission to update this page'
+        const authMsg = 'You do not have permission to update this page'
+        errorMessage.value = authMsg
+        toast.error('Permission denied', { message: authMsg })
       } else {
         // Generic error
-        errorMessage.value = error.value.message || 'Failed to update page. Please try again.'
+        const genericMsg = error.value.message || 'Failed to update page. Please try again.'
+        errorMessage.value = genericMsg
+        toast.error('Failed to update page', { message: genericMsg })
       }
 
       return
     }
 
     if (!data.value?.success) {
-      errorMessage.value = 'Failed to update page. Please try again.'
+      const failMsg = 'Failed to update page. Please try again.'
+      errorMessage.value = failMsg
+      toast.error('Update failed', { message: failMsg })
       return
     }
 
@@ -290,11 +300,9 @@ async function handleSubmit(formData: PageFormData) {
       consola.success('✅ Page updated successfully!')
     }
 
-    // Redirect to page list with success message
-    router.push({
-      path: '/admin/pages',
-      query: { success: 'Page updated successfully!' }
-    })
+    // Show success toast and redirect
+    toast.success('Page updated successfully!')
+    router.push('/admin/pages')
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Unexpected error:', err)
@@ -359,13 +367,17 @@ async function handleArchive() {
       if (import.meta.dev) {
         consola.error('❌ Archive error:', error.value)
       }
-      errorMessage.value = error.value.message || 'Failed to archive page'
+      const archiveErrorMsg = error.value.message || 'Failed to archive page'
+      errorMessage.value = archiveErrorMsg
+      toast.error('Archive failed', { message: archiveErrorMsg })
       showArchiveDialog.value = false
       return
     }
 
     if (!data.value?.success) {
-      errorMessage.value = 'Failed to archive page. Please try again.'
+      const archiveFailMsg = 'Failed to archive page. Please try again.'
+      errorMessage.value = archiveFailMsg
+      toast.error('Archive failed', { message: archiveFailMsg })
       showArchiveDialog.value = false
       return
     }
@@ -374,11 +386,12 @@ async function handleArchive() {
       consola.success('✅ Page archived successfully!')
     }
 
-    // Redirect to page list with success message
-    router.push({
-      path: '/admin/pages',
-      query: { success: `Page archived successfully! ${childrenCount.value > 0 ? `${childrenCount.value} child page(s) also archived.` : ''}` }
-    })
+    // Show success toast and redirect
+    const archiveMsg = childrenCount.value > 0
+      ? `Page archived successfully! ${childrenCount.value} child page(s) also archived.`
+      : 'Page archived successfully!'
+    toast.success('Page archived', { message: archiveMsg })
+    router.push('/admin/pages')
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Unexpected archive error:', err)
@@ -411,13 +424,17 @@ async function handleDelete() {
       if (import.meta.dev) {
         consola.error('❌ Delete error:', error.value)
       }
-      errorMessage.value = error.value.message || 'Failed to delete page'
+      const deleteErrorMsg = error.value.message || 'Failed to delete page'
+      errorMessage.value = deleteErrorMsg
+      toast.error('Delete failed', { message: deleteErrorMsg })
       showDeleteDialog.value = false
       return
     }
 
     if (!data.value?.success) {
-      errorMessage.value = 'Failed to delete page. Please try again.'
+      const deleteFailMsg = 'Failed to delete page. Please try again.'
+      errorMessage.value = deleteFailMsg
+      toast.error('Delete failed', { message: deleteFailMsg })
       showDeleteDialog.value = false
       return
     }
@@ -426,11 +443,9 @@ async function handleDelete() {
       consola.success('✅ Page deleted successfully!')
     }
 
-    // Redirect to page list with success message
-    router.push({
-      path: '/admin/pages',
-      query: { success: 'Page deleted successfully!' }
-    })
+    // Show success toast and redirect
+    toast.success('Page deleted successfully!')
+    router.push('/admin/pages')
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Unexpected delete error:', err)
@@ -464,13 +479,17 @@ async function handleUnarchive() {
       if (import.meta.dev) {
         consola.error('❌ Unarchive error:', error.value)
       }
-      errorMessage.value = error.value.message || 'Failed to unarchive page'
+      const unarchiveErrorMsg = error.value.message || 'Failed to restore page'
+      errorMessage.value = unarchiveErrorMsg
+      toast.error('Restore failed', { message: unarchiveErrorMsg })
       showUnarchiveDialog.value = false
       return
     }
 
     if (!data.value?.success) {
-      errorMessage.value = 'Failed to unarchive page. Please try again.'
+      const unarchiveFailMsg = 'Failed to restore page. Please try again.'
+      errorMessage.value = unarchiveFailMsg
+      toast.error('Restore failed', { message: unarchiveFailMsg })
       showUnarchiveDialog.value = false
       return
     }
@@ -479,11 +498,9 @@ async function handleUnarchive() {
       consola.success('✅ Page unarchived successfully!')
     }
 
-    // Redirect to page list with success message
-    router.push({
-      path: '/admin/pages',
-      query: { success: 'Page unarchived successfully!' }
-    })
+    // Show success toast and redirect
+    toast.success('Page restored successfully!')
+    router.push('/admin/pages')
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Unexpected unarchive error:', err)

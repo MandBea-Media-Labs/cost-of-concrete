@@ -21,6 +21,7 @@ useHead({
 // =====================================================
 
 const router = useRouter()
+const toast = useToast()
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
@@ -110,12 +111,9 @@ async function handleSubmit(formData: PageFormData) {
       consola.success('✅ Page created successfully:', response)
     }
 
-    // Redirect to page list with success indicator
-    // Note: Toast component will be added in future (see Linear ticket BAM-22)
-    router.push({
-      path: '/admin/pages',
-      query: { created: 'true' }
-    })
+    // Show success toast and redirect
+    toast.success('Page created successfully!')
+    router.push('/admin/pages')
   } catch (error: any) {
     if (import.meta.dev) {
       consola.error('❌ Error creating page:', error)
@@ -136,19 +134,26 @@ async function handleSubmit(formData: PageFormData) {
       }, {} as Record<string, string>)
 
       errorMessage.value = 'Please fix the validation errors below.'
+      toast.error('Validation errors', { message: 'Please fix the errors in the form below.' })
 
       if (import.meta.dev) {
         consola.warn('Validation errors:', fieldErrors.value)
       }
     } else if (statusCode === 409) {
       // Conflict error (e.g., slug already exists)
-      errorMessage.value = errorMsg || 'A page with this slug already exists under the selected parent.'
+      const conflictMsg = errorMsg || 'A page with this slug already exists under the selected parent.'
+      errorMessage.value = conflictMsg
+      toast.error('Page already exists', { message: conflictMsg })
     } else if (statusCode === 401 || statusCode === 403) {
       // Authentication/authorization error
-      errorMessage.value = 'You do not have permission to create pages. Please log in.'
+      const authMsg = 'You do not have permission to create pages. Please log in.'
+      errorMessage.value = authMsg
+      toast.error('Permission denied', { message: authMsg })
     } else {
       // Generic error
-      errorMessage.value = errorMsg || 'Failed to create page. Please try again.'
+      const genericMsg = errorMsg || 'Failed to create page. Please try again.'
+      errorMessage.value = genericMsg
+      toast.error('Failed to create page', { message: genericMsg })
     }
   } finally {
     isSubmitting.value = false

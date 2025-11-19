@@ -22,23 +22,21 @@ let testPageId: string
 let testPageSlug: string
 let testPageTitle: string
 
+const TEST_PAGE_PATH = '/concrete-basics'
+
 test.describe('Batch 6A: Edit Page Form', () => {
   test.beforeAll(async ({ request }) => {
-    // Fetch a page to edit from the API
-    const response = await request.get(`${BASE_URL}/api/pages`, {
-      params: {
-        limit: '1',
-        orderBy: 'created_at',
-        orderDirection: 'desc'
-      }
+    // Fetch a known published page via the public by-path API
+    const response = await request.get(`${BASE_URL}/api/pages/by-path`, {
+      params: { path: TEST_PAGE_PATH }
     })
 
     expect(response.ok()).toBeTruthy()
     const data = await response.json()
     expect(data.success).toBe(true)
-    expect(data.data.length).toBeGreaterThan(0)
+    expect(data.data).toBeTruthy()
 
-    const page = data.data[0]
+    const page = data.data
     testPageId = page.id
     testPageSlug = page.slug
     testPageTitle = page.title

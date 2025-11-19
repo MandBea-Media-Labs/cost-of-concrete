@@ -57,9 +57,10 @@ function updateField(fieldName: string, value: any) {
   emit('update:metadata', updated)
 }
 
-// Get field value
+// Get field value - return null instead of undefined for proper type compatibility
 function getFieldValue(fieldName: string) {
-  return props.metadata?.[fieldName]
+  const value = props.metadata?.[fieldName]
+  return value !== undefined ? value : null
 }
 </script>
 

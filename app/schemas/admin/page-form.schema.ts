@@ -99,7 +99,9 @@ export const metaKeywordsSchema = z
  */
 export const ogImageSchema = z
   .string()
-  .url('Must be a valid URL')
+  .refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Must be a valid URL'
+  })
   .optional()
   .nullable()
 
@@ -145,7 +147,9 @@ export const sitemapChangefreqSchema = z
  */
 export const canonicalUrlSchema = z
   .string()
-  .url('Must be a valid URL')
+  .refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Must be a valid URL'
+  })
   .optional()
   .nullable()
 
@@ -154,7 +158,9 @@ export const canonicalUrlSchema = z
  */
 export const redirectUrlSchema = z
   .string()
-  .url('Must be a valid URL')
+  .refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Must be a valid URL'
+  })
   .optional()
   .nullable()
 
@@ -162,7 +168,13 @@ export const redirectUrlSchema = z
  * Redirect type validation
  */
 export const redirectTypeSchema = z
-  .enum([301, 302, 307, 308])
+  .union([
+    z.literal(301),
+    z.literal(302),
+    z.literal(307),
+    z.literal(308),
+    z.null()
+  ])
   .optional()
   .nullable()
 
@@ -236,7 +248,9 @@ export const twitterDescriptionSchema = z
  */
 export const twitterImageSchema = z
   .string()
-  .url('Must be a valid URL')
+  .refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Must be a valid URL'
+  })
   .optional()
   .nullable()
 

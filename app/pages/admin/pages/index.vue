@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { consola } from 'consola'
 import type { AdminPagesFilters } from '~/composables/useAdminPages'
 
 // Page metadata
@@ -9,27 +10,8 @@ definePageMeta({
 // Use admin pages composable
 const { pages, pagination, pending, error, fetchPages, deletePage } = useAdminPages()
 
-// Success message state (from query params)
-const route = useRoute()
-const showSuccessMessage = ref(false)
-const successMessage = ref('')
-
-// Check for success query parameter
-onMounted(() => {
-  if (route.query.created === 'true') {
-    showSuccessMessage.value = true
-    successMessage.value = 'Page created successfully!'
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      showSuccessMessage.value = false
-    }, 5000)
-
-    // Remove query parameter from URL
-    const router = useRouter()
-    router.replace({ query: {} })
-  }
-})
+// Use toast notifications
+const toast = useToast()
 
 // Filter state
 const filters = ref<AdminPagesFilters>({
@@ -118,17 +100,21 @@ const confirmDelete = async () => {
   const success = await deletePage(pageToDelete.value)
 
   if (success) {
-    // Show success message (TODO: Add toast notification in future)
+    // Show success toast
+    toast.success('Page deleted successfully')
+
     if (import.meta.dev) {
-      console.log('Page deleted successfully')
+      consola.success('Page deleted successfully')
     }
 
     // Refresh page list
     await fetchPages(filters.value)
   } else {
-    // Show error message (TODO: Add toast notification in future)
+    // Show error toast
+    toast.error('Failed to delete page', { message: 'Please try again or contact support' })
+
     if (import.meta.dev) {
-      console.error('Failed to delete page')
+      consola.error('Failed to delete page')
     }
   }
 
@@ -173,30 +159,6 @@ const handleCreatePage = () => {
     </div>
 
     <!-- Content -->
-      <!-- Success Message -->
-      <div
-        v-if="showSuccessMessage"
-        class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
-      >
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:check-circle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
-              Success
-            </h3>
-            <p class="mt-1 text-sm text-green-700 dark:text-green-300">
-              {{ successMessage }}
-            </p>
-          </div>
-          <button
-            @click="showSuccessMessage = false"
-            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
-          >
-            <Icon name="heroicons:x-mark" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
       <!-- Filters Section -->
       <div class="mb-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">

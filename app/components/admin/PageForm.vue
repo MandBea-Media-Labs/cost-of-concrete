@@ -198,9 +198,21 @@ const statusOptions = [
 // FORM SUBMISSION
 // =====================================================
 
-const onSubmit = handleSubmit((formData) => {
-  emit('submit', formData)
-})
+const onSubmit = handleSubmit(
+  (formData) => {
+    // Success callback - validation passed
+    if (import.meta.dev) {
+      consola.success('Form validation passed, submitting...')
+    }
+    emit('submit', formData)
+  },
+  ({ errors: validationErrors }) => {
+    // Error callback - validation failed
+    if (import.meta.dev) {
+      consola.error('Form validation failed:', validationErrors)
+    }
+  }
+)
 
 function onCancel() {
   emit('cancel')

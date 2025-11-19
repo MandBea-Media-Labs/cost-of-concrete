@@ -134,6 +134,9 @@ const handleLogout = async () => {
         <slot />
       </main>
     </div>
+
+    <!-- Toast Notifications -->
+    <ToastContainer />
   </div>
 </template>
 
