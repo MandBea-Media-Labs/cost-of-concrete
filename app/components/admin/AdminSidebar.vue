@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Admin Sidebar Component
- * 
+ *
  * Collapsible sidebar navigation for admin panel.
  * Features:
  * - Desktop: Collapsible sidebar (full width / icon only)
@@ -36,6 +36,12 @@ const navigationItems = [
     name: 'Pages',
     href: '/admin/pages',
     icon: 'heroicons:document-text',
+    exact: false
+  },
+  {
+    name: 'Menus',
+    href: '/admin/menus',
+    icon: 'heroicons:bars-3',
     exact: false
   },
   {
