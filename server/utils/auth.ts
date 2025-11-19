@@ -123,7 +123,7 @@ export async function optionalAuth(event: H3Event): Promise<string | null> {
  * Get authenticated user and admin flag for server-side route guards
  *
  * Returns both the user ID (or null if unauthenticated) and the is_admin flag
- * from the user_profiles table. This is intentionally non-throwing so that
+ * from the account_profiles table. This is intentionally non-throwing so that
  * callers (like route middleware) can decide whether to redirect or throw.
  */
 export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: string | null; isAdmin: boolean | null }> {
@@ -139,13 +139,13 @@ export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: s
     }
 
     const { data, error: profileError } = await client
-      .from('user_profiles')
-      .select('is_admin')
+      .from('account_profiles')
+      .select('is_admin, account_type, metadata')
       .eq('id', user.id)
       .maybeSingle()
 
     if (profileError && import.meta.dev) {
-      consola.warn('getAuthUserAndIsAdmin: error fetching user_profiles row', profileError.message)
+      consola.warn('getAuthUserAndIsAdmin: error fetching account_profiles row', profileError.message)
     }
 
     const isAdmin = data ? !!data.is_admin : false

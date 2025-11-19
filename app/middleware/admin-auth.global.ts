@@ -131,13 +131,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (isAdminState.value === undefined) {
       try {
         const { data, error } = await supabase
-          .from('user_profiles')
-          .select('is_admin')
+          .from('account_profiles')
+          .select('is_admin, account_type, metadata')
           .eq('id', authUserState.value.id)
           .maybeSingle()
 
         if (error && import.meta.dev) {
-          consola.warn('Admin route guard (client): error fetching user_profiles row', error.message)
+          consola.warn('Admin route guard (client): error fetching account_profiles row', error.message)
         }
 
         // If there is no row or is_admin is false, treat as non-admin
