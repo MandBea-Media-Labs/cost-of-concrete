@@ -3,13 +3,21 @@
 // Features logo, quick links, social icons, and copyright section
 // Background: #00174c (dark navy blue)
 
-// Navigation links
-const quickLinks = [
-  { text: 'Home', to: '/' },
-  { text: 'Find a Contractor', to: '/' },
-  { text: 'About', to: '/' },
-  { text: 'Articles', to: '/' }
-]
+// Fetch footer menu dynamically
+const { fetchMenuBySlug } = useMenus()
+const { data: footerMenuData } = await useAsyncData('footer-menu', () =>
+  fetchMenuBySlug('footer-links')
+)
+
+// Transform menu data to quick links format
+const quickLinks = computed(() => {
+  if (!footerMenuData.value?.items) return []
+
+  return footerMenuData.value.items.map(item => ({
+    text: item.label,
+    to: item.page_id ? undefined : (item.custom_url || '/')
+  }))
+})
 
 // Social media links
 const socialLinks = [

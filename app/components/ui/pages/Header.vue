@@ -12,7 +12,34 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport
 } from 'reka-ui'
-import { navigationItems } from '~/mock-data'
+
+// Fetch header menu dynamically
+const { fetchMenuBySlug } = useMenus()
+const { data: headerMenuData } = await useAsyncData('header-menu', () =>
+  fetchMenuBySlug('main-nav')
+)
+
+// Transform menu data to match NavigationItem interface
+interface NavigationItem {
+  label: string
+  link?: string
+  description?: string
+  children?: NavigationItem[]
+}
+
+const navigationItems = computed<NavigationItem[]>(() => {
+  if (!headerMenuData.value?.items) return []
+
+  return headerMenuData.value.items.map(item => ({
+    label: item.label,
+    link: item.page_id ? undefined : (item.custom_url || undefined),
+    children: item.children?.length > 0 ? item.children.map(child => ({
+      label: child.label,
+      link: child.page_id ? undefined : (child.custom_url || undefined),
+      description: undefined // Menu items don't have descriptions in DB
+    })) : undefined
+  }))
+})
 
 // Color mode
 const colorMode = useColorMode()
