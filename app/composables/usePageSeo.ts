@@ -86,7 +86,7 @@ export function usePageSeo(page: Page) {
       script: [
         {
           type: 'application/ld+json',
-          children: JSON.stringify(schemaMetadata)
+          innerHTML: JSON.stringify(schemaMetadata)
         }
       ]
     })
