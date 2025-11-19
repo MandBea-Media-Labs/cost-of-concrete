@@ -1249,7 +1249,7 @@ const page = (response as any).data ?? response
 
 ### Deferred to Auth Phase
 
-- [ ] Auth middleware for `/admin/*` routes
+- [x] Auth middleware for `/admin/*` routes (implemented in Phase 6; see `docs/admin-ui/phase-6-auth-and-rls-overview.md`)
 - [ ] User roles (admin, editor, viewer)
 - [ ] RLS policy updates for role-based access
 - [ ] User profile in admin header

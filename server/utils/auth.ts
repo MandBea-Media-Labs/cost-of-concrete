@@ -119,3 +119,47 @@ export async function optionalAuth(event: H3Event): Promise<string | null> {
   }
 }
 
+/**
+ * Get authenticated user and admin flag for server-side route guards
+ *
+ * Returns both the user ID (or null if unauthenticated) and the is_admin flag
+ * from the user_profiles table. This is intentionally non-throwing so that
+ * callers (like route middleware) can decide whether to redirect or throw.
+ */
+export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: string | null; isAdmin: boolean | null }> {
+  try {
+    const client = await serverSupabaseClient(event)
+    const { data: { user }, error } = await client.auth.getUser()
+
+    if (error || !user) {
+      if (import.meta.dev) {
+        consola.warn('getAuthUserAndIsAdmin: no authenticated user', error?.message || 'No user')
+      }
+      return { userId: null, isAdmin: null }
+    }
+
+    const { data, error: profileError } = await client
+      .from('user_profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileError && import.meta.dev) {
+      consola.warn('getAuthUserAndIsAdmin: error fetching user_profiles row', profileError.message)
+    }
+
+    const isAdmin = data ? !!data.is_admin : false
+
+    if (import.meta.dev) {
+      consola.info('getAuthUserAndIsAdmin: resolved admin flag', { userId: user.id, isAdmin })
+    }
+
+    return { userId: user.id, isAdmin }
+  } catch (error) {
+    if (import.meta.dev) {
+      consola.error('getAuthUserAndIsAdmin: unexpected error', error)
+    }
+    return { userId: null, isAdmin: null }
+  }
+}
+
