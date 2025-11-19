@@ -1,7 +1,7 @@
 /**
  * GET /api/pages/[id]
  *
- * Get a specific page by ID.
+ * Get a specific page by ID (admin only).
  *
  * @param {string} id - Page UUID
  * @returns {Object} Page data
@@ -10,6 +10,7 @@
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
+import { requireAdmin } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -24,11 +25,11 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Optional auth - allows both authenticated and anonymous access
-    const userId = await optionalAuth(event)
+    // Require admin authentication - only admins can fetch arbitrary pages by ID
+    const userId = await requireAdmin(event)
 
     if (import.meta.dev) {
-      consola.info(`GET /api/pages/${id} - Fetching page (userId: ${userId || 'anonymous'})`)
+      consola.info(`GET /api/pages/${id} - Fetching page`, { userId })
     }
 
     // Get Supabase client and create service
@@ -50,20 +51,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // TODO: Re-enable this check in Batch 7
-    // Check if user can view this page
-    // Public users can only view published pages
-    // if (!userId && page.status !== 'published') {
-    //   if (import.meta.dev) {
-    //     consola.warn(`GET /api/pages/${id} - Unauthorized access to ${page.status} page`)
-    //   }
-    //
-    //   throw createError({
-    //     statusCode: 403,
-    //     statusMessage: 'Forbidden',
-    //     message: 'You do not have permission to view this page'
-    //   })
-    // }
 
     if (import.meta.dev) {
       consola.success(`GET /api/pages/${id} - Returning page: ${page.title}`)

@@ -2,7 +2,7 @@
  * DELETE /api/pages/[id]
  *
  * Soft delete a page.
- * Requires authentication.
+ * Requires admin authentication.
  *
  * Note: This performs a soft delete (sets deleted_at timestamp).
  * Child pages will be cascade deleted due to database constraints.
@@ -14,11 +14,12 @@
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
+import { requireAdmin } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Require authentication for deletes
-    const userId = await requireAuth(event)
+    // Require admin authentication for deletes
+    const userId = await requireAdmin(event)
 
     // Get page ID from route params
     const id = getRouterParam(event, 'id')

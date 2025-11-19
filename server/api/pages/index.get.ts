@@ -1,7 +1,7 @@
 /**
  * GET /api/pages
  *
- * List pages with optional filtering and pagination.
+ * List pages with optional filtering and pagination (admin only).
  *
  * Query Parameters:
  * - status: Filter by status (draft, published, archived)
@@ -21,14 +21,15 @@ import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
 import { listPagesQuerySchema } from '../../schemas/page.schemas'
+import { requireAdmin } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Optional authentication - public can view published pages, authenticated users can view all
-    const userId = await optionalAuth(event)
+    // Require admin authentication - only admins can list pages via this endpoint
+    const userId = await requireAdmin(event)
 
     if (import.meta.dev) {
-      consola.info('GET /api/pages - Listing pages', { userId: userId || 'anonymous' })
+      consola.info('GET /api/pages - Listing pages', { userId })
     }
 
     // Get and validate query parameters

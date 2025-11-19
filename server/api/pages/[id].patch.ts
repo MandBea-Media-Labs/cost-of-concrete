@@ -2,7 +2,7 @@
  * PATCH /api/pages/[id]
  *
  * Update an existing page.
- * Requires authentication.
+ * Requires admin authentication.
  *
  * @param {string} id - Page UUID
  *
@@ -23,11 +23,12 @@ import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
 import { updatePageSchema } from '../../schemas/page.schemas'
+import { requireAdmin } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Require authentication for updates
-    const userId = await requireAuth(event)
+    // Require admin authentication for updates
+    const userId = await requireAdmin(event)
 
     // Get page ID from route params
     const id = getRouterParam(event, 'id')
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (import.meta.dev) {
-      consola.info(`PATCH /api/pages/${id} - Updating page (auth temporarily disabled for testing)`)
+      consola.info(`PATCH /api/pages/${id} - Updating page`, { userId })
     }
 
     // Get and validate request body

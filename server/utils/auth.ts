@@ -163,3 +163,48 @@ export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: s
   }
 }
 
+
+
+/**
+ * Require admin access for an API endpoint
+ *
+ * Uses getAuthUserAndIsAdmin to ensure the user is authenticated and has
+ * admin privileges based on the account_profiles.is_admin flag.
+ *
+ * @param event - H3 event object
+ * @throws {Error} - 401 Unauthorized if not authenticated, 403 Forbidden if not admin
+ * @returns {Promise<string>} - User ID of the admin user
+ */
+export async function requireAdmin(event: H3Event): Promise<string> {
+  const { userId, isAdmin } = await getAuthUserAndIsAdmin(event)
+
+  if (!userId) {
+    if (import.meta.dev) {
+      consola.warn('requireAdmin: no authenticated user')
+    }
+
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: 'Authentication required. Please log in.'
+    })
+  }
+
+  if (!isAdmin) {
+    if (import.meta.dev) {
+      consola.warn('requireAdmin: user is not an admin', { userId })
+    }
+
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: 'Admin access required to perform this action.'
+    })
+  }
+
+  if (import.meta.dev) {
+    consola.success('requireAdmin: admin access granted', { userId })
+  }
+
+  return userId
+}

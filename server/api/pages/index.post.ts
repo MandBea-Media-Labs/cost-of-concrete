@@ -2,7 +2,7 @@
  * POST /api/pages
  *
  * Create a new page.
- * Requires authentication.
+ * Requires admin authentication.
  *
  * Request Body:
  * - title: Page title (required)
@@ -22,20 +22,15 @@ import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { PageService } from '../../services/PageService'
 import { createPageSchema } from '../../schemas/page.schemas'
+import { requireAdmin } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    // TODO: Re-enable authentication in Batch 7
-    // Temporarily disabled for testing form functionality
-    // Steps to re-enable:
-    // 1. Uncomment the line below: const userId = await requireAuth(event)
-    // 2. Re-enable RLS on pages table: ALTER TABLE pages ENABLE ROW LEVEL SECURITY;
-    // 3. Create proper RLS policies for authenticated users
-    // 4. Test with actual auth session
-    // const userId = await requireAuth(event)
+    // Require admin authentication for creating pages
+    const userId = await requireAdmin(event)
 
     if (import.meta.dev) {
-      consola.info('POST /api/pages - Creating new page (auth temporarily disabled for testing)')
+      consola.info('POST /api/pages - Creating new page', { userId })
     }
 
     // Get and validate request body

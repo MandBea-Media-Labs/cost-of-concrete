@@ -2,7 +2,7 @@
 
 **Project:** Cost of Concrete – Admin Interface for Page Management
 **Phase:** 6 – Admin Auth & RLS
-**Status:** In Progress (Batches 1–3 delivered; Batches 4–5 planned)
+**Status:** ✅ Complete (All 5 batches delivered and tested)
 
 ---
 
@@ -41,12 +41,16 @@ Planned batches for Phase 6:
    - Authenticated non-admin users receive a 403 handled by the global `app/error.vue` page using `account_profiles.is_admin`.
    - Verified via Playwright MCP: logged-out users hitting `/admin/pages` are redirected to the login page and admins land on `/admin/pages` with no hydration mismatches or console errors.
 
-4. **Batch 4 – API Admin Enforcement** ⏳
+4. **Batch 4 – API Admin Enforcement** ✅
    - `requireAdmin` helper on the server side using `account_profiles.is_admin` / `account_type`.
    - Apply admin checks to `server/api/pages/*` endpoints.
+   - All admin-only API endpoints now protected (GET, POST, PATCH, DELETE).
 
-5. **Batch 5 – Auth & RLS Testing** ⏳
-   - Extend Playwright MCP tests and manual checklists for login/logout, protected routes, non-admin behavior, and API-level access control.
+5. **Batch 5 – Auth & RLS Testing** ✅
+   - Extended Playwright tests for API-level access control.
+   - Fixed RLS enforcement on `pages` table.
+   - Added public read policy for published pages only.
+   - All tests passing (unauthenticated users receive 401, public users can view published pages).
 
 ---
 
@@ -75,19 +79,27 @@ Defined in:
 
 ### 3.2 `pages` RLS hardening
 
-These migrations also tighten `pages` RLS:
+These migrations tighten `pages` RLS:
 
+**Migrations:**
+- `20251119134331_enable_rls_on_pages_table.sql` – Re-enabled RLS on pages table
+- `20251119134414_remove_temporary_pages_read_policy.sql` – Removed overly permissive temporary policy
+- `20251119135456_add_public_read_policy_for_published_pages.sql` – Added limited public read policy
+
+**Final RLS Policies:**
 - Drop the broad authenticated-user policies:
   `"Authenticated users can view/create/update/delete pages"`.
-- Keep the public policy from the original pages migration ("Public can view published pages").
+- Remove the temporary policy that allowed all users to read all non-deleted pages.
 - Add admin-only policies based on `account_profiles`:
   - `"Admins can read all pages"` – SELECT allowed when there is a matching `account_profiles` row with `is_admin = TRUE`.
   - `"Admins can create pages"` – INSERT allowed only for admins.
   - `"Admins can update pages"` – UPDATE allowed only for admins (both USING and WITH CHECK).
   - `"Admins can delete pages"` – DELETE allowed only for admins.
+- Add limited public read policy:
+  - `"Public users can view published pages"` – SELECT allowed for published, non-deleted pages only.
 - The Supabase **service_role** key continues to bypass RLS automatically for server-side operations where appropriate.
 
-Result: RLS now enforces that **only admins** (accounts with `account_type = 'admin'`) can manage pages via Supabase, while non-admin/public users can only read published content through the existing read-only policy.
+Result: RLS now enforces that **only admins** (accounts with `account_type = 'admin'`) can manage pages via Supabase, while public users can only read published content. Draft and archived pages remain admin-only.
 
 ---
 
@@ -149,20 +161,45 @@ This ensures admins have a clear way to end their session and land back on the l
 
 ## 5. Current Status & Next Steps
 
-**Delivered so far (Phase 6 Batches 1–3):**
+**✅ Phase 6 Complete (All 5 Batches Delivered):**
 
+**Batch 1 – Schema & RLS Foundations:**
 - `account_profiles` table with `account_type`, computed `is_admin`, `metadata` and self-view RLS.
-- Hardened `pages` RLS so only admins can manage pages; public users rely on the existing published-pages policy.
+- Initial RLS policies on `pages` table for admin-only management.
+
+**Batch 2 – Login UI & Basic Flows:**
 - `/admin/login` page wired to Supabase email+password auth with proper redirects and dev-only logging.
 - Global header Login buttons wired to `/admin/login` for both desktop and mobile views.
 - Admin layout Logout button that signs out via Supabase and redirects to `/admin/login`.
+
+**Batch 3 – Route Protection & 403 Page:**
 - Global admin route middleware protecting `/admin/*` with SSR-safe redirects and 403 handling for non-admins.
-- Local Supabase migrations applied via `npx supabase db push --local`.
-- At least one admin test user created in `auth.users` with a matching `account_profiles` row where `account_type = 'admin'` (and thus `is_admin = TRUE`), verified end-to-end via Playwright MCP.
+- Server-side `getAuthUserAndIsAdmin(event)` helper for SSR-compatible auth checks.
+- At least one admin test user created in `auth.users` with a matching `account_profiles` row where `account_type = 'admin'`.
 
-**Planned next (Batches 4–5):**
+**Batch 4 – API Admin Enforcement:**
+- Server-side `requireAdmin` helper using `account_profiles.is_admin` / `account_type`.
+- Applied admin checks to all `server/api/pages/*` endpoints (GET, POST, PATCH, DELETE).
+- Unauthenticated users now receive 401 errors when accessing admin-only endpoints.
 
-- Server-side `requireAdmin` helper and admin gating on `server/api/pages/*` endpoints.
-- Hardening of any remaining API routes that touch admin data.
-- Extended Playwright MCP tests for login/logout flows, protected routes, non-admin 403 behavior, and API-level access control.
+**Batch 5 – Auth & RLS Testing:**
+- Fixed RLS enforcement on `pages` table (re-enabled RLS, removed temporary policy).
+- Added limited public read policy for published pages only.
+- Created 3 new migrations to capture RLS changes:
+  - `20251119134331_enable_rls_on_pages_table.sql`
+  - `20251119134414_remove_temporary_pages_read_policy.sql`
+  - `20251119135456_add_public_read_policy_for_published_pages.sql`
+- Extended Playwright tests for API-level access control.
+- All tests passing:
+  - ✅ Unauthenticated users receive 401 for admin-only API endpoints
+  - ✅ Public users can view published pages
+  - ✅ Draft and archived pages remain admin-only
+
+**Next Phase:**
+
+Phase 6 is complete! The admin authentication and RLS system is fully functional and tested. Future enhancements could include:
+- Additional account types (e.g., 'editor', 'viewer')
+- More granular permissions
+- Session management improvements
+- Two-factor authentication
 
