@@ -132,8 +132,8 @@ export class PageRepository {
       includeDeleted = false,
       limit = 50,
       offset = 0,
-      orderBy = 'created_at',
-      orderDirection = 'desc'
+      orderBy = 'display_order',
+      orderDirection = 'asc'
     } = options
 
     // Build query
@@ -157,6 +157,7 @@ export class PageRepository {
     // Apply pagination and sorting
     query = query
       .order(orderBy, { ascending: orderDirection === 'asc' })
+      .order('full_path', { ascending: true })
       .range(offset, offset + limit - 1)
 
     const { data, error, count } = await query
@@ -177,7 +178,9 @@ export class PageRepository {
       .from('pages')
       .select('*')
       .eq('parent_id', parentId)
-      .order('created_at', { ascending: true })
+      .eq('parent_id', parentId)
+      .order('display_order', { ascending: true })
+      .order('full_path', { ascending: true })
 
     if (!includeDeleted) {
       query = query.is('deleted_at', null)
@@ -202,7 +205,8 @@ export class PageRepository {
       .select('*')
       .like('full_path', `${parent.full_path}/%`)
       .order('depth', { ascending: true })
-      .order('created_at', { ascending: true })
+      .order('display_order', { ascending: true })
+      .order('full_path', { ascending: true })
 
     if (!includeDeleted) {
       query = query.is('deleted_at', null)
@@ -347,6 +351,28 @@ export class PageRepository {
 
     if (error) throw error
     return data !== null
+  }
+
+  /**
+   * Get max display order for siblings
+   */
+  async getMaxDisplayOrder(parentId: string | null): Promise<number> {
+    let query = this.client
+      .from('pages')
+      .select('display_order')
+      .order('display_order', { ascending: false })
+      .limit(1)
+
+    if (parentId === null) {
+      query = query.is('parent_id', null)
+    } else {
+      query = query.eq('parent_id', parentId)
+    }
+
+    const { data, error } = await query.maybeSingle()
+
+    if (error) throw error
+    return data?.display_order ?? -1
   }
 }
 
