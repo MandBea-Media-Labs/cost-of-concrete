@@ -84,6 +84,133 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_items: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          custom_url: string | null
+          deleted_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_enabled: boolean
+          label: string
+          menu_id: string
+          metadata: Json | null
+          open_in_new_tab: boolean
+          page_id: string | null
+          parent_id: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          custom_url?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          label: string
+          menu_id: string
+          metadata?: Json | null
+          open_in_new_tab?: boolean
+          page_id?: string | null
+          parent_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          custom_url?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          label?: string
+          menu_id?: string
+          metadata?: Json | null
+          open_in_new_tab?: boolean
+          page_id?: string | null
+          parent_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_menu_id_fkey"
+            columns: ["menu_id"]
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_page_id_fkey"
+            columns: ["page_id"]
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_parent_id_fkey"
+            columns: ["parent_id"]
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menus: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_enabled: boolean
+          metadata: Json | null
+          name: string
+          show_in_footer: boolean
+          show_in_header: boolean
+          slug: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          name: string
+          show_in_footer?: boolean
+          show_in_header?: boolean
+          slug: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          name?: string
+          show_in_footer?: boolean
+          show_in_header?: boolean
+          slug?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           canonical_url: string | null
