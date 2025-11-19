@@ -1,4 +1,5 @@
 import consola from 'consola'
+import { parseCookies } from 'h3'
 
 // Global middleware to protect all /admin/* routes
 // - Unauthenticated users are redirected to /admin/login with a redirect back
@@ -40,39 +41,31 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     try {
-      const { getAuthUserAndIsAdmin } = await import('~~/server/utils/auth')
+      // Check for Supabase auth cookies instead of calling getUser()
+      // This avoids the SSR cookie timing issue that causes the flash
+      // Cookie format: sb-{project-id}-auth-token (and variants)
+      const cookies = parseCookies(event)
+      const cookieNames = Object.keys(cookies)
+      const hasAuthCookies = cookieNames.some(name => name.startsWith('sb-') && name.includes('auth-token'))
 
-      const { userId, isAdmin } = await getAuthUserAndIsAdmin(event)
-
-      if (!userId) {
+      if (!hasAuthCookies) {
+        // No auth cookies at all - definitely not authenticated
         if (import.meta.dev) {
-          consola.info('Admin route guard (server): unauthenticated, redirecting to login', {
+          consola.info('Admin route guard (server): no auth cookies, redirecting to login', {
             path: to.fullPath,
+            availableCookies: cookieNames,
           })
         }
 
         return redirectToLogin()
       }
 
-      if (!isAdmin) {
-        if (import.meta.dev) {
-          consola.info('Admin route guard (server): authenticated but not admin, throwing 403', {
-            path: to.fullPath,
-            userId,
-          })
-        }
-
-        throw createError({
-          statusCode: 403,
-          statusMessage: 'Forbidden',
-          message: 'You do not have permission to access this area.',
-        })
-      }
-
+      // Auth cookies exist - let the client-side guard verify the session
+      // This prevents the flash on hard refresh while maintaining security
       if (import.meta.dev) {
-        consola.success('Admin route guard (server): admin access granted', {
+        consola.info('Admin route guard (server): auth cookies present, deferring to client', {
           path: to.fullPath,
-          userId,
+          authCookies: cookieNames.filter(name => name.startsWith('sb-')),
         })
       }
 

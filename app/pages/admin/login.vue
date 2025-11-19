@@ -26,7 +26,16 @@ const errorMessage = ref<string | null>(null)
 // If already logged in, redirect to admin pages
 watchEffect(() => {
   if (user.value) {
-    router.replace('/admin/pages')
+    const redirectParam = route.query.redirect
+    const redirectTo = typeof redirectParam === 'string' && redirectParam.startsWith('/')
+      ? redirectParam
+      : '/admin/pages'
+
+    if (import.meta.dev) {
+      consola.info('Login page: user already authenticated, redirecting to:', redirectTo)
+    }
+
+    router.replace(redirectTo)
   }
 })
 
