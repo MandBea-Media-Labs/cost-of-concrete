@@ -107,7 +107,7 @@ export class MenuItemRepository {
   /**
    * Soft delete menu item
    */
-  async delete(id: string) {
+  async softDelete(id: string) {
     const { data, error } = await this.client
       .from('menu_items')
       .update({ deleted_at: new Date().toISOString() })

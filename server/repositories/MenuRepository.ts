@@ -147,12 +147,16 @@ export class MenuRepository {
       .eq('id', id)
       .is('deleted_at', null)
       .select()
+      .single()
 
+    if (error) throw error
+    return menu as Menu
+  }
 
   /**
    * Soft delete menu
    */
-  async delete(id: string) {
+  async softDelete(id: string) {
     const { data, error } = await this.client
       .from('menus')
       .update({ deleted_at: new Date().toISOString() })

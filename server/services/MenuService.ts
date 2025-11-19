@@ -62,7 +62,7 @@ export class MenuService {
    * Delete a menu (soft delete)
    */
   async deleteMenu(id: string) {
-    return await this.menuRepo.delete(id)
+    return await this.menuRepo.softDelete(id)
   }
 
   /**
@@ -129,7 +129,7 @@ export class MenuService {
    * Delete a menu item (soft delete)
    */
   async deleteMenuItem(id: string) {
-    return await this.menuItemRepo.delete(id)
+    return await this.menuItemRepo.softDelete(id)
   }
 
   /**
