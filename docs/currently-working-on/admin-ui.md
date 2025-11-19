@@ -193,6 +193,8 @@
 
 ## 📋 Table of Contents
 
+> **Note:** Detailed Phase 5 batch docs now live in `docs/admin-ui/*` (one file per batch plus overview and testing summary). This file remains as a high‑level, historical overview.
+
 1. [Current Progress](#current-progress)
 2. [Overview](#overview)
 3. [Architecture Decisions](#architecture-decisions)

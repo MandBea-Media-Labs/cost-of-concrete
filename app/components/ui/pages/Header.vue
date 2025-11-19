@@ -171,6 +171,7 @@ onUnmounted(() => {
         <div class="hidden flex-shrink-0 items-center gap-3 md:flex">
           <Button
             text="Login"
+            location="/admin/login"
             variant="primary"
             size="md"
           />
@@ -292,6 +293,7 @@ onUnmounted(() => {
             <div class="flex flex-col gap-3">
               <Button
                 text="Login"
+                location="/admin/login"
                 variant="primary"
                 size="lg"
               />

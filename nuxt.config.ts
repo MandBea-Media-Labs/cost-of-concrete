@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     'reka-ui/nuxt',
     '@nuxtjs/color-mode',
     '@nuxtjs/supabase',
+    '@nuxt/hints',
   ],
 
   supabase: {

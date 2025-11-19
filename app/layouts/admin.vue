@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Admin Layout
- * 
+ *
  * WordPress-style admin layout with collapsible sidebar navigation.
  * Features:
  * - Collapsible sidebar (desktop)
@@ -29,6 +29,22 @@ const route = useRoute()
 watch(() => route.path, () => {
   mobileMenuOpen.value = false
 })
+
+// Supabase logout handling
+const supabase = useSupabaseClient()
+const router = useRouter()
+
+const handleLogout = async () => {
+  try {
+    await supabase.auth.signOut()
+    await router.replace('/admin/login')
+  }
+  catch (error) {
+    if (import.meta.dev) {
+      console.error('[AdminLayout] Logout error', error)
+    }
+  }
+}
 </script>
 
 <template>
@@ -82,7 +98,7 @@ watch(() => route.path, () => {
             <AdminBreadcrumbs />
           </div>
 
-          <!-- User Menu Placeholder -->
+          <!-- User Menu -->
           <div class="flex items-center gap-3">
             <!-- Dark Mode Toggle -->
             <button
@@ -94,6 +110,15 @@ watch(() => route.path, () => {
                 :name="$colorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon'"
                 class="h-5 w-5"
               />
+            </button>
+
+            <!-- Logout Button -->
+            <button
+              type="button"
+              class="rounded-md px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 hover:text-red-600 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:hover:text-red-400"
+              @click="handleLogout"
+            >
+              Logout
             </button>
 
             <!-- User Avatar Placeholder -->
