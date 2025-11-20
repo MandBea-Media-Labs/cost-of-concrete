@@ -27,7 +27,7 @@ export class MenuService {
   /**
    * Create a new menu
    */
-  async createMenu(data: MenuInsert, userId: string) {
+  async createMenu(data: MenuInsert, userId: string, force: boolean = false) {
     // Validate slug is unique
     const isUnique = await this.menuRepo.isSlugUnique(data.slug)
     if (!isUnique) {
@@ -35,6 +35,39 @@ export class MenuService {
         statusCode: 400,
         message: `Menu with slug "${data.slug}" already exists`
       })
+    }
+
+    // Check if location is being set
+    const isSettingHeader = data.show_in_header === true
+    const isSettingFooter = data.show_in_footer === true
+
+    // Validate: Footer menus cannot have dropdown items (will be validated when items are added)
+
+    // Check for location conflicts
+    if (isSettingHeader || isSettingFooter) {
+      const location = isSettingHeader ? 'header' : 'footer'
+      const existingMenu = await this.menuRepo.findByLocation(location)
+
+      // If another menu is already in this location
+      if (existingMenu) {
+        if (!force) {
+          // Return conflict error with existing menu info
+          throw createError({
+            statusCode: 409,
+            statusMessage: 'Location Conflict',
+            message: `Menu "${existingMenu.name}" is currently assigned to ${location}`,
+            data: {
+              conflictingMenu: {
+                id: existingMenu.id,
+                name: existingMenu.name
+              }
+            }
+          })
+        }
+
+        // Force flag is true - unset the existing menu
+        await this.menuRepo.unsetLocation(existingMenu.id, location, userId)
+      }
     }
 
     return await this.menuRepo.create(data, userId)

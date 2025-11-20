@@ -32,6 +32,11 @@ const menu = ref<Menu | null>(null)
 const loading = ref(true)
 const isSubmitting = ref(false)
 
+// Conflict dialog state
+const showConflictDialog = ref(false)
+const conflictingMenu = ref<{ id: string; name: string } | null>(null)
+const pendingFormData = ref<MenuFormData | null>(null)
+
 // =====================================================
 // FETCH MENU DATA
 // =====================================================
@@ -126,6 +131,22 @@ async function handleSubmit(formData: MenuFormData) {
   } catch (error: any) {
     consola.error('[EditMenu] Error:', error)
 
+    // Handle location conflict (409)
+    if (error?.statusCode === 409 && error?.data?.conflictingMenu) {
+      conflictingMenu.value = error.data.conflictingMenu
+      pendingFormData.value = formData
+      showConflictDialog.value = true
+      isSubmitting.value = false
+      return
+    }
+
+    // Handle footer dropdown validation error
+    if (error?.message?.includes('dropdown items')) {
+      toast.error(error.message)
+      isSubmitting.value = false
+      return
+    }
+
     // Show user-friendly error message
     if (error?.message?.includes('duplicate')) {
       toast.error('A menu with this slug already exists')
@@ -133,7 +154,9 @@ async function handleSubmit(formData: MenuFormData) {
       toast.error(error?.message || 'Failed to update menu')
     }
   } finally {
-    isSubmitting.value = false
+    if (!showConflictDialog.value) {
+      isSubmitting.value = false
+    }
   }
 }
 
@@ -142,6 +165,53 @@ async function handleSubmit(formData: MenuFormData) {
  */
 function handleCancel() {
   router.push('/admin/menus')
+}
+
+// =====================================================
+// CONFLICT DIALOG HANDLERS
+// =====================================================
+
+/**
+ * Handle force update when user confirms location conflict
+ */
+async function handleForceUpdate() {
+  if (!pendingFormData.value) return
+
+  try {
+    const input = mapFormDataToApiInput(pendingFormData.value)
+
+    if (import.meta.client && import.meta.dev) {
+      consola.info('[EditMenu] Force updating with input:', input)
+    }
+
+    // Call API with force=true
+    const success = await updateMenu(menuId.value, input, true)
+
+    if (success) {
+      toast.success('Menu updated successfully')
+      router.push('/admin/menus')
+    } else {
+      toast.error('Failed to update menu')
+    }
+  } catch (error: any) {
+    consola.error('[EditMenu] Force update error:', error)
+    toast.error(error?.message || 'Failed to update menu')
+  } finally {
+    showConflictDialog.value = false
+    conflictingMenu.value = null
+    pendingFormData.value = null
+    isSubmitting.value = false
+  }
+}
+
+/**
+ * Handle conflict dialog cancellation
+ */
+function handleCancelConflict() {
+  showConflictDialog.value = false
+  conflictingMenu.value = null
+  pendingFormData.value = null
+  isSubmitting.value = false
 }
 </script>
 
@@ -191,6 +261,27 @@ function handleCancel() {
             @cancel="handleCancel"
           />
         </div>
+
+        <!-- Location Conflict Dialog -->
+        <Dialog
+          :open="showConflictDialog"
+          title="Location Conflict"
+          :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will remove it from that location. Continue?`"
+          @close="handleCancelConflict"
+        >
+          <template #actions>
+            <Button
+              text="Cancel"
+              variant="ghost"
+              @click="handleCancelConflict"
+            />
+            <Button
+              text="Continue"
+              variant="primary"
+              @click="handleForceUpdate"
+            />
+          </template>
+        </Dialog>
       </template>
     </div>
   </div>

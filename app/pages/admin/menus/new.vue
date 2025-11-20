@@ -24,6 +24,11 @@ const toast = useToast()
 const { createMenu } = useMenus()
 const isSubmitting = ref(false)
 
+// Conflict dialog state
+const showConflictDialog = ref(false)
+const conflictingMenu = ref<{ id: string; name: string } | null>(null)
+const pendingFormData = ref<MenuFormData | null>(null)
+
 // =====================================================
 // FORM SUBMISSION
 // =====================================================
@@ -55,7 +60,7 @@ async function handleSubmit(formData: MenuFormData) {
 
   try {
     const input = mapFormDataToApiInput(formData)
-    
+
     if (import.meta.client && import.meta.dev) {
       consola.info('[CreateMenu] API input:', input)
     }
@@ -64,7 +69,7 @@ async function handleSubmit(formData: MenuFormData) {
 
     if (newMenu) {
       toast.success('Menu created successfully')
-      
+
       // Redirect to menu list
       router.push('/admin/menus')
     } else {
@@ -72,7 +77,23 @@ async function handleSubmit(formData: MenuFormData) {
     }
   } catch (error: any) {
     consola.error('[CreateMenu] Error:', error)
-    
+
+    // Handle location conflict (409)
+    if (error?.statusCode === 409 && error?.data?.conflictingMenu) {
+      conflictingMenu.value = error.data.conflictingMenu
+      pendingFormData.value = formData
+      showConflictDialog.value = true
+      isSubmitting.value = false
+      return
+    }
+
+    // Handle footer dropdown validation error
+    if (error?.message?.includes('dropdown items')) {
+      toast.error(error.message)
+      isSubmitting.value = false
+      return
+    }
+
     // Show user-friendly error message
     if (error?.message?.includes('duplicate')) {
       toast.error('A menu with this slug already exists')
@@ -80,7 +101,9 @@ async function handleSubmit(formData: MenuFormData) {
       toast.error(error?.message || 'Failed to create menu')
     }
   } finally {
-    isSubmitting.value = false
+    if (!showConflictDialog.value) {
+      isSubmitting.value = false
+    }
   }
 }
 
@@ -89,6 +112,53 @@ async function handleSubmit(formData: MenuFormData) {
  */
 function handleCancel() {
   router.push('/admin/menus')
+}
+
+// =====================================================
+// CONFLICT DIALOG HANDLERS
+// =====================================================
+
+/**
+ * Handle force create when user confirms location conflict
+ */
+async function handleForceCreate() {
+  if (!pendingFormData.value) return
+
+  try {
+    const input = mapFormDataToApiInput(pendingFormData.value)
+
+    if (import.meta.client && import.meta.dev) {
+      consola.info('[CreateMenu] Force creating with input:', input)
+    }
+
+    // Call API with force=true
+    const newMenu = await createMenu(input, true)
+
+    if (newMenu) {
+      toast.success('Menu created successfully')
+      router.push('/admin/menus')
+    } else {
+      toast.error('Failed to create menu')
+    }
+  } catch (error: any) {
+    consola.error('[CreateMenu] Force create error:', error)
+    toast.error(error?.message || 'Failed to create menu')
+  } finally {
+    showConflictDialog.value = false
+    conflictingMenu.value = null
+    pendingFormData.value = null
+    isSubmitting.value = false
+  }
+}
+
+/**
+ * Handle conflict dialog cancellation
+ */
+function handleCancelConflict() {
+  showConflictDialog.value = false
+  conflictingMenu.value = null
+  pendingFormData.value = null
+  isSubmitting.value = false
 }
 </script>
 
@@ -123,6 +193,27 @@ function handleCancel() {
           @cancel="handleCancel"
         />
       </div>
+
+      <!-- Location Conflict Dialog -->
+      <Dialog
+        :open="showConflictDialog"
+        title="Location Conflict"
+        :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will remove it from that location. Continue?`"
+        @close="handleCancelConflict"
+      >
+        <template #actions>
+          <Button
+            text="Cancel"
+            variant="ghost"
+            @click="handleCancelConflict"
+          />
+          <Button
+            text="Continue"
+            variant="primary"
+            @click="handleForceCreate"
+          />
+        </template>
+      </Dialog>
     </div>
   </div>
 </template>

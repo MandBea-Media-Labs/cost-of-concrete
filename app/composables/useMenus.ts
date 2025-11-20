@@ -107,10 +107,14 @@ export function useMenus() {
 
   /**
    * Create a new menu (admin endpoint)
+   * @param menuData - Menu data to create
+   * @param force - Force create even if location conflict exists (unsets existing menu)
    */
-  const createMenu = async (menuData: MenuInsert): Promise<Menu | null> => {
+  const createMenu = async (menuData: MenuInsert, force: boolean = false): Promise<Menu | null> => {
     try {
-      const response = await $fetch<{ success: boolean; data: Menu }>('/api/menus', {
+      const url = force ? '/api/menus?force=true' : '/api/menus'
+
+      const response = await $fetch<{ success: boolean; data: Menu }>(url, {
         method: 'POST',
         body: menuData
       })
@@ -128,10 +132,15 @@ export function useMenus() {
 
   /**
    * Update an existing menu (admin endpoint)
+   * @param id - Menu ID
+   * @param menuData - Menu data to update
+   * @param force - Force update even if location conflict exists (unsets existing menu)
    */
-  const updateMenu = async (id: string, menuData: MenuUpdate): Promise<Menu | null> => {
+  const updateMenu = async (id: string, menuData: MenuUpdate, force: boolean = false): Promise<Menu | null> => {
     try {
-      const response = await $fetch<{ success: boolean; data: Menu }>(`/api/menus/${id}`, {
+      const url = force ? `/api/menus/${id}?force=true` : `/api/menus/${id}`
+
+      const response = await $fetch<{ success: boolean; data: Menu }>(url, {
         method: 'PATCH',
         body: menuData
       })

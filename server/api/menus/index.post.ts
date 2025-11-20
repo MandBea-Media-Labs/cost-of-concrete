@@ -4,6 +4,9 @@
  * Create a new menu.
  * Requires admin authentication.
  *
+ * Query Parameters:
+ * - force: Force create even if location conflict exists (unsets existing menu)
+ *
  * Request Body:
  * - name: Menu name (required)
  * - slug: Menu slug (required, lowercase alphanumeric with hyphens)
@@ -28,8 +31,12 @@ export default defineEventHandler(async (event) => {
     // Require admin authentication
     const userId = await requireAdmin(event)
 
+    // Get force flag from query params
+    const query = getQuery(event)
+    const force = query.force === 'true'
+
     if (import.meta.dev) {
-      consola.info('POST /api/menus - Creating new menu', { userId })
+      consola.info('POST /api/menus - Creating new menu', { userId, force })
     }
 
     // Get and validate request body
@@ -49,8 +56,8 @@ export default defineEventHandler(async (event) => {
     const client = await serverSupabaseClient(event)
     const menuService = new MenuService(client)
 
-    // Create menu using service (handles slug uniqueness validation)
-    const menu = await menuService.createMenu(validatedData, userId)
+    // Create menu using service (handles slug uniqueness validation and location conflicts)
+    const menu = await menuService.createMenu(validatedData, userId, force)
 
     if (import.meta.dev) {
       consola.success('POST /api/menus - Menu created:', {
@@ -70,7 +77,7 @@ export default defineEventHandler(async (event) => {
       consola.error('POST /api/menus - Error:', error)
     }
 
-    // Handle validation errors
+    // Handle validation errors (Zod)
     if (error && typeof error === 'object' && 'issues' in error) {
       throw createError({
         statusCode: 400,
@@ -80,23 +87,36 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Handle business logic errors (from MenuService)
-    if (error instanceof Error) {
-      if (error.message.includes('already exists') || error.message.includes('slug')) {
-        throw createError({
-          statusCode: 409,
-          statusMessage: 'Conflict',
-          message: error.message
-        })
-      }
+    // Handle location conflict (409) - pass through with conflict data
+    if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 409) {
+      throw error
+    }
 
-      if (error.message.includes('Invalid') || error.message.includes('location')) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Bad Request',
-          message: error.message
-        })
-      }
+    // Handle footer dropdown validation error (400)
+    if (error instanceof Error && error.message.includes('dropdown items')) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: error.message
+      })
+    }
+
+    // Handle slug uniqueness errors
+    if (error instanceof Error && (error.message.includes('already exists') || error.message.includes('slug'))) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: error.message
+      })
+    }
+
+    // Handle other validation errors
+    if (error instanceof Error && (error.message.includes('Invalid') || error.message.includes('location'))) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: error.message
+      })
     }
 
     // Re-throw if already an H3Error
