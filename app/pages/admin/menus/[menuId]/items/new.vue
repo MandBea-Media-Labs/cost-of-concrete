@@ -159,11 +159,17 @@ async function handleSubmit(formData: MenuItemFormData) {
   } catch (error: any) {
     consola.error('[CreateMenuItem] Error:', error)
 
+    // Get error message from nested data structure (H3 error wraps data)
+    const errorMessage = error?.data?.message || error?.message
+
     // Show user-friendly error message
-    if (error?.message?.includes('depth') || error?.message?.includes('nested')) {
+    if (errorMessage?.includes('depth') || errorMessage?.includes('nested')) {
       toast.error('Cannot create nested items more than 1 level deep')
+    } else if (errorMessage?.includes('dropdown items')) {
+      // Footer dropdown validation error - show exact message from backend
+      toast.error(errorMessage)
     } else {
-      toast.error(error?.message || 'Failed to create menu item')
+      toast.error(errorMessage || 'Failed to create menu item')
     }
   } finally {
     isSubmitting.value = false

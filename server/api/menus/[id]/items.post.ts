@@ -107,6 +107,15 @@ export default defineEventHandler(async (event) => {
           message: error.message
         })
       }
+
+      // Handle footer dropdown validation error
+      if (error.message.includes('dropdown items')) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: error.message
+        })
+      }
     }
 
     // Re-throw if already an H3Error
