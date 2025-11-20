@@ -54,6 +54,52 @@ export class MenuRepository {
   }
 
   /**
+   * Find menu currently assigned to a location
+   * @param location - 'header' or 'footer'
+   * @returns Menu or null if no menu assigned to location
+   */
+  async findByLocation(location: 'header' | 'footer'): Promise<Menu | null> {
+    const column = location === 'header' ? 'show_in_header' : 'show_in_footer'
+
+    const { data, error } = await this.client
+      .from('menus')
+      .select('*')
+      .eq(column, true)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    return data
+  }
+
+  /**
+   * Unset location for a menu
+   * @param menuId - Menu ID
+   * @param location - 'header' or 'footer'
+   * @param userId - User performing the action
+   */
+  async unsetLocation(menuId: string, location: 'header' | 'footer', userId: string) {
+    const column = location === 'header' ? 'show_in_header' : 'show_in_footer'
+
+    const { data, error } = await this.client
+      .from('menus')
+      .update({
+        [column]: false,
+        updated_by: userId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', menuId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Menu
+  }
+
+  /**
    * Get menu by ID
    */
   async getById(id: string) {
