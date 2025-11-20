@@ -50,12 +50,12 @@ export function useMenus() {
    */
   const fetchMenuBySlug = async (slug: string): Promise<MenuWithItems | null> => {
     try {
-      const response = await $fetch<{ success: boolean; data: MenuWithItems }>(`/api/menus/${slug}`)
-      
+      const response = await $fetch<{ success: boolean; data: MenuWithItems }>(`/api/menus/by-slug/${slug}`)
+
       if (response.success) {
         return response.data
       }
-      
+
       return null
     } catch (err) {
       console.error(`Error fetching menu '${slug}':`, err)
@@ -69,11 +69,11 @@ export function useMenus() {
   const listMenus = async (): Promise<Menu[]> => {
     try {
       const response = await $fetch<{ success: boolean; data: Menu[] }>('/api/menus')
-      
+
       if (response.success) {
         return response.data
       }
-      
+
       return []
     } catch (err) {
       console.error('Error listing menus:', err)
@@ -90,11 +90,11 @@ export function useMenus() {
         method: 'POST',
         body: menuData
       })
-      
+
       if (response.success) {
         return response.data
       }
-      
+
       return null
     } catch (err) {
       console.error('Error creating menu:', err)
@@ -111,11 +111,11 @@ export function useMenus() {
         method: 'PATCH',
         body: menuData
       })
-      
+
       if (response.success) {
         return response.data
       }
-      
+
       return null
     } catch (err) {
       console.error(`Error updating menu '${id}':`, err)
@@ -131,7 +131,7 @@ export function useMenus() {
       const response = await $fetch<{ success: boolean }>(`/api/menus/${id}`, {
         method: 'DELETE'
       })
-      
+
       return response.success
     } catch (err) {
       console.error(`Error deleting menu '${id}':`, err)

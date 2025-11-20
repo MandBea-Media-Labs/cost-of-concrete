@@ -1,5 +1,5 @@
 /**
- * GET /api/menus/[slug]
+ * GET /api/menus/by-slug/[slug]
  *
  * Get menu with all its items (nested structure).
  * Public endpoint - returns only enabled menus and items.
@@ -10,7 +10,7 @@
 
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
-import { MenuRepository } from '../../repositories/MenuRepository'
+import { MenuRepository } from '../../../repositories/MenuRepository'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (import.meta.dev) {
-      consola.info(`GET /api/menus/${slug} - Fetching menu with items`)
+      consola.info(`GET /api/menus/by-slug/${slug} - Fetching menu with items`)
     }
 
     // Get Supabase client and create repository
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     const menuWithItems = await menuRepo.getMenuWithItems(slug)
 
     if (import.meta.dev) {
-      consola.success(`GET /api/menus/${slug} - Retrieved menu:`, {
+      consola.success(`GET /api/menus/by-slug/${slug} - Retrieved menu:`, {
         id: menuWithItems.id,
         name: menuWithItems.name,
         itemCount: menuWithItems.items.length
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     if (import.meta.dev) {
-      consola.error('GET /api/menus/[slug] - Error:', error)
+      consola.error('GET /api/menus/by-slug/[slug] - Error:', error)
     }
 
     // Handle not found errors

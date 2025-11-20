@@ -29,7 +29,7 @@ const router = useRouter()
 const toast = useToast()
 const { listMenus } = useMenus()
 const { updateMenuItem } = useMenuItems()
-const { pages: pagesComposable } = useAdminPages()
+const { pages: pagesData, fetchPages } = useAdminPages()
 
 const menuId = computed(() => route.params.menuId as string)
 const itemId = computed(() => route.params.id as string)
@@ -82,8 +82,8 @@ async function fetchData() {
     }
 
     // Fetch published pages (for page link dropdown)
-    await pagesComposable.fetchPages({ status: 'published', limit: 100 })
-    pages.value = pagesComposable.pages.value
+    await fetchPages({ status: 'published', limit: 100 })
+    pages.value = pagesData.value
   } catch (error) {
     consola.error('[EditMenuItem] Error fetching data:', error)
     toast.error('Failed to load data')
@@ -127,15 +127,15 @@ const initialFormData = computed<Partial<MenuItemFormData> | undefined>(() => {
 function mapFormDataToApiInput(formData: MenuItemFormData) {
   return {
     link_type: formData.link_type,
-    page_id: formData.page_id || undefined,
-    custom_url: formData.custom_url || undefined,
+    page_id: formData.page_id ?? null,
+    custom_url: formData.custom_url ?? null,
     label: formData.label,
-    description: formData.description || undefined,
-    parent_id: formData.parent_id || undefined,
+    description: formData.description ?? null,
+    parent_id: formData.parent_id ?? null,
     open_in_new_tab: formData.open_in_new_tab,
     is_enabled: formData.is_enabled,
-    display_order: formData.display_order || undefined,
-    metadata: formData.metadata || undefined
+    display_order: formData.display_order ?? null,
+    metadata: formData.metadata ?? null
   }
 }
 

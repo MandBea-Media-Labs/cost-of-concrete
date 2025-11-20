@@ -98,7 +98,7 @@ export const createMenuItemSchema = z.object({
 
   is_enabled: z.boolean().default(true),
 
-  display_order: z.number().int().min(0).optional(),
+  display_order: z.number().int().min(0).nullable().optional(),
 
   metadata: z.record(z.any()).optional().nullable()
 }).refine(

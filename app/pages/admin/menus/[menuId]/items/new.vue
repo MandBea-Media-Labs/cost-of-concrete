@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { consola } from 'consola'
-import type { MenuItemFormData } from '~/schemas/admin/menu-item-form.schema'
+import { menuItemFormDefaultValues, type MenuItemFormData } from '~/schemas/admin/menu-item-form.schema'
 import type { Database } from '~/types/supabase'
 
 type Menu = Database['public']['Tables']['menus']['Row']
@@ -29,7 +29,7 @@ const router = useRouter()
 const toast = useToast()
 const { listMenus } = useMenus()
 const { createMenuItem } = useMenuItems()
-const { pages: pagesComposable } = useAdminPages()
+const { pages: pagesData, fetchPages } = useAdminPages()
 
 const menuId = computed(() => route.params.menuId as string)
 const parentIdFromQuery = computed(() => route.query.parentId as string | undefined)
@@ -66,8 +66,8 @@ async function fetchData() {
     }
 
     // Fetch published pages (for page link dropdown)
-    await pagesComposable.fetchPages({ status: 'published', limit: 100 })
-    pages.value = pagesComposable.pages.value
+    await fetchPages({ status: 'published', limit: 100 })
+    pages.value = pagesData.value
   } catch (error) {
     consola.error('[CreateMenuItem] Error fetching data:', error)
     toast.error('Failed to load data')
@@ -85,9 +85,10 @@ onMounted(async () => {
 // =====================================================
 
 const initialFormData = computed(() => {
-  const data: Partial<MenuItemFormData> = {}
+  // Start with default values
+  const data: Partial<MenuItemFormData> = { ...menuItemFormDefaultValues }
 
-  // Set parent_id from query param if provided
+  // Override with parent_id from query param if provided
   if (parentIdFromQuery.value) {
     data.parent_id = parentIdFromQuery.value
   }
@@ -105,15 +106,15 @@ const initialFormData = computed(() => {
 function mapFormDataToApiInput(formData: MenuItemFormData) {
   return {
     link_type: formData.link_type,
-    page_id: formData.page_id || undefined,
-    custom_url: formData.custom_url || undefined,
+    page_id: formData.page_id ?? null,
+    custom_url: formData.custom_url ?? null,
     label: formData.label,
-    description: formData.description || undefined,
-    parent_id: formData.parent_id || undefined,
+    description: formData.description ?? null,
+    parent_id: formData.parent_id ?? null,
     open_in_new_tab: formData.open_in_new_tab,
     is_enabled: formData.is_enabled,
-    display_order: formData.display_order || undefined,
-    metadata: formData.metadata || undefined
+    display_order: formData.display_order ?? null,
+    metadata: formData.metadata ?? null
   }
 }
 

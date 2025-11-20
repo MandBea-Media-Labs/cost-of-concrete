@@ -12,40 +12,40 @@ export const menuItemFormSchema = z.object({
   label: z.string()
     .min(1, 'Label is required')
     .max(200, 'Label must be 200 characters or less'),
-  
+
   link_type: linkTypeEnum,
-  
+
   page_id: z.string()
     .uuid('Invalid page ID')
-    .optional()
-    .nullable(),
-  
+    .nullable()
+    .optional(),
+
   custom_url: z.string()
     .url('Invalid URL')
-    .optional()
-    .nullable(),
-  
+    .nullable()
+    .optional(),
+
   description: z.string()
     .max(500, 'Description must be 500 characters or less')
-    .optional()
-    .nullable(),
-  
+    .nullable()
+    .optional(),
+
   parent_id: z.string()
     .uuid('Invalid parent ID')
-    .optional()
-    .nullable(),
-  
-  open_in_new_tab: z.boolean().default(false),
-  
-  is_enabled: z.boolean().default(true),
-  
+    .nullable()
+    .optional(),
+
+  open_in_new_tab: z.boolean(),
+
+  is_enabled: z.boolean(),
+
   display_order: z.number()
     .int()
     .min(0)
-    .optional()
-    .nullable(),
-  
-  metadata: z.record(z.any()).optional().nullable()
+    .nullable()
+    .optional(),
+
+  metadata: z.record(z.any()).nullable().optional()
 }).refine(
   data => {
     if (data.link_type === 'page') {
