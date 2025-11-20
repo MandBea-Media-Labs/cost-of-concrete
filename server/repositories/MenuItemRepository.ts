@@ -16,15 +16,14 @@ export class MenuItemRepository {
   constructor(private client: SupabaseClient<Database>) {}
 
   /**
-   * List all items for a menu
+   * List all items for a menu in hierarchical order
+   * (parents followed by their children)
    */
   async listByMenu(menuId: string, includeDeleted = false) {
     let query = this.client
       .from('menu_items')
       .select('*')
       .eq('menu_id', menuId)
-      .order('parent_id', { ascending: true, nullsFirst: true })
-      .order('display_order', { ascending: true })
 
     if (!includeDeleted) {
       query = query.is('deleted_at', null)
@@ -33,7 +32,32 @@ export class MenuItemRepository {
     const { data, error } = await query
 
     if (error) throw error
-    return data as MenuItem[]
+
+    const items = data as MenuItem[]
+
+    // Separate parents and children
+    const parents = items
+      .filter(item => item.parent_id === null)
+      .sort((a, b) => a.display_order - b.display_order)
+
+    const children = items.filter(item => item.parent_id !== null)
+
+    // Build hierarchical array: [parent1, child1a, child1b, parent2, child2a, ...]
+    const hierarchical: MenuItem[] = []
+
+    for (const parent of parents) {
+      // Add parent
+      hierarchical.push(parent)
+
+      // Add children of this parent (sorted by display_order)
+      const parentChildren = children
+        .filter(child => child.parent_id === parent.id)
+        .sort((a, b) => a.display_order - b.display_order)
+
+      hierarchical.push(...parentChildren)
+    }
+
+    return hierarchical
   }
 
   /**
@@ -191,35 +215,32 @@ export class MenuItemRepository {
 
 
   /**
-   * Get next display order for a parent
+   * Get next display order for a parent or child item
+   * Returns the next available display_order within the same parent scope
    */
   async getNextDisplayOrder(menuId: string, parentId: string | null) {
-    const { data, error } = await this.client
+    // Build query to get items with the same parent_id
+    let query = this.client
       .from('menu_items')
       .select('display_order')
       .eq('menu_id', menuId)
       .is('deleted_at', null)
 
-    if (parentId) {
-      const { data: parentData, error: parentError } = await this.client
-        .from('menu_items')
-        .select('display_order')
-        .eq('menu_id', menuId)
-        .eq('parent_id', parentId)
-        .is('deleted_at', null)
-
-      if (parentError) throw parentError
-
-      if (!parentData || parentData.length === 0) return 0
-
-      const maxOrder = Math.max(...parentData.map(item => item.display_order))
-      return maxOrder + 1
+    // Filter by parent_id (null for top-level items, specific ID for children)
+    if (parentId === null) {
+      query = query.is('parent_id', null)
+    } else {
+      query = query.eq('parent_id', parentId)
     }
+
+    const { data, error } = await query
 
     if (error) throw error
 
+    // If no items exist at this level, start at 0
     if (!data || data.length === 0) return 0
 
+    // Get the max display_order and add 1
     const maxOrder = Math.max(...data.map(item => item.display_order))
     return maxOrder + 1
   }
