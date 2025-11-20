@@ -43,7 +43,7 @@ export class MenuService {
   /**
    * Update an existing menu
    */
-  async updateMenu(id: string, data: MenuUpdate, userId: string) {
+  async updateMenu(id: string, data: MenuUpdate, userId: string, force: boolean = false) {
     // If slug is being updated, validate uniqueness
     if (data.slug) {
       const isUnique = await this.menuRepo.isSlugUnique(data.slug, id)
@@ -52,6 +52,51 @@ export class MenuService {
           statusCode: 400,
           message: `Menu with slug "${data.slug}" already exists`
         })
+      }
+    }
+
+    // Check if location is being changed
+    const isChangingToHeader = data.show_in_header === true
+    const isChangingToFooter = data.show_in_footer === true
+
+    // Validate: Footer menus cannot have dropdown items
+    if (isChangingToFooter) {
+      const items = await this.menuItemRepo.listByMenu(id)
+      const hasDropdowns = items.some(item => item.link_type === 'dropdown')
+
+      if (hasDropdowns) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: 'Cannot assign menu to footer because it contains dropdown items. Footer menus can only contain page links and custom links. Please remove dropdown items first.'
+        })
+      }
+    }
+
+    // Check for location conflicts
+    if (isChangingToHeader || isChangingToFooter) {
+      const location = isChangingToHeader ? 'header' : 'footer'
+      const existingMenu = await this.menuRepo.findByLocation(location)
+
+      // If another menu is already in this location
+      if (existingMenu && existingMenu.id !== id) {
+        if (!force) {
+          // Return conflict error with existing menu info
+          throw createError({
+            statusCode: 409,
+            statusMessage: 'Location Conflict',
+            message: `Menu "${existingMenu.name}" is currently assigned to ${location}`,
+            data: {
+              conflictingMenu: {
+                id: existingMenu.id,
+                name: existingMenu.name
+              }
+            }
+          })
+        }
+
+        // Force flag is true - unset the existing menu
+        await this.menuRepo.unsetLocation(existingMenu.id, location, userId)
       }
     }
 
