@@ -32,11 +32,11 @@ const navigationItems = computed<NavigationItem[]>(() => {
 
   return headerMenuData.value.items.map(item => ({
     label: item.label,
-    link: item.page_id ? undefined : (item.custom_url || undefined),
+    link: item.page_id && item.page?.full_path ? item.page.full_path : (item.custom_url || undefined),
     children: item.children?.length > 0 ? item.children.map(child => ({
       label: child.label,
-      link: child.page_id ? undefined : (child.custom_url || undefined),
-      description: undefined // Menu items don't have descriptions in DB
+      link: child.page_id && child.page?.full_path ? child.page.full_path : (child.custom_url || undefined),
+      description: child.description || undefined
     })) : undefined
   }))
 })

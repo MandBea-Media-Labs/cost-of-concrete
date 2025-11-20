@@ -90,10 +90,13 @@ export class MenuRepository {
     // Get menu
     const menu = await this.getBySlug(slug)
 
-    // Get all items for this menu
+    // Get all items for this menu with page data
     const { data: items, error } = await this.client
       .from('menu_items')
-      .select('*')
+      .select(`
+        *,
+        page:pages(slug, title, full_path)
+      `)
       .eq('menu_id', menu.id)
       .eq('is_enabled', true)
       .is('deleted_at', null)

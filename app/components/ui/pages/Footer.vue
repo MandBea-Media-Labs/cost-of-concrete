@@ -15,7 +15,7 @@ const quickLinks = computed(() => {
 
   return footerMenuData.value.items.map(item => ({
     text: item.label,
-    to: item.page_id ? undefined : (item.custom_url || '/')
+    to: item.page_id && item.page?.full_path ? item.page.full_path : (item.custom_url || '/')
   }))
 })
 
