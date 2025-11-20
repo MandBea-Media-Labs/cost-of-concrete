@@ -495,10 +495,6 @@ export class PageService {
       }
     }
 
-    // Calculate display order
-    const maxOrder = await this.repository.getMaxDisplayOrder(data.parentId || null)
-    const displayOrder = maxOrder + 1
-
     // Create page data
     const pageData: PageInsert = {
       parent_id: data.parentId || null,
@@ -521,7 +517,6 @@ export class PageService {
       redirect_url: data.redirectUrl || null,
       redirect_type: data.redirectType || null,
       metadata,
-      display_order: displayOrder,
       published_at: data.status === 'published' ? new Date().toISOString() : null
     }
 

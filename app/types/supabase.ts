@@ -220,19 +220,23 @@ export type Database = {
           deleted_at: string | null
           depth: number
           description: string | null
-          display_order: number
+          focus_keyword: string | null
           full_path: string
           id: string
-          is_published: boolean
-          keywords: string[] | null
-          meta_description: string | null
+          meta_keywords: string[] | null
+          meta_robots: string[] | null
           meta_title: string | null
+          metadata: Json | null
           og_image: string | null
           parent_id: string | null
           published_at: string | null
+          redirect_type: number | null
           redirect_url: string | null
-          schema_markup: Json | null
+          sitemap_changefreq: string | null
+          sitemap_priority: number | null
           slug: string
+          status: string
+          template: string
           title: string
           updated_at: string | null
           updated_by: string | null
@@ -243,21 +247,25 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
-          depth: number
+          depth?: number
           description?: string | null
-          display_order?: number
+          focus_keyword?: string | null
           full_path: string
           id?: string
-          is_published?: boolean
-          keywords?: string[] | null
-          meta_description?: string | null
+          meta_keywords?: string[] | null
+          meta_robots?: string[] | null
           meta_title?: string | null
+          metadata?: Json | null
           og_image?: string | null
           parent_id?: string | null
           published_at?: string | null
+          redirect_type?: number | null
           redirect_url?: string | null
-          schema_markup?: Json | null
+          sitemap_changefreq?: string | null
+          sitemap_priority?: number | null
           slug: string
+          status?: string
+          template?: string
           title: string
           updated_at?: string | null
           updated_by?: string | null
@@ -270,19 +278,23 @@ export type Database = {
           deleted_at?: string | null
           depth?: number
           description?: string | null
-          display_order?: number
+          focus_keyword?: string | null
           full_path?: string
           id?: string
-          is_published?: boolean
-          keywords?: string[] | null
-          meta_description?: string | null
+          meta_keywords?: string[] | null
+          meta_robots?: string[] | null
           meta_title?: string | null
+          metadata?: Json | null
           og_image?: string | null
           parent_id?: string | null
           published_at?: string | null
+          redirect_type?: number | null
           redirect_url?: string | null
-          schema_markup?: Json | null
+          sitemap_changefreq?: string | null
+          sitemap_priority?: number | null
           slug?: string
+          status?: string
+          template?: string
           title?: string
           updated_at?: string | null
           updated_by?: string | null
@@ -291,7 +303,6 @@ export type Database = {
           {
             foreignKeyName: "pages_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: false
             referencedRelation: "pages"
             referencedColumns: ["id"]
           },

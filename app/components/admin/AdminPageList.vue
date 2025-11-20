@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import type { Database } from '~/types/supabase'
-import { useSortable } from '@vueuse/integrations/useSortable'
-import { ref, watch } from 'vue'
 
 type Page = Database['public']['Tables']['pages']['Row']
 
@@ -110,67 +108,6 @@ const handleView = (fullPath: string) => {
 const handleDelete = (pageId: string) => {
   emit('delete', pageId)
 }
-
-// Drag and Drop Implementation
-const el = ref<HTMLElement | null>(null)
-const localPages = ref<Page[]>([...props.pages])
-const isReordering = ref(false)
-
-// Watch for prop changes to update local state
-watch(() => props.pages, (newPages) => {
-  localPages.value = [...newPages]
-}, { deep: true })
-
-const { sortable } = useSortable(el, localPages, {
-  handle: '.drag-handle',
-  animation: 150,
-  ghostClass: 'bg-blue-50',
-  dragClass: 'opacity-50',
-  onMove: (evt) => {
-    // Only allow dragging within same parent
-    const draggedParentId = evt.dragged.dataset.parentId || ''
-    const targetParentId = evt.related.dataset.parentId || ''
-    return draggedParentId === targetParentId
-  },
-  onEnd: async (evt) => {
-    const { oldIndex, newIndex } = evt
-    if (oldIndex === newIndex) return
-
-    // Persist to backend
-    isReordering.value = true
-    try {
-      // Prepare payload: we need to send the updated order for all pages
-      // or at least the affected siblings.
-      // The API expects an array of { id, display_order, parent_id }
-
-      // We need to recalculate display_order for all pages in the affected group
-      // But localPages contains ALL pages (flat list).
-      // We need to find the parent group of the moved item.
-      const movedItem = localPages.value[newIndex]
-      const parentId = movedItem.parent_id
-
-      // Filter pages that belong to this parent
-      const siblings = localPages.value.filter(p => p.parent_id === parentId)
-
-      const updates = siblings.map((page, index) => ({
-        id: page.id,
-        display_order: index,
-        parent_id: page.parent_id
-      }))
-
-      await $fetch('/api/pages/reorder', {
-        method: 'PATCH',
-        body: { pages: updates }
-      })
-    } catch (error) {
-      console.error('Failed to reorder pages:', error)
-      // Revert changes if failed (reload from props)
-      localPages.value = [...props.pages]
-    } finally {
-      isReordering.value = false
-    }
-  }
-})
 </script>
 
 <template>
@@ -212,7 +149,6 @@ const { sortable } = useSortable(el, localPages, {
         <!-- Table Header -->
         <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
           <tr>
-            <th class="w-10 px-3 py-3"></th> <!-- Drag handle column -->
             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">
               Title
             </th>
@@ -235,26 +171,12 @@ const { sortable } = useSortable(el, localPages, {
         </thead>
 
         <!-- Table Body -->
-        <tbody
-          ref="el"
-          class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700"
-        >
+        <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
           <tr
-            v-for="page in localPages"
+            v-for="page in pages"
             :key="page.id"
-            :data-parent-id="page.parent_id || ''"
             class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors group"
           >
-            <!-- Drag Handle -->
-            <td class="px-3 py-4 whitespace-nowrap text-center">
-              <button
-                type="button"
-                class="drag-handle cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 p-1 rounded touch-none"
-                title="Drag to reorder"
-              >
-                <Icon name="heroicons:bars-3" class="h-5 w-5" />
-              </button>
-            </td>
             <!-- Title (with indentation) -->
             <td class="px-6 py-4 whitespace-nowrap">
               <div
