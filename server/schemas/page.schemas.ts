@@ -20,9 +20,10 @@ export const slugSchema = z.string()
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens only')
 
 /**
- * Valid template types
+ * Template slug schema
+ * Accepts any non-empty string (validated against database)
  */
-export const templateSchema = z.enum(['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default'])
+export const templateSchema = z.string().min(1, 'Template is required')
 
 /**
  * Valid page status
@@ -68,8 +69,8 @@ export const createPageSchema = z.object({
   // Optional slug (auto-generated if not provided)
   slug: slugSchema.optional(),
 
-  // Optional template (auto-assigned based on depth if not provided)
-  template: templateSchema.optional(),
+  // Required template (must be explicitly specified)
+  template: templateSchema,
 
   // Optional content fields
   description: z.string().max(500, 'Description must be 500 characters or less').optional().nullable(),

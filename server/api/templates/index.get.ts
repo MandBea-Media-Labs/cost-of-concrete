@@ -1,28 +1,25 @@
 /**
  * GET /api/templates
  *
- * List all available page templates with their configurations.
+ * List all enabled page templates from the database.
  *
  * @returns {Object} List of templates with metadata
  */
 
 import { consola } from 'consola'
-import { TEMPLATES, type TemplateType } from '../../config/templates'
+import { serverSupabaseClient } from '#supabase/server'
+import { PageTemplateService } from '../../services/PageTemplateService'
 
 export default defineEventHandler(async (event) => {
   try {
     if (import.meta.dev) {
-      consola.info('GET /api/templates - Fetching all templates')
+      consola.info('GET /api/templates - Fetching all enabled templates from database')
     }
 
-    // Transform templates object into array format
-    const templates = Object.entries(TEMPLATES).map(([key, config]) => ({
-      type: key as TemplateType,
-      name: config.name,
-      description: config.description,
-      allowedDepths: config.allowedDepths,
-      defaultMetadata: config.defaultMetadata
-    }))
+    const client = await serverSupabaseClient(event)
+    const templateService = new PageTemplateService(client)
+
+    const templates = await templateService.getEnabledTemplates()
 
     if (import.meta.dev) {
       consola.success(`GET /api/templates - Returning ${templates.length} templates`)

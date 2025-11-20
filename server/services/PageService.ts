@@ -5,17 +5,12 @@
  * Handles slug generation, path management, template validation, and SEO operations.
  */
 
+import { consola } from 'consola'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/supabase'
 import { PageRepository } from '../repositories/PageRepository'
-import {
-  getDefaultTemplateForDepth,
-  getAvailableTemplatesForDepth,
-  isTemplateAllowedAtDepth,
-  getTemplateConfig,
-  getDefaultMetadata,
-  type TemplateType
-} from '../config/templates'
+import { PageTemplateService } from './PageTemplateService'
+import type { TemplateSlug } from '../../app/types/templates'
 import type {
   SEOMetadata,
   OpenGraphMetadata,
@@ -40,7 +35,7 @@ export interface CreatePageData {
   title: string
   description?: string
   content: string
-  template?: TemplateType
+  template: TemplateSlug  // Now required
   status?: 'draft' | 'published' | 'archived'
 
   // Basic SEO fields
@@ -80,7 +75,7 @@ export interface UpdatePageData {
   title?: string
   description?: string
   content?: string
-  template?: TemplateType
+  template?: TemplateSlug
   status?: 'draft' | 'published' | 'archived'
   metaTitle?: string
   metaKeywords?: string[]
@@ -98,9 +93,11 @@ export interface UpdatePageData {
 
 export class PageService {
   public repository: PageRepository
+  private templateService: PageTemplateService
 
   constructor(client: SupabaseClient<Database>) {
     this.repository = new PageRepository(client)
+    this.templateService = new PageTemplateService(client)
   }
 
   // =====================================================
@@ -192,56 +189,47 @@ export class PageService {
   // =====================================================
 
   /**
-   * Determine default template for a depth
+   * Validate template slug against database
    */
-  determineDefaultTemplate(depth: number): TemplateType {
-    return getDefaultTemplateForDepth(depth)
-  }
-
-  /**
-   * Validate template type
-   */
-  validateTemplate(template: string): ValidationResult {
-    const validTemplates: TemplateType[] = ['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default']
-
-    if (!validTemplates.includes(template as TemplateType)) {
-      return {
-        valid: false,
-        errors: [`Invalid template: ${template}. Must be one of: ${validTemplates.join(', ')}`]
-      }
+  async validateTemplate(template: string): Promise<ValidationResult> {
+    if (import.meta.dev) {
+      consola.info('[PageService] validateTemplate() - Validating template', { template })
     }
 
-    return { valid: true, errors: [] }
-  }
+    try {
+      const isValid = await this.templateService.validateTemplateSlug(template)
 
-  /**
-   * Validate template for a specific depth
-   */
-  validateTemplateDepth(template: TemplateType, depth: number): ValidationResult {
-    if (!isTemplateAllowedAtDepth(template, depth)) {
-      const config = getTemplateConfig(template)
-      const allowedDepths = config?.allowedDepths === 'any' ? 'any depth' : config?.allowedDepths.join(', ')
+      if (!isValid) {
+        if (import.meta.dev) {
+          consola.warn(`[PageService] validateTemplate() - Invalid template: ${template}`)
+        }
+        return {
+          valid: false,
+          errors: [`Template '${template}' does not exist or is not enabled`]
+        }
+      }
+
+      if (import.meta.dev) {
+        consola.success(`[PageService] validateTemplate() - Template valid: ${template}`)
+      }
+
+      return { valid: true, errors: [] }
+    } catch (error) {
+      if (import.meta.dev) {
+        consola.error('[PageService] validateTemplate() - Error:', error)
+      }
       return {
         valid: false,
-        errors: [`Template '${template}' is not allowed at depth ${depth}. Allowed at: ${allowedDepths}`]
+        errors: ['Failed to validate template']
       }
     }
-
-    return { valid: true, errors: [] }
-  }
-
-  /**
-   * Get available templates for a depth
-   */
-  getAvailableTemplatesForDepth(depth: number): TemplateType[] {
-    return getAvailableTemplatesForDepth(depth)
   }
 
   /**
    * Validate template metadata against schema
    * TODO: Implement JSON Schema validation with ajv
    */
-  validateTemplateMetadata(template: TemplateType, metadata: any): ValidationResult {
+  validateTemplateMetadata(template: TemplateSlug, metadata: any): ValidationResult {
     // For now, just check if metadata is an object
     if (metadata && typeof metadata !== 'object') {
       return {
@@ -424,23 +412,20 @@ export class PageService {
     const depth = await this.calculateDepth(data.parentId)
     const fullPath = await this.generateFullPath(slug, data.parentId)
 
-    // Determine template
-    const template = data.template || this.determineDefaultTemplate(depth)
+    // Template is now required
+    if (!data.template) {
+      throw new Error('Template is required')
+    }
+    const template = data.template
 
-    // Validate template
-    const templateValidation = this.validateTemplate(template)
+    // Validate template against database
+    const templateValidation = await this.validateTemplate(template)
     if (!templateValidation.valid) {
       throw new Error(`Invalid template: ${templateValidation.errors.join(', ')}`)
     }
 
-    // Validate template for depth
-    const depthValidation = this.validateTemplateDepth(template, depth)
-    if (!depthValidation.valid) {
-      throw new Error(`Template not allowed at depth: ${depthValidation.errors.join(', ')}`)
-    }
-
-    // Prepare metadata
-    const defaultMetadata = getDefaultMetadata(template)
+    // Get default metadata from database
+    const defaultMetadata = await this.templateService.getTemplateDefaultMetadata(template)
 
     // Build SEO metadata structure
     const seoMetadata: any = {
@@ -554,14 +539,9 @@ export class PageService {
 
     // Handle template change
     if (data.template && data.template !== existingPage.template) {
-      const templateValidation = this.validateTemplate(data.template)
+      const templateValidation = await this.validateTemplate(data.template)
       if (!templateValidation.valid) {
         throw new Error(`Invalid template: ${templateValidation.errors.join(', ')}`)
-      }
-
-      const depthValidation = this.validateTemplateDepth(data.template, existingPage.depth)
-      if (!depthValidation.valid) {
-        throw new Error(`Template not allowed at depth: ${depthValidation.errors.join(', ')}`)
       }
 
       updateData.template = data.template
