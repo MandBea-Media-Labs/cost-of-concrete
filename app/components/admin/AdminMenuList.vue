@@ -200,29 +200,26 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
 
             <!-- Actions -->
             <td class="px-6 py-4">
-              <div class="flex items-center justify-end gap-2">
-                <button
-                  @click="handleManageItems(menu.id)"
-                  class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                  title="Manage Items"
-                >
-                  Items
-                </button>
-                <button
-                  @click="handleEdit(menu.id)"
-                  class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                  title="Edit Menu"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="handleDelete(menu.id)"
-                  class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
-                  title="Delete Menu"
-                >
-                  Delete
-                </button>
-              </div>
+              <TableActionsMenu
+                :actions="[
+                  {
+                    label: 'Add Links',
+                    icon: 'heroicons:list-bullet',
+                    onClick: () => handleManageItems(menu.id)
+                  },
+                  {
+                    label: 'Edit',
+                    icon: 'heroicons:pencil',
+                    onClick: () => handleEdit(menu.id)
+                  },
+                  {
+                    label: 'Delete',
+                    icon: 'heroicons:trash',
+                    onClick: () => handleDelete(menu.id),
+                    variant: 'danger'
+                  }
+                ]"
+              />
             </td>
           </tr>
         </tbody>

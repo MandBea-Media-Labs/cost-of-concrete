@@ -304,31 +304,27 @@ const { sortable } = useSortable(el, localItems, {
 
             <!-- Actions -->
             <td class="px-6 py-4">
-              <div class="flex items-center justify-end gap-2">
-                <!-- Add Child Link (only for dropdowns) -->
-                <button
-                  v-if="item.link_type === 'dropdown'"
-                  @click="handleAddChild(item.id)"
-                  class="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium"
-                  title="Add Link to this dropdown"
-                >
-                  Add Link
-                </button>
-                <button
-                  @click="handleEdit(item.id)"
-                  class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                  title="Edit Item"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="handleDelete(item.id)"
-                  class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
-                  title="Delete Item"
-                >
-                  Delete
-                </button>
-              </div>
+              <TableActionsMenu
+                :actions="[
+                  {
+                    label: 'Add Link',
+                    icon: 'heroicons:plus',
+                    onClick: () => handleAddChild(item.id),
+                    show: item.link_type === 'dropdown'
+                  },
+                  {
+                    label: 'Edit',
+                    icon: 'heroicons:pencil',
+                    onClick: () => handleEdit(item.id)
+                  },
+                  {
+                    label: 'Delete',
+                    icon: 'heroicons:trash',
+                    onClick: () => handleDelete(item.id),
+                    variant: 'danger'
+                  }
+                ]"
+              />
             </td>
           </tr>
         </tbody>
