@@ -309,38 +309,27 @@ const { sortable } = useSortable(el, localPages, {
             </td>
 
             <!-- Actions -->
-            <td class="px-6 py-4 whitespace-nowrap text-right">
-              <div class="flex items-center justify-end gap-2">
-                <!-- View Button -->
-                <button
-                  type="button"
-                  class="p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  @click="handleView(page.full_path)"
-                  title="View page"
-                >
-                  <Icon name="heroicons:eye" class="h-5 w-5" />
-                </button>
-
-                <!-- Edit Button -->
-                <button
-                  type="button"
-                  class="p-2 text-neutral-600 hover:text-green-600 dark:text-neutral-400 dark:hover:text-green-400 transition-colors rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  @click="handleEdit(page.id)"
-                  title="Edit page"
-                >
-                  <Icon name="heroicons:pencil-square" class="h-5 w-5" />
-                </button>
-
-                <!-- Delete Button -->
-                <button
-                  type="button"
-                  class="p-2 text-neutral-600 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition-colors rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  @click="handleDelete(page.id)"
-                  title="Delete page"
-                >
-                  <Icon name="heroicons:trash" class="h-5 w-5" />
-                </button>
-              </div>
+            <td class="px-6 py-4">
+              <TableActionsMenu
+                :actions="[
+                  {
+                    label: 'View',
+                    icon: 'heroicons:eye',
+                    onClick: () => handleView(page.full_path)
+                  },
+                  {
+                    label: 'Edit',
+                    icon: 'heroicons:pencil',
+                    onClick: () => handleEdit(page.id)
+                  },
+                  {
+                    label: 'Delete',
+                    icon: 'heroicons:trash',
+                    onClick: () => handleDelete(page.id),
+                    variant: 'danger'
+                  }
+                ]"
+              />
             </td>
           </tr>
         </tbody>
