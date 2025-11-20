@@ -26,9 +26,9 @@ export const menuFormSchema = z.object({
 
   metadata: z.record(z.any()).optional().nullable()
 }).refine(
-  data => data.show_in_header || data.show_in_footer,
+  data => !(data.show_in_header && data.show_in_footer),
   {
-    message: 'Menu must be shown in at least one location (header or footer)',
+    message: 'Menu can only be assigned to one location (Header or Footer)',
     path: ['show_in_header']
   }
 )
@@ -45,7 +45,7 @@ export const menuFormDefaultValues: MenuFormData = {
   name: '',
   slug: '',
   description: null,
-  show_in_header: true,
+  show_in_header: false,
   show_in_footer: false,
   is_enabled: true,
   metadata: null

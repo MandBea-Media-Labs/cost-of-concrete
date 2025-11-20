@@ -38,8 +38,11 @@ export const createMenuSchema = z.object({
 
   metadata: z.record(z.any()).optional().nullable()
 }).refine(
-  data => data.show_in_header || data.show_in_footer,
-  { message: 'Menu must be shown in at least one location (header or footer)' }
+  data => !(data.show_in_header && data.show_in_footer),
+  {
+    message: 'Menu can only be assigned to one location (Header or Footer)',
+    path: ['show_in_header']
+  }
 )
 
 // Update menu schema (all fields optional except what's being updated)
