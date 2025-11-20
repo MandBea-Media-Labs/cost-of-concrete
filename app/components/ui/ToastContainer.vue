@@ -5,7 +5,7 @@
  * Fixed positioned container that renders the global toast queue.
  *
  * Features:
- * - Fixed positioning (bottom-right on desktop, top-center on mobile)
+ * - Fixed positioning (top-right on desktop, top-center on mobile)
  * - Stacks toasts vertically with gap
  * - Auto-animate enter/exit transitions
  * - Z-index above modals
@@ -29,8 +29,8 @@ function handleClose(id: string) {
     :class="[
       // Mobile: top-center
       'top-4 left-1/2 -translate-x-1/2',
-      // Desktop: bottom-right
-      'lg:top-auto lg:bottom-4 lg:right-4 lg:left-auto lg:translate-x-0'
+      // Desktop: top-right
+      'lg:top-4 lg:bottom-auto lg:right-4 lg:left-auto lg:translate-x-0'
     ]"
   >
     <Toast
