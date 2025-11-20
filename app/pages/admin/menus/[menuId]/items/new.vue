@@ -33,6 +33,7 @@ const { pages: pagesData, fetchPages } = useAdminPages()
 
 const menuId = computed(() => route.params.menuId as string)
 const parentIdFromQuery = computed(() => route.query.parentId as string | undefined)
+const typeFromQuery = computed(() => route.query.type as 'dropdown' | 'link' | undefined)
 
 const menu = ref<Menu | null>(null)
 const menuItems = ref<MenuItem[]>([])
@@ -61,8 +62,8 @@ async function fetchData() {
     // Fetch menu items (for parent dropdown)
     const itemsResponse = await $fetch<{ success: boolean; data: MenuItem[] }>(`/api/menus/${menuId.value}/items`)
     if (itemsResponse.success) {
-      // Only show top-level items as parent options (1-level depth limit)
-      menuItems.value = itemsResponse.data.filter(item => item.parent_id === null)
+      // Only show dropdown menus as parent options (links can only be children of dropdowns)
+      menuItems.value = itemsResponse.data.filter(item => item.link_type === 'dropdown')
     }
 
     // Fetch published pages (for page link dropdown)
@@ -88,9 +89,19 @@ const initialFormData = computed(() => {
   // Start with default values
   const data: Partial<MenuItemFormData> = { ...menuItemFormDefaultValues }
 
-  // Override with parent_id from query param if provided
-  if (parentIdFromQuery.value) {
-    data.parent_id = parentIdFromQuery.value
+  // Set link_type based on query param
+  if (typeFromQuery.value === 'dropdown') {
+    data.link_type = 'dropdown'
+    data.page_id = null
+    data.custom_url = null
+    data.parent_id = null // Dropdowns are always top-level
+  } else if (typeFromQuery.value === 'link') {
+    data.link_type = 'page' // Default to page link
+
+    // If parentId is provided, set it (child link)
+    if (parentIdFromQuery.value) {
+      data.parent_id = parentIdFromQuery.value
+    }
   }
 
   return data
@@ -197,10 +208,23 @@ function handleCancel() {
         <!-- Header -->
         <div class="mb-8">
           <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-            Create Menu Item
+            <template v-if="typeFromQuery === 'dropdown'">
+              Create Dropdown Menu
+            </template>
+            <template v-else>
+              Create Link
+            </template>
           </h1>
           <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Add a new item to {{ menu.name }}
+            <template v-if="typeFromQuery === 'dropdown'">
+              Add a new dropdown menu to {{ menu.name }}
+            </template>
+            <template v-else-if="parentIdFromQuery">
+              Add a new link under a dropdown in {{ menu.name }}
+            </template>
+            <template v-else>
+              Add a new top-level link to {{ menu.name }}
+            </template>
           </p>
         </div>
 

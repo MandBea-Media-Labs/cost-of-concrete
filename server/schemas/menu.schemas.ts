@@ -71,7 +71,10 @@ export const updateMenuSchema = z.object({
 // =====================================================
 
 // Link type enum
-export const linkTypeSchema = z.enum(['page', 'custom'])
+// - dropdown: Label-only dropdown trigger (no link)
+// - page: Link to internal page
+// - custom: Link to custom URL
+export const linkTypeSchema = z.enum(['dropdown', 'page', 'custom'])
 
 // Create menu item schema
 export const createMenuItemSchema = z.object({
@@ -103,13 +106,21 @@ export const createMenuItemSchema = z.object({
   metadata: z.record(z.any()).optional().nullable()
 }).refine(
   data => {
+    // Dropdown: no link data, no parent
+    if (data.link_type === 'dropdown') {
+      return data.page_id === null && data.custom_url === null && data.parent_id === null
+    }
+    // Page link: page_id required, no custom_url
     if (data.link_type === 'page') {
       return data.page_id !== null && data.page_id !== undefined && data.custom_url === null
-    } else {
+    }
+    // Custom URL: custom_url required, no page_id
+    if (data.link_type === 'custom') {
       return data.custom_url !== null && data.custom_url !== undefined && data.page_id === null
     }
+    return false
   },
-  { message: 'Must provide either page_id (for page links) or custom_url (for custom links), but not both' }
+  { message: 'Invalid link configuration for the selected link type' }
 )
 
 // Update menu item schema

@@ -81,14 +81,19 @@ onMounted(async () => {
 // ACTIONS
 // =====================================================
 
-// Handle add parent item
-const handleAddParentItem = () => {
-  router.push(`/admin/menus/${menuId.value}/items/new`)
+// Handle add dropdown menu (top-level, no link)
+const handleAddDropdownMenu = () => {
+  router.push(`/admin/menus/${menuId.value}/items/new?type=dropdown`)
 }
 
-// Handle add child item
-const handleAddChildItem = (parentId: string) => {
-  router.push(`/admin/menus/${menuId.value}/items/new?parentId=${parentId}`)
+// Handle add top-level link
+const handleAddTopLevelLink = () => {
+  router.push(`/admin/menus/${menuId.value}/items/new?type=link`)
+}
+
+// Handle add child link (under a dropdown)
+const handleAddChildLink = (parentId: string) => {
+  router.push(`/admin/menus/${menuId.value}/items/new?type=link&parentId=${parentId}`)
 }
 
 // Handle edit item
@@ -191,20 +196,28 @@ const handleToggleEnabled = async (itemId: string, value: boolean) => {
             </p>
           </div>
 
-          <!-- Add Parent Item Button -->
-          <Button
-            text="Add Parent Item"
-            variant="primary"
-            size="md"
-            @click="handleAddParentItem"
-          />
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3">
+            <Button
+              text="Add Dropdown Menu"
+              variant="secondary"
+              size="md"
+              @click="handleAddDropdownMenu"
+            />
+            <Button
+              text="Add Link"
+              variant="primary"
+              size="md"
+              @click="handleAddTopLevelLink"
+            />
+          </div>
         </div>
 
         <!-- Menu Item List -->
         <AdminMenuItemList
           :menu-items="menuItems"
           :loading="loading"
-          @add-child="handleAddChildItem"
+          @add-child-link="handleAddChildLink"
           @edit="handleEditItem"
           @delete="handleDeleteItem"
           @reorder="handleReorder"

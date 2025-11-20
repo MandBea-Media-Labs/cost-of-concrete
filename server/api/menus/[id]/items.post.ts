@@ -62,15 +62,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Remove link_type before inserting (it's only used for validation)
-    const { link_type, ...dataToInsert } = validatedData
-
     // Get Supabase client and create service
     const client = await serverSupabaseClient(event)
     const menuService = new MenuService(client)
 
     // Create menu item using service (handles depth enforcement and auto-ordering)
-    const menuItem = await menuService.createMenuItem(dataToInsert, userId)
+    // Note: link_type is now a database column, so we keep it in the data
+    const menuItem = await menuService.createMenuItem(validatedData, userId)
 
     if (import.meta.dev) {
       consola.success(`POST /api/menus/${menuId}/items - Menu item created:`, {

@@ -79,17 +79,23 @@ const [isEnabled, isEnabledAttrs] = defineField('is_enabled')
 // CONDITIONAL FIELD LOGIC
 // =====================================================
 
-// Clear page_id when switching to custom URL
+// Clear fields when switching link type
 watch(linkType, (newType) => {
-  if (newType === 'custom') {
+  if (newType === 'dropdown') {
+    // Dropdowns have no link data and no parent
     setFieldValue('page_id', null)
-  } else {
+    setFieldValue('custom_url', null)
+    setFieldValue('parent_id', null)
+  } else if (newType === 'custom') {
+    setFieldValue('page_id', null)
+  } else if (newType === 'page') {
     setFieldValue('custom_url', null)
   }
 })
 
-// Show description field only if parent is selected
-const showDescription = computed(() => !!parentId.value)
+// Computed flags for conditional rendering
+const isDropdown = computed(() => linkType.value === 'dropdown')
+const isLink = computed(() => linkType.value === 'page' || linkType.value === 'custom')
 
 // =====================================================
 // FORM SUBMISSION
@@ -137,8 +143,23 @@ const onCancel = () => {
       </p>
     </div>
 
-    <!-- Link Type Radio Buttons -->
-    <div class="space-y-3">
+    <!-- Link Type Info (for dropdowns) -->
+    <div v-if="isDropdown" class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+      <div class="flex items-start gap-3">
+        <Icon name="heroicons:information-circle" class="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+        <div>
+          <h4 class="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+            Dropdown Menu
+          </h4>
+          <p class="text-sm text-green-700 dark:text-green-300">
+            This is a label-only dropdown menu. It will not link to any page. You can add links under this dropdown using the "Add Link" action.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Link Type Radio Buttons (for links only) -->
+    <div v-if="isLink" class="space-y-3">
       <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
         Link Type <span class="text-red-500">*</span>
       </label>
@@ -261,13 +282,13 @@ const onCancel = () => {
       </div>
     </div>
 
-    <!-- Parent Item Dropdown -->
-    <div>
+    <!-- Parent Dropdown (only for links, not dropdowns) -->
+    <div v-if="isLink">
       <label
         for="parent_id"
         class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"
       >
-        Parent Item (Optional)
+        Parent Dropdown Menu (Optional)
       </label>
       <select
         id="parent_id"
@@ -277,7 +298,7 @@ const onCancel = () => {
         :class="{ 'border-red-500': errors.parent_id }"
       >
         <option :value="null">
-          None (Top-level item)
+          None (Top-level link)
         </option>
         <option
           v-for="item in parentItems"
@@ -294,12 +315,12 @@ const onCancel = () => {
         {{ errors.parent_id }}
       </p>
       <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-        Select a parent to create a nested menu item (1 level deep only)
+        Select a dropdown menu to nest this link under it
       </p>
     </div>
 
-    <!-- Description Field (conditional - only if parent is selected) -->
-    <div v-if="showDescription">
+    <!-- Description Field -->
+    <div>
       <label
         for="description"
         class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"

@@ -2,8 +2,11 @@ import { z } from 'zod'
 
 /**
  * Link type enum
+ * - dropdown: Label-only dropdown trigger (no link)
+ * - page: Link to internal page
+ * - custom: Link to custom URL
  */
-export const linkTypeEnum = z.enum(['page', 'custom'])
+export const linkTypeEnum = z.enum(['dropdown', 'page', 'custom'])
 
 /**
  * Zod schema for menu item form validation
@@ -48,14 +51,22 @@ export const menuItemFormSchema = z.object({
   metadata: z.record(z.any()).nullable().optional()
 }).refine(
   data => {
+    // Dropdown: no link data, no parent
+    if (data.link_type === 'dropdown') {
+      return data.page_id === null && data.custom_url === null && data.parent_id === null
+    }
+    // Page link: page_id required, no custom_url
     if (data.link_type === 'page') {
       return data.page_id !== null && data.page_id !== undefined && data.custom_url === null
-    } else {
+    }
+    // Custom URL: custom_url required, no page_id
+    if (data.link_type === 'custom') {
       return data.custom_url !== null && data.custom_url !== undefined && data.page_id === null
     }
+    return false
   },
   {
-    message: 'Must provide either page_id (for page links) or custom_url (for custom links), but not both',
+    message: 'Invalid link configuration for the selected link type',
     path: ['link_type']
   }
 )

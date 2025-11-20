@@ -23,24 +23,26 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  addChild: [parentId: string]
+  addChildLink: [parentId: string]
   edit: [itemId: string]
   delete: [itemId: string]
   reorder: [updates: Array<{ id: string; display_order: number }>]
   toggleEnabled: [itemId: string, value: boolean]
 }>()
 
-// Get link type display
+// Get link type display based on link_type column
 const getLinkTypeDisplay = (item: MenuItem) => {
-  if (item.page_id) return 'Page Link'
-  if (item.custom_url) return 'Custom URL'
+  if (item.link_type === 'dropdown') return 'Dropdown Menu'
+  if (item.link_type === 'page') return 'Page Link'
+  if (item.link_type === 'custom') return 'Custom URL'
   return 'Unknown'
 }
 
 // Get link type color
 const getLinkTypeColor = (item: MenuItem) => {
-  if (item.page_id) return 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
-  if (item.custom_url) return 'text-purple-600 dark:text-purple-400 border-purple-600 dark:border-purple-400'
+  if (item.link_type === 'dropdown') return 'text-green-600 dark:text-green-400 border-green-600 dark:border-green-400'
+  if (item.link_type === 'page') return 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+  if (item.link_type === 'custom') return 'text-purple-600 dark:text-purple-400 border-purple-600 dark:border-purple-400'
   return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
 }
 
@@ -51,7 +53,7 @@ const getIndentation = (item: MenuItem) => {
 
 // Handle action clicks
 const handleAddChild = (parentId: string) => {
-  emit('addChild', parentId)
+  emit('addChildLink', parentId)
 }
 
 const handleEdit = (itemId: string) => {
@@ -180,7 +182,7 @@ const { sortable } = useSortable(el, localItems, {
         No menu items found
       </h3>
       <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-6 text-center max-w-md">
-        Get started by adding your first menu item. You can create parent items and nest child items under them.
+        Get started by adding dropdown menus and links to build your navigation.
       </p>
     </div>
 
@@ -278,7 +280,15 @@ const { sortable } = useSortable(el, localItems, {
             <!-- Link -->
             <td class="px-6 py-4 hidden md:table-cell">
               <span class="text-sm text-neutral-600 dark:text-neutral-400 truncate max-w-xs block">
-                {{ item.custom_url || 'Page Link' }}
+                <template v-if="item.link_type === 'dropdown'">
+                  —
+                </template>
+                <template v-else-if="item.link_type === 'custom'">
+                  {{ item.custom_url }}
+                </template>
+                <template v-else>
+                  Page Link
+                </template>
               </span>
             </td>
 
@@ -295,13 +305,14 @@ const { sortable } = useSortable(el, localItems, {
             <!-- Actions -->
             <td class="px-6 py-4">
               <div class="flex items-center justify-end gap-2">
+                <!-- Add Child Link (only for dropdowns) -->
                 <button
-                  v-if="!item.parent_id"
+                  v-if="item.link_type === 'dropdown'"
                   @click="handleAddChild(item.id)"
                   class="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium"
-                  title="Add Child Item"
+                  title="Add Link to this dropdown"
                 >
-                  Add Child
+                  Add Link
                 </button>
                 <button
                   @click="handleEdit(item.id)"
