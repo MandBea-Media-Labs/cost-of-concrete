@@ -114,6 +114,19 @@ export class MenuService {
    * Create a new menu item
    */
   async createMenuItem(data: MenuItemInsert, userId: string) {
+    // Validate: Footer menus cannot have dropdown items
+    if (data.link_type === 'dropdown') {
+      const menu = await this.menuRepo.getById(data.menu_id)
+
+      if (menu.show_in_footer) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: 'Footer menus cannot contain dropdown items. Only page links and custom links are allowed in footer menus.'
+        })
+      }
+    }
+
     // Enforce 1-level depth rule
     if (data.parent_id) {
       const parent = await this.menuItemRepo.getById(data.parent_id)
@@ -142,9 +155,29 @@ export class MenuService {
    * Update an existing menu item
    */
   async updateMenuItem(id: string, data: MenuItemUpdate, userId: string) {
+    // Get item once if needed for validation
+    let item: any = null
+
+    // Validate: Footer menus cannot have dropdown items
+    if (data.link_type === 'dropdown') {
+      item = await this.menuItemRepo.getById(id)
+      const menu = await this.menuRepo.getById(item.menu_id)
+
+      if (menu.show_in_footer) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: 'Footer menus cannot contain dropdown items. Only page links and custom links are allowed in footer menus.'
+        })
+      }
+    }
+
     // If parent_id is being updated, enforce 1-level depth rule
     if (data.parent_id !== undefined) {
-      const item = await this.menuItemRepo.getById(id)
+      // Reuse item if already fetched, otherwise fetch it
+      if (!item) {
+        item = await this.menuItemRepo.getById(id)
+      }
 
       // Check if this item has children
       const children = await this.menuItemRepo.getChildren(id)
