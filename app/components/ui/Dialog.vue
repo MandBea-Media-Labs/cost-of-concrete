@@ -20,6 +20,11 @@ interface Props {
   description?: string
 
   /**
+   * Whether the dialog is open (controlled mode)
+   */
+  open?: boolean
+
+  /**
    * Whether to show the overlay backdrop
    * @default true
    */
@@ -53,6 +58,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 interface Emits {
   (e: 'update:open', value: boolean): void
+  (e: 'close'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -64,7 +70,7 @@ const hasCustomTrigger = computed(() => !!slots.trigger)
 const hasCustomTitle = computed(() => !!slots.title)
 const hasCustomDescription = computed(() => !!slots.description)
 const hasCustomClose = computed(() => !!slots.close)
-const hasFooter = computed(() => !!slots.footer)
+const hasFooter = computed(() => !!slots.footer || !!slots.actions)
 
 
 
@@ -161,7 +167,11 @@ const footerClasses = computed(() => {
 
 <template>
   <DialogRoot
-    @update:open="(value) => emit('update:open', value)"
+    :open="open"
+    @update:open="(value) => {
+      emit('update:open', value)
+      if (!value) emit('close')
+    }"
   >
     <!-- Custom trigger slot with as-child -->
     <DialogTrigger
@@ -173,7 +183,7 @@ const footerClasses = computed(() => {
 
     <!-- Default trigger button -->
     <DialogTrigger
-      v-else
+      v-else-if="triggerText"
       :class="triggerClasses"
     >
       {{ triggerText }}
@@ -258,12 +268,13 @@ const footerClasses = computed(() => {
           <slot />
         </div>
 
-        <!-- Footer -->
+        <!-- Footer / Actions -->
         <div
           v-if="hasFooter"
           :class="footerClasses"
         >
           <slot name="footer" />
+          <slot name="actions" />
         </div>
       </DialogContent>
     </DialogPortal>

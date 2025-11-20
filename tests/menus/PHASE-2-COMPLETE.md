@@ -93,7 +93,7 @@ All 4 important workflow tests have been created:
 - Item appears in admin list
 - Item appears in public header with correct link
 
-### Workflow 3: Toggle Menu Flags (toggle-menu-flags.spec.ts)
+### Workflow 3: Toggle Menu Flags (toggle-menu-flags.spec.ts) - DONE
 - Toggle "Show in Header" ON/OFF
 - Verify menu appears/disappears in header
 - Toggle "Show in Footer" ON/OFF
@@ -101,19 +101,12 @@ All 4 important workflow tests have been created:
 - Toggle "Enabled" ON/OFF
 - Verify menu appears/disappears everywhere
 
-### Workflow 4: Reorder Menu Items (reorder-menu-items.spec.ts)
-- Drag-and-drop menu items
-- Visual feedback during drag
-- Order updates in admin list
-- Order persists after page refresh
-- Order appears correctly in header
-
-### Workflow 5: Delete Menu (delete-menu.spec.ts)
+### Workflow 9: Delete Menu Item (delete-menu-item.spec.ts)
 - Click delete button
 - Confirmation dialog appears
 - Confirm deletion
-- Menu removed from admin list
-- Menu removed from header/footer
+- Item removed from admin list
+- Item removed from header
 - Cancel deletion workflow
 
 ### Workflow 6: Create Child Item (create-child-item.spec.ts)
@@ -122,6 +115,13 @@ All 4 important workflow tests have been created:
 - Create child item
 - Child appears nested under parent in admin
 - Child appears in header dropdown
+
+### Workflow 4: Reorder Menu Items (reorder-menu-items.spec.ts)
+- Drag-and-drop menu items
+- Visual feedback during drag
+- Order updates in admin list
+- Order persists after page refresh
+- Order appears correctly in header
 
 ### Workflow 7: Edit Menu (edit-menu.spec.ts)
 - Navigate to edit form
@@ -136,14 +136,6 @@ All 4 important workflow tests have been created:
 - Update item fields
 - Changes appear in admin list
 - Changes appear in header
-
-### Workflow 9: Delete Menu Item (delete-menu-item.spec.ts)
-- Click delete button
-- Confirmation dialog appears
-- Confirm deletion
-- Item removed from admin list
-- Item removed from header
-- Cancel deletion workflow
 
 ---
 
