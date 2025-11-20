@@ -32,6 +32,12 @@ interface Props {
   disabled?: boolean
 
   /**
+   * The button type attribute
+   * @default 'button'
+   */
+  type?: 'button' | 'submit' | 'reset'
+
+  /**
    * Optional icon name (uses Nuxt Icon)
    * When provided, displays on the right side of the button text
    * Example: 'heroicons:arrow-right'
@@ -71,6 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   location: null,
   variant: 'primary',
   disabled: false,
+  type: 'button',
   icon: null,
   colors: null,
   textColors: null,
@@ -227,7 +234,7 @@ const isLink = computed(() => props.location && !props.disabled)
 
   <button
     v-else
-    type="button"
+    :type="type"
     :disabled="disabled"
     :class="buttonClasses"
     :style="customStyles"
