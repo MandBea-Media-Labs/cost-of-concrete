@@ -5,18 +5,12 @@
  * and generating dynamic form fields based on JSON Schema.
  */
 
-import type { TemplateType } from '~/server/config/templates'
+import { consola } from 'consola'
+import type { TemplateSlug, TemplateSchemaData } from '~/types/templates'
 
 export interface TemplateSchemaResponse {
   success: boolean
-  data: {
-    type: TemplateType
-    name: string
-    description: string
-    allowedDepths: number[] | 'any'
-    schema: Record<string, any>
-    defaultMetadata: Record<string, any>
-  }
+  data: TemplateSchemaData
 }
 
 export interface FormField {
@@ -41,9 +35,9 @@ export function useTemplateSchema() {
   /**
    * Fetch template schema from API
    */
-  async function fetchTemplateSchema(templateType: TemplateType) {
-    if (!templateType) {
-      error.value = 'Template type is required'
+  async function fetchTemplateSchema(templateSlug: TemplateSlug) {
+    if (!templateSlug) {
+      error.value = 'Template slug is required'
       return null
     }
 
@@ -51,19 +45,30 @@ export function useTemplateSchema() {
     error.value = null
 
     try {
-      const response = await $fetch<TemplateSchemaResponse>(`/api/templates/${templateType}/schema`)
+      if (import.meta.dev) {
+        consola.info('[useTemplateSchema] Fetching schema from API', { templateSlug })
+      }
+
+      const response = await $fetch<TemplateSchemaResponse>(`/api/templates/${templateSlug}/schema`)
 
       if (response.success && response.data) {
         templateSchema.value = response.data
+
+        if (import.meta.dev) {
+          consola.success('[useTemplateSchema] Schema loaded', { templateSlug })
+        }
+
         return response.data
       } else {
         throw new Error('Invalid response from API')
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch template schema'
-      if (import.meta.client) {
-        consola.error('Failed to fetch template schema:', err)
+
+      if (import.meta.dev) {
+        consola.error('[useTemplateSchema] Failed to fetch schema:', err)
       }
+
       return null
     } finally {
       loading.value = false
@@ -154,7 +159,7 @@ export function useTemplateSchema() {
   /**
    * Get default metadata for a template
    */
-  function getDefaultMetadata(templateType: TemplateType): Record<string, any> {
+  function getDefaultMetadata(): Record<string, any> {
     return templateSchema.value?.defaultMetadata || {}
   }
 
@@ -207,53 +212,6 @@ export function useTemplateSchema() {
     }
   }
 
-  /**
-   * Get field help text based on template and field name
-   */
-  function getFieldHelpText(templateType: TemplateType, fieldName: string): string {
-    const helpTexts: Record<TemplateType, Record<string, string>> = {
-      hub: {
-        layout: 'Choose how child pages are displayed',
-        columns: 'Number of columns in grid layout (2-4)',
-        showChildGrid: 'Display child pages in a grid',
-        heroImage: 'URL to hero image for this hub page',
-        featuredPages: 'Select pages to feature at the top'
-      },
-      spoke: {
-        showSidebar: 'Display sidebar on this page',
-        sidebarPosition: 'Position of the sidebar (left or right)',
-        sidebarContent: 'Type of content to show in sidebar',
-        relatedPages: 'Select related pages to display',
-        showChildList: 'Display list of child pages'
-      },
-      'sub-spoke': {
-        showTableOfContents: 'Display table of contents',
-        tocPosition: 'Position of the table of contents',
-        showBreadcrumbs: 'Display breadcrumb navigation',
-        showChildList: 'Display list of child pages',
-        relatedPages: 'Select related pages to display',
-        showAuthor: 'Display author information',
-        showPublishDate: 'Display publish date'
-      },
-      article: {
-        showTableOfContents: 'Display table of contents',
-        showBreadcrumbs: 'Display breadcrumb navigation',
-        showAuthor: 'Display author information',
-        showPublishDate: 'Display publish date',
-        showReadingTime: 'Display estimated reading time',
-        relatedArticles: 'Select related articles to display',
-        tags: 'Add tags for categorization'
-      },
-      custom: {},
-      default: {
-        showBreadcrumbs: 'Display breadcrumb navigation',
-        showChildList: 'Display list of child pages'
-      }
-    }
-
-    return helpTexts[templateType]?.[fieldName] || ''
-  }
-
   return {
     templateSchema,
     loading,
@@ -262,7 +220,6 @@ export function useTemplateSchema() {
     generateFormFields,
     getDefaultMetadata,
     validateMetadata,
-    getFieldHelpText,
     formatLabel
   }
 }

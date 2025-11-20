@@ -4,6 +4,7 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { consola } from 'consola'
 import { pageFormSchema, pageFormDefaultValues, type PageFormData } from '~/schemas/admin/page-form.schema'
+import type { PageTemplate, TemplateSlug } from '~/types/templates'
 
 interface Props {
   /**
@@ -162,27 +163,111 @@ const parentPageOptions = computed(() => {
   ]
 })
 
-// Fetch parent pages on component mount
+// =====================================================
+// TEMPLATE OPTIONS (Database-Driven)
+// =====================================================
+
+const templates = ref<PageTemplate[]>([])
+const isLoadingTemplates = ref(false)
+const templateLoadError = ref<string | null>(null)
+
+// Transform templates into dropdown options
+const templateOptions = computed(() => {
+  return templates.value.map((template) => ({
+    value: template.slug,
+    label: `${template.name} - ${template.description || 'No description'}`
+  }))
+})
+
+// Fetch templates from API
+async function fetchTemplates() {
+  isLoadingTemplates.value = true
+  templateLoadError.value = null
+
+  try {
+    if (import.meta.dev) {
+      consola.info('[PageForm] Fetching templates from API')
+    }
+
+    const response = await $fetch<{ success: boolean; data: PageTemplate[]; total: number }>('/api/templates')
+
+    if (response.success && response.data) {
+      templates.value = response.data
+
+      if (import.meta.dev) {
+        consola.success(`[PageForm] Loaded ${response.data.length} templates`)
+      }
+    } else {
+      throw new Error('Invalid response from API')
+    }
+  } catch (err: any) {
+    templateLoadError.value = err.message || 'Failed to load templates'
+
+    if (import.meta.dev) {
+      consola.error('[PageForm] Failed to fetch templates:', err)
+    }
+  } finally {
+    isLoadingTemplates.value = false
+  }
+}
+
+// Fetch parent pages and templates on component mount
 onMounted(async () => {
-  await fetchPages({
-    limit: 100,
-    orderBy: 'full_path',
-    orderDirection: 'asc'
-  })
+  await Promise.all([
+    fetchPages({
+      limit: 100,
+      orderBy: 'full_path',
+      orderDirection: 'asc'
+    }),
+    fetchTemplates()
+  ])
 })
 
 // =====================================================
-// TEMPLATE OPTIONS
+// TEMPLATE/DEPTH WARNINGS
 // =====================================================
 
-const templateOptions = [
-  { value: 'hub', label: 'Hub Template - Top-level category with child grid (Depth 0)' },
-  { value: 'spoke', label: 'Spoke Template - Mid-level content with sidebar (Depth 1)' },
-  { value: 'sub-spoke', label: 'Sub-Spoke Template - Detailed content with TOC (Depth 2)' },
-  { value: 'article', label: 'Article Template - Deep-level article (Depth 3+)' },
-  { value: 'custom', label: 'Custom Template - Fully customizable' },
-  { value: 'default', label: 'Default Template - Basic fallback' }
-]
+// Calculate the depth of the page being created/edited
+const calculatedDepth = computed(() => {
+  if (!parentId.value) return 0
+
+  const parent = availablePages.value.find(p => p.id === parentId.value)
+  return parent ? parent.depth + 1 : 0
+})
+
+// Check for unusual template/depth combinations
+const templateWarning = computed(() => {
+  if (!template.value) return null
+
+  const depth = calculatedDepth.value
+  const templateSlug = template.value as string
+
+  // Hub template with parent (depth > 0)
+  if (templateSlug === 'hub' && depth > 0) {
+    return {
+      type: 'warning',
+      message: 'Hub templates are typically used at the top level (depth 0). Using a Hub template with a parent page may not display as expected.'
+    }
+  }
+
+  // Spoke template at depth 0
+  if (templateSlug === 'spoke' && depth === 0) {
+    return {
+      type: 'warning',
+      message: 'Spoke templates are typically used at depth 1 (one level below Hub). Using a Spoke template at the top level may not display as expected.'
+    }
+  }
+
+  // Sub-Spoke template at depth 0 or 1
+  if (templateSlug === 'sub-spoke' && (depth === 0 || depth === 1)) {
+    return {
+      type: 'warning',
+      message: 'Sub-Spoke templates are typically used at depth 2 or deeper. Using a Sub-Spoke template at this level may not display as expected.'
+    }
+  }
+
+  return null
+})
 
 // =====================================================
 // STATUS OPTIONS
@@ -330,14 +415,45 @@ function onCancel() {
         v-bind="templateAttrs"
         :options="templateOptions"
         placeholder="Select template"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || isLoadingTemplates"
       />
-      <p v-if="errors.template" class="mt-1 text-sm text-red-600 dark:text-red-400">
+
+      <!-- Loading state -->
+      <p v-if="isLoadingTemplates" class="mt-1 text-sm text-blue-600 dark:text-blue-400">
+        Loading templates...
+      </p>
+
+      <!-- Error state -->
+      <p v-else-if="templateLoadError" class="mt-1 text-sm text-red-600 dark:text-red-400">
+        {{ templateLoadError }}
+      </p>
+
+      <!-- Validation error -->
+      <p v-else-if="errors.template" class="mt-1 text-sm text-red-600 dark:text-red-400">
         {{ errors.template }}
       </p>
+
+      <!-- Template/Depth Warning -->
+      <div
+        v-if="templateWarning"
+        class="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
+      >
+        <div class="flex items-start gap-2">
+          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Unusual Template Selection</p>
+            <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+              {{ templateWarning.message }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Warning for template change in edit mode -->
       <div
-        v-if="isEditMode && hasTemplateChanged"
+        v-else-if="isEditMode && hasTemplateChanged"
         class="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
       >
         <div class="flex items-start gap-2">
@@ -352,6 +468,8 @@ function onCancel() {
           </div>
         </div>
       </div>
+
+      <!-- Help text -->
       <p v-else class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
         Choose the template that best fits your content type
       </p>

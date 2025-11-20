@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+import type { TemplateSlug } from '~/types/templates'
 
 // =====================================================
 // CORE FIELD SCHEMAS
@@ -43,10 +44,11 @@ export const descriptionSchema = z
 
 /**
  * Template validation
+ * Now accepts any string (validated against database)
  */
-export const templateSchema = z.enum(['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default'], {
-  errorMap: () => ({ message: 'Please select a valid template' })
-})
+export const templateSchema = z
+  .string()
+  .min(1, 'Template is required')
 
 /**
  * Status validation
@@ -289,7 +291,7 @@ export const coreFieldsDefaultValues: CoreFieldsFormData = {
   title: '',
   slug: '',
   parentId: null,
-  template: 'default',
+  template: '' as TemplateSlug,  // Empty string - template selection required
   status: 'draft',
   description: ''
 }
@@ -318,7 +320,7 @@ export const contentFormDefaultValues: ContentFormData = {
   title: '',
   slug: '',
   parentId: null,
-  template: 'default',
+  template: '' as TemplateSlug,  // Empty string - template selection required
   status: 'draft',
   description: '',
   content: ''

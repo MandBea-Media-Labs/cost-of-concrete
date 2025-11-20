@@ -7,10 +7,10 @@
  */
 
 import { consola } from 'consola'
-import type { TemplateType } from '~/server/config/templates'
+import type { TemplateSlug } from '~/types/templates'
 
 interface Props {
-  template: TemplateType
+  template: TemplateSlug
   metadata?: Record<string, any> | null
   disabled?: boolean
 }
@@ -24,7 +24,7 @@ const emit = defineEmits<{
   'update:metadata': [value: Record<string, any>]
 }>()
 
-const { templateSchema, loading, error, fetchTemplateSchema, generateFormFields, getFieldHelpText } = useTemplateSchema()
+const { templateSchema, loading, error, fetchTemplateSchema, generateFormFields } = useTemplateSchema()
 
 // Generate form fields based on template schema
 const formFields = ref<ReturnType<typeof generateFormFields>>([])
@@ -107,8 +107,8 @@ function getFieldValue(fieldName: string) {
               {{ field.label }}
               <span v-if="field.required" class="text-red-500">*</span>
             </label>
-            <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              {{ field.helpText || getFieldHelpText(template, field.name) }}
+            <p v-if="field.helpText" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              {{ field.helpText }}
             </p>
           </div>
         </div>
@@ -122,7 +122,7 @@ function getFieldValue(fieldName: string) {
           :placeholder="`Select ${field.label.toLowerCase()}`"
           :required="field.required"
           :disabled="disabled"
-          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          :help-text="field.helpText"
           @update:model-value="updateField(field.name, $event)"
         />
 
@@ -135,7 +135,7 @@ function getFieldValue(fieldName: string) {
           :placeholder="field.placeholder"
           :required="field.required"
           :disabled="disabled"
-          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          :help-text="field.helpText"
           @update:model-value="updateField(field.name, Number($event))"
         />
 
@@ -147,7 +147,7 @@ function getFieldValue(fieldName: string) {
           :placeholder="field.placeholder"
           :required="field.required"
           :disabled="disabled"
-          :help-text="field.helpText || getFieldHelpText(template, field.name)"
+          :help-text="field.helpText"
           @update:model-value="updateField(field.name, $event)"
         />
 
@@ -166,8 +166,8 @@ function getFieldValue(fieldName: string) {
             @input="updateField(field.name, JSON.parse(($event.target as HTMLTextAreaElement).value || (field.type === 'array' ? '[]' : '{}')))"
             class="w-full rounded-lg border border-neutral-300 bg-white text-neutral-700 transition-all outline-none px-4 py-3 text-sm font-mono hover:border-neutral-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/30 dark:disabled:bg-neutral-900"
           ></textarea>
-          <p v-if="field.helpText || getFieldHelpText(template, field.name)" class="text-sm text-neutral-500 dark:text-neutral-400">
-            {{ field.helpText || getFieldHelpText(template, field.name) }}
+          <p v-if="field.helpText" class="text-sm text-neutral-500 dark:text-neutral-400">
+            {{ field.helpText }}
           </p>
           <p class="text-xs text-neutral-500 dark:text-neutral-400">Enter valid JSON format</p>
         </div>
