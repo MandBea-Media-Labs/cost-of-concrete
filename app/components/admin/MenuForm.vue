@@ -103,6 +103,26 @@ const onSubmit = handleSubmit((formData) => {
 const onCancel = () => {
   emit('cancel')
 }
+
+// =====================================================
+// LOCATION CHANGE HANDLER
+// =====================================================
+
+/**
+ * Handle location radio button change
+ */
+const handleLocationChange = (location: 'none' | 'header' | 'footer') => {
+  if (location === 'none') {
+    setFieldValue('show_in_header', false)
+    setFieldValue('show_in_footer', false)
+  } else if (location === 'header') {
+    setFieldValue('show_in_header', true)
+    setFieldValue('show_in_footer', false)
+  } else if (location === 'footer') {
+    setFieldValue('show_in_header', false)
+    setFieldValue('show_in_footer', true)
+  }
+}
 </script>
 
 <template>
@@ -188,48 +208,49 @@ const onCancel = () => {
       </p>
     </div>
 
-    <!-- Location Checkboxes -->
-    <div class="space-y-4">
-      <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        Display Location <span class="text-red-500">*</span>
+    <!-- Location Radio Buttons -->
+    <div>
+      <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
+        Location <span class="text-red-500">*</span>
       </label>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="location"
+            :checked="!showInHeader && !showInFooter"
+            @change="handleLocationChange('none')"
+            class="h-4 w-4 border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+          />
+          <span class="text-sm text-neutral-700 dark:text-neutral-300">None</span>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400">(Menu not displayed)</span>
+        </label>
 
-      <div class="flex items-center gap-2">
-        <input
-          id="show_in_header"
-          v-model="showInHeader"
-          v-bind="showInHeaderAttrs"
-          type="checkbox"
-          class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-        />
-        <label
-          for="show_in_header"
-          class="text-sm text-neutral-700 dark:text-neutral-300"
-        >
-          Show in Header
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="location"
+            :checked="showInHeader"
+            @change="handleLocationChange('header')"
+            class="h-4 w-4 border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+          />
+          <span class="text-sm text-neutral-700 dark:text-neutral-300">Header</span>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400">(Top navigation)</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="location"
+            :checked="showInFooter"
+            @change="handleLocationChange('footer')"
+            class="h-4 w-4 border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+          />
+          <span class="text-sm text-neutral-700 dark:text-neutral-300">Footer</span>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400">(Bottom navigation, flat links only)</span>
         </label>
       </div>
-
-      <div class="flex items-center gap-2">
-        <input
-          id="show_in_footer"
-          v-model="showInFooter"
-          v-bind="showInFooterAttrs"
-          type="checkbox"
-          class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-        />
-        <label
-          for="show_in_footer"
-          class="text-sm text-neutral-700 dark:text-neutral-300"
-        >
-          Show in Footer
-        </label>
-      </div>
-
-      <p
-        v-if="errors.show_in_header"
-        class="mt-1 text-sm text-red-600 dark:text-red-400"
-      >
+      <p v-if="errors.show_in_header" class="mt-2 text-sm text-red-600 dark:text-red-400">
         {{ errors.show_in_header }}
       </p>
     </div>
