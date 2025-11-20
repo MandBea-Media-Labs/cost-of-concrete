@@ -6,6 +6,7 @@ import { consola } from 'consola'
 import { menuItemFormSchema, menuItemFormDefaultValues, type MenuItemFormData } from '~/schemas/admin/menu-item-form.schema'
 import type { Database } from '~/types/supabase'
 
+type Menu = Database['public']['Tables']['menus']['Row']
 type MenuItem = Database['public']['Tables']['menu_items']['Row']
 type Page = Database['public']['Tables']['pages']['Row']
 
@@ -14,6 +15,11 @@ interface Props {
    * Menu ID (required for creating items)
    */
   menuId: string
+
+  /**
+   * Menu object (for conditional rendering based on menu location)
+   */
+  menu?: Menu | null
 
   /**
    * Initial form data (for edit mode)
@@ -44,6 +50,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  menu: null,
   initialData: undefined,
   isEditMode: false,
   isSubmitting: false,
@@ -96,6 +103,7 @@ watch(linkType, (newType) => {
 // Computed flags for conditional rendering
 const isDropdown = computed(() => linkType.value === 'dropdown')
 const isLink = computed(() => linkType.value === 'page' || linkType.value === 'custom')
+const isFooterMenu = computed(() => props.menu?.show_in_footer === true)
 
 // =====================================================
 // FORM SUBMISSION
@@ -282,8 +290,8 @@ const onCancel = () => {
       </div>
     </div>
 
-    <!-- Parent Dropdown (only for links, not dropdowns) -->
-    <div v-if="isLink">
+    <!-- Parent Dropdown (only for links, not dropdowns, and not for footer menus) -->
+    <div v-if="isLink && !isFooterMenu">
       <label
         for="parent_id"
         class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"

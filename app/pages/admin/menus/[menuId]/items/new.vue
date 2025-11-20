@@ -238,6 +238,7 @@ function handleCancel() {
         <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <MenuItemForm
             :menu-id="menuId"
+            :menu="menu"
             :initial-data="initialFormData"
             :parent-items="menuItems"
             :pages="pages"
