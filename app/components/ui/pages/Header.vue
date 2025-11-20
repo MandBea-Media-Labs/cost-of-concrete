@@ -13,10 +13,10 @@ import {
   NavigationMenuViewport
 } from 'reka-ui'
 
-// Fetch header menu dynamically
-const { fetchMenuBySlug } = useMenus()
+// Fetch header menu dynamically (gets first enabled header menu)
+const { fetchMenuByLocation } = useMenus()
 const { data: headerMenuData } = await useAsyncData('header-menu', () =>
-  fetchMenuBySlug('main-nav')
+  fetchMenuByLocation('header')
 )
 
 // Transform menu data to match NavigationItem interface

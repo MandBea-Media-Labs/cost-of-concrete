@@ -3,10 +3,10 @@
 // Features logo, quick links, social icons, and copyright section
 // Background: #00174c (dark navy blue)
 
-// Fetch footer menu dynamically
-const { fetchMenuBySlug } = useMenus()
+// Fetch footer menu dynamically (gets first enabled footer menu)
+const { fetchMenuByLocation } = useMenus()
 const { data: footerMenuData } = await useAsyncData('footer-menu', () =>
-  fetchMenuBySlug('footer-links')
+  fetchMenuByLocation('footer')
 )
 
 // Transform menu data to quick links format

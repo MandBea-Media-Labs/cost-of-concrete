@@ -120,6 +120,55 @@ export class MenuRepository {
   }
 
   /**
+   * Get first enabled menu for a location with all its items (nested structure)
+   * Used for dynamically loading header/footer menus
+   */
+  async getMenuWithItemsByLocation(location: 'header' | 'footer') {
+    const column = location === 'header' ? 'show_in_header' : 'show_in_footer'
+
+    // Get first enabled menu for this location
+    const { data: menu, error: menuError } = await this.client
+      .from('menus')
+      .select('*')
+      .eq(column, true)
+      .eq('is_enabled', true)
+      .is('deleted_at', null)
+      .order('display_order', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (menuError) throw menuError
+
+    // Get all items for this menu with page data
+    const { data: items, error: itemsError } = await this.client
+      .from('menu_items')
+      .select(`
+        *,
+        page:pages(slug, title, full_path)
+      `)
+      .eq('menu_id', menu.id)
+      .eq('is_enabled', true)
+      .is('deleted_at', null)
+      .order('display_order', { ascending: true })
+
+    if (itemsError) throw itemsError
+
+    // Build hierarchical structure
+    const topLevel = items.filter(item => item.parent_id === null)
+    const children = items.filter(item => item.parent_id !== null)
+
+    const itemsWithChildren = topLevel.map(parent => ({
+      ...parent,
+      children: children.filter(child => child.parent_id === parent.id)
+    }))
+
+    return {
+      ...menu,
+      items: itemsWithChildren
+    }
+  }
+
+  /**
    * Create new menu
    */
   async create(data: MenuInsert, userId: string) {

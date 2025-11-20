@@ -27,6 +27,7 @@ export interface MenuWithItems extends Menu {
  * Composable for menu management
  *
  * Provides methods for:
+ * - Fetching menus by location (public)
  * - Fetching menus by slug (public)
  * - Listing all menus (admin)
  * - Creating menus (admin)
@@ -35,10 +36,13 @@ export interface MenuWithItems extends Menu {
  *
  * @example
  * ```ts
- * const { fetchMenuBySlug, listMenus, createMenu, updateMenu, deleteMenu } = useMenus()
+ * const { fetchMenuByLocation, fetchMenuBySlug, listMenus, createMenu, updateMenu, deleteMenu } = useMenus()
  *
- * // Fetch menu for header
- * const headerMenu = await fetchMenuBySlug('main-nav')
+ * // Fetch menu for header (dynamic - gets first enabled header menu)
+ * const headerMenu = await fetchMenuByLocation('header')
+ *
+ * // Fetch menu by slug (static)
+ * const mainNav = await fetchMenuBySlug('main-nav')
  *
  * // List all menus (admin)
  * const allMenus = await listMenus()
@@ -46,7 +50,27 @@ export interface MenuWithItems extends Menu {
  */
 export function useMenus() {
   /**
+   * Fetch the first enabled menu for a location with nested items (public endpoint)
+   * This is the recommended method for loading header/footer menus dynamically
+   */
+  const fetchMenuByLocation = async (location: 'header' | 'footer'): Promise<MenuWithItems | null> => {
+    try {
+      const response = await $fetch<{ success: boolean; data: MenuWithItems }>(`/api/menus/by-location/${location}`)
+
+      if (response.success) {
+        return response.data
+      }
+
+      return null
+    } catch (err) {
+      console.error(`Error fetching menu for location '${location}':`, err)
+      return null
+    }
+  }
+
+  /**
    * Fetch a menu by slug with nested items (public endpoint)
+   * Use fetchMenuByLocation instead for dynamic header/footer menus
    */
   const fetchMenuBySlug = async (slug: string): Promise<MenuWithItems | null> => {
     try {
@@ -140,6 +164,7 @@ export function useMenus() {
   }
 
   return {
+    fetchMenuByLocation,
     fetchMenuBySlug,
     listMenus,
     createMenu,
