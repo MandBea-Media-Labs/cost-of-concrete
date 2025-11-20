@@ -131,9 +131,16 @@ async function handleSubmit(formData: MenuFormData) {
   } catch (error: any) {
     consola.error('[EditMenu] Error:', error)
 
+    // Get status code (can be statusCode or status depending on error type)
+    const statusCode = error?.statusCode || error?.status
+
     // Handle location conflict (409)
-    if (error?.statusCode === 409 && error?.data?.conflictingMenu) {
-      conflictingMenu.value = error.data.conflictingMenu
+    // Note: error.data.data.conflictingMenu because H3 error wraps data in another data property
+    if (statusCode === 409 && error?.data?.data?.conflictingMenu) {
+      if (import.meta.client && import.meta.dev) {
+        consola.info('[EditMenu] Location conflict detected:', error.data.data.conflictingMenu)
+      }
+      conflictingMenu.value = error.data.data.conflictingMenu
       pendingFormData.value = formData
       showConflictDialog.value = true
       isSubmitting.value = false
@@ -141,17 +148,18 @@ async function handleSubmit(formData: MenuFormData) {
     }
 
     // Handle footer dropdown validation error
-    if (error?.message?.includes('dropdown items')) {
-      toast.error(error.message)
+    if (error?.data?.message?.includes('dropdown items') || error?.message?.includes('dropdown items')) {
+      toast.error(error?.data?.message || error.message)
       isSubmitting.value = false
       return
     }
 
     // Show user-friendly error message
-    if (error?.message?.includes('duplicate')) {
+    const errorMessage = error?.data?.message || error?.message
+    if (errorMessage?.includes('duplicate') || errorMessage?.includes('slug')) {
       toast.error('A menu with this slug already exists')
     } else {
-      toast.error(error?.message || 'Failed to update menu')
+      toast.error(errorMessage || 'Failed to update menu')
     }
   } finally {
     if (!showConflictDialog.value) {
