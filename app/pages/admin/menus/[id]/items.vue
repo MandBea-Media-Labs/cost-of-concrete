@@ -198,7 +198,9 @@ const handleToggleEnabled = async (itemId: string, value: boolean) => {
 
           <!-- Action Buttons -->
           <div class="flex items-center gap-3">
+            <!-- Hide "Add Dropdown Menu" button for footer menus -->
             <Button
+              v-if="!menu.show_in_footer"
               text="Add Dropdown Menu"
               variant="secondary"
               size="md"
