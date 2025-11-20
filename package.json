@@ -7,7 +7,12 @@
     "dev": "nuxt dev --dotenv .env.local --port 3019",
     "generate": "nuxt generate --dotenv .env.production",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare --dotenv .env.local"
+    "postinstall": "nuxt prepare --dotenv .env.local",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.1",
