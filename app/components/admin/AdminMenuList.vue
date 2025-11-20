@@ -23,8 +23,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   edit: [menuId: string]
   delete: [menuId: string]
-  toggleHeader: [menuId: string, value: boolean]
-  toggleFooter: [menuId: string, value: boolean]
   toggleEnabled: [menuId: string, value: boolean]
   manageItems: [menuId: string]
 }>()
@@ -46,6 +44,24 @@ const formatDate = (dateString: string | null) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+// Get location text for badge
+const getLocationText = (menu: Menu) => {
+  if (menu.show_in_header) return 'Header'
+  if (menu.show_in_footer) return 'Footer'
+  return 'None'
+}
+
+// Get location color classes for badge
+const getLocationColor = (menu: Menu) => {
+  if (menu.show_in_header) {
+    return 'text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/20'
+  }
+  if (menu.show_in_footer) {
+    return 'text-purple-700 bg-purple-50 dark:text-purple-300 dark:bg-purple-900/20'
+  }
+  return 'text-neutral-500 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800'
+}
+
 // Handle action clicks
 const handleEdit = (menuId: string) => {
   emit('edit', menuId)
@@ -57,14 +73,6 @@ const handleDelete = (menuId: string) => {
 
 const handleManageItems = (menuId: string) => {
   emit('manageItems', menuId)
-}
-
-const handleToggleHeader = (menuId: string, value: boolean) => {
-  emit('toggleHeader', menuId, value)
-}
-
-const handleToggleFooter = (menuId: string, value: boolean) => {
-  emit('toggleFooter', menuId, value)
 }
 
 const handleToggleEnabled = (menuId: string, value: boolean) => {
@@ -116,11 +124,8 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
               Slug
             </th>
-            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-              Header
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-              Footer
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+              Location
             </th>
             <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
               Enabled
@@ -161,23 +166,13 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
               </code>
             </td>
 
-            <!-- Header Toggle -->
-            <td class="px-6 py-4 text-center">
-              <input
-                type="checkbox"
-                :checked="menu.show_in_header"
-                @change="handleToggleHeader(menu.id, !menu.show_in_header)"
-                class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-              />
-            </td>
-
-            <!-- Footer Toggle -->
-            <td class="px-6 py-4 text-center">
-              <input
-                type="checkbox"
-                :checked="menu.show_in_footer"
-                @change="handleToggleFooter(menu.id, !menu.show_in_footer)"
-                class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
+            <!-- Location Badge -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <Badge
+                :text="getLocationText(menu)"
+                variant="ghost"
+                size="sm"
+                :class="getLocationColor(menu)"
               />
             </td>
 

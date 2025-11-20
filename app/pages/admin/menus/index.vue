@@ -77,29 +77,7 @@ const cancelDelete = () => {
   menuToDelete.value = null
 }
 
-// Handle toggle actions
-const handleToggleHeader = async (menuId: string, value: boolean) => {
-  try {
-    await updateMenu(menuId, { show_in_header: value })
-    toast.success(`Menu ${value ? 'added to' : 'removed from'} header`)
-    await fetchMenus() // Refresh list
-  } catch (err) {
-    consola.error('Error toggling header:', err)
-    toast.error('Failed to update menu')
-  }
-}
-
-const handleToggleFooter = async (menuId: string, value: boolean) => {
-  try {
-    await updateMenu(menuId, { show_in_footer: value })
-    toast.success(`Menu ${value ? 'added to' : 'removed from'} footer`)
-    await fetchMenus() // Refresh list
-  } catch (err) {
-    consola.error('Error toggling footer:', err)
-    toast.error('Failed to update menu')
-  }
-}
-
+// Handle toggle enabled action
 const handleToggleEnabled = async (menuId: string, value: boolean) => {
   try {
     await updateMenu(menuId, { is_enabled: value })
@@ -141,8 +119,6 @@ const handleToggleEnabled = async (menuId: string, value: boolean) => {
         :loading="loading"
         @edit="handleEdit"
         @delete="handleDelete"
-        @toggle-header="handleToggleHeader"
-        @toggle-footer="handleToggleFooter"
         @toggle-enabled="handleToggleEnabled"
         @manage-items="handleManageItems"
       />
