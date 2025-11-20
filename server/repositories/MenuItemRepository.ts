@@ -123,17 +123,64 @@ export class MenuItemRepository {
    * Reorder menu items (for drag-and-drop)
    */
   async reorder(items: Array<{ id: string; display_order: number }>) {
-    const updates = items.map(item =>
-      this.client
+    // Two-phase update to avoid unique constraint violations
+    // Phase 1: Set all items to negative display_order values
+    // Phase 2: Set items to their final positive display_order values
+    const errors = []
+    const successes = []
+
+    console.log('[MenuItemRepository] Starting reorder for items:', JSON.stringify(items, null, 2))
+
+    // Phase 1: Set to negative values to avoid conflicts
+    console.log('[MenuItemRepository] Phase 1: Setting temporary negative values')
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      const tempOrder = -(i + 1) // -1, -2, -3, etc.
+
+      console.log(`[MenuItemRepository] Phase 1: Updating item ${item.id} to temporary display_order ${tempOrder}`)
+
+      const { error } = await this.client
+        .from('menu_items')
+        .update({ display_order: tempOrder })
+        .eq('id', item.id)
+        .select()
+
+      if (error) {
+        console.error(`[MenuItemRepository] Phase 1 ERROR for item ${item.id}:`, JSON.stringify(error, null, 2))
+        errors.push({ id: item.id, error, phase: 1 })
+      }
+    }
+
+    // If Phase 1 had errors, abort
+    if (errors.length > 0) {
+      console.error('[MenuItemRepository] Phase 1 failed, aborting. Errors:', errors)
+      throw errors[0].error
+    }
+
+    // Phase 2: Set to final positive values
+    console.log('[MenuItemRepository] Phase 2: Setting final positive values')
+    for (const item of items) {
+      console.log(`[MenuItemRepository] Phase 2: Updating item ${item.id} to final display_order ${item.display_order}`)
+
+      const { data, error } = await this.client
         .from('menu_items')
         .update({ display_order: item.display_order })
         .eq('id', item.id)
-    )
+        .select()
 
-    const results = await Promise.all(updates)
+      if (error) {
+        console.error(`[MenuItemRepository] Phase 2 ERROR for item ${item.id}:`, JSON.stringify(error, null, 2))
+        errors.push({ id: item.id, error, phase: 2 })
+      } else {
+        console.log(`[MenuItemRepository] Phase 2 SUCCESS for item ${item.id}`)
+        successes.push(item.id)
+      }
+    }
 
-    const errors = results.filter(r => r.error)
+    console.log(`[MenuItemRepository] Reorder complete. Successes: ${successes.length}, Errors: ${errors.length}`)
+
     if (errors.length > 0) {
+      console.error('[MenuItemRepository] Throwing first error:', errors[0].error)
       throw errors[0].error
     }
 

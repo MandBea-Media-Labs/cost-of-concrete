@@ -89,26 +89,62 @@ const { sortable } = useSortable(el, localItems, {
   },
   onEnd: async (evt) => {
     const { oldIndex, newIndex } = evt
-    if (oldIndex === newIndex) return
+    console.log('[AdminMenuItemList] Drag ended:', { oldIndex, newIndex })
+
+    if (oldIndex === newIndex) {
+      console.log('[AdminMenuItemList] No change in position, skipping reorder')
+      return
+    }
 
     isReordering.value = true
     try {
-      // Get the moved item
-      const movedItem = localItems.value[newIndex]
+      // IMPORTANT: useSortable does NOT automatically update the Vue ref!
+      // We need to manually reorder the localItems array
+      const items = [...localItems.value]
+      const [movedItem] = items.splice(oldIndex, 1)
+      items.splice(newIndex, 0, movedItem)
+      localItems.value = items
+
+      console.log('[AdminMenuItemList] Manually reordered localItems:', items.map((item, idx) => ({
+        index: idx,
+        id: item.id,
+        label: item.label,
+        parent_id: item.parent_id
+      })))
+
+      // Get the parent ID from the moved item
       const parentId = movedItem.parent_id
 
-      // Filter items that belong to this parent
+      console.log('[AdminMenuItemList] Moved item:', {
+        id: movedItem.id,
+        label: movedItem.label,
+        parentId,
+        oldIndex,
+        newIndex
+      })
+
+      // Filter items that belong to this parent from the REORDERED localItems
+      // This gives us the new order we want to save
       const siblings = localItems.value.filter(item => item.parent_id === parentId)
 
-      // Create updates array
+      console.log('[AdminMenuItemList] Siblings in NEW order:', siblings.map((s, idx) => ({
+        id: s.id,
+        label: s.label,
+        old_display_order: s.display_order,
+        new_display_order: idx
+      })))
+
+      // Create updates array based on the NEW positions in the reordered array
       const updates = siblings.map((item, index) => ({
         id: item.id,
         display_order: index
       }))
 
+      console.log('[AdminMenuItemList] Emitting reorder with updates:', updates)
+
       emit('reorder', updates)
     } catch (error) {
-      console.error('Failed to reorder menu items:', error)
+      console.error('[AdminMenuItemList] Failed to reorder menu items:', error)
       // Revert changes if failed
       localItems.value = [...props.menuItems]
     } finally {

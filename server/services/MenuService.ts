@@ -136,10 +136,18 @@ export class MenuService {
    * Reorder menu items
    */
   async reorderMenuItems(items: Array<{ id: string; display_order: number }>) {
+    if (import.meta.dev) {
+      console.log('[MenuService] reorderMenuItems called with:', items)
+    }
+
     // Validate all items belong to same menu and parent
     const itemDetails = await Promise.all(
       items.map(item => this.menuItemRepo.getById(item.id))
     )
+
+    if (import.meta.dev) {
+      console.log('[MenuService] Item details fetched:', itemDetails.map(i => ({ id: i.id, label: i.label, parent_id: i.parent_id, menu_id: i.menu_id })))
+    }
 
     const menuIds = new Set(itemDetails.map(item => item.menu_id))
     const parentIds = new Set(itemDetails.map(item => item.parent_id))
@@ -158,7 +166,17 @@ export class MenuService {
       })
     }
 
-    return await this.menuItemRepo.reorder(items)
+    if (import.meta.dev) {
+      console.log('[MenuService] Validation passed, calling repository.reorder')
+    }
+
+    const result = await this.menuItemRepo.reorder(items)
+
+    if (import.meta.dev) {
+      console.log('[MenuService] Repository.reorder returned:', result)
+    }
+
+    return result
   }
 }
 

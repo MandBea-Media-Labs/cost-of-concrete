@@ -33,7 +33,8 @@ export default defineEventHandler(async (event) => {
 
     if (import.meta.dev) {
       consola.info('PATCH /api/menu-items/reorder - Validated data:', {
-        itemCount: validatedData.items.length
+        itemCount: validatedData.items.length,
+        items: validatedData.items
       })
     }
 
@@ -41,11 +42,15 @@ export default defineEventHandler(async (event) => {
     const client = await serverSupabaseClient(event)
     const menuService = new MenuService(client)
 
+    if (import.meta.dev) {
+      consola.info('PATCH /api/menu-items/reorder - Calling menuService.reorderMenuItems')
+    }
+
     // Reorder menu items using service (validates same menu/parent)
-    await menuService.reorderMenuItems(validatedData.items)
+    const result = await menuService.reorderMenuItems(validatedData.items)
 
     if (import.meta.dev) {
-      consola.success('PATCH /api/menu-items/reorder - Menu items reordered')
+      consola.success('PATCH /api/menu-items/reorder - Menu items reordered successfully', { result })
     }
 
     return {
