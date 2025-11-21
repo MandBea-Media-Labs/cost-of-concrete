@@ -57,6 +57,32 @@ const serviceInfo = [
     content: '1-year workmanship warranty; materials per manufacturer.'
   }
 ]
+
+// Photo gallery data - varying dimensions to simulate real-world photos
+const photos = [
+  'https://placehold.co/800x600',
+  'https://placehold.co/1200x800',
+  'https://placehold.co/600x800',
+  'https://placehold.co/1000x750',
+  'https://placehold.co/900x600',
+  'https://placehold.co/700x900',
+  'https://placehold.co/1100x700',
+  'https://placehold.co/800x1000',
+  'https://placehold.co/950x650',
+  'https://placehold.co/750x750',
+  'https://placehold.co/1000x600',
+  'https://placehold.co/650x850'
+]
+
+// Lightbox state
+const isLightboxOpen = ref(false)
+const selectedImageIndex = ref(0)
+
+// Function to open lightbox at specific image
+const openLightbox = (index: number) => {
+  selectedImageIndex.value = index
+  isLightboxOpen.value = true
+}
 </script>
 
 <template>
@@ -325,7 +351,41 @@ const serviceInfo = [
             </div>
           </div>
 
-          <!-- Other Tabs -->
+          <!-- Photos Tab -->
+          <div v-else-if="activeTab === 'Photos'" class="space-y-6">
+            <!-- Photo Grid -->
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <div
+                v-for="(photo, index) in photos"
+                :key="index"
+                @click="openLightbox(index)"
+                class="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-lg border-2 border-transparent transition-all duration-300 hover:scale-105 hover:border-blue-500 hover:shadow-lg dark:hover:border-blue-400"
+              >
+                <img
+                  :src="photo"
+                  :alt="`Photo ${index + 1}`"
+                  class="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
+                  loading="lazy"
+                />
+                <!-- Overlay on hover -->
+                <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/20">
+                  <Icon
+                    name="heroicons:magnifying-glass-plus"
+                    class="h-8 w-8 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Lightbox -->
+            <Lightbox
+              v-model:open="isLightboxOpen"
+              :images="photos"
+              :initial-index="selectedImageIndex"
+            />
+          </div>
+
+          <!-- Other Tabs (Reviews, etc.) -->
           <div v-else class="flex h-64 items-center justify-center text-neutral-500">
             Content for {{ activeTab }} tab coming soon...
           </div>
