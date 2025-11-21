@@ -169,9 +169,9 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
-    <div class="mb-6">
+    <div class="mb-6 px-6 pt-6">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -192,68 +192,68 @@ function handleCancel() {
     </div>
 
     <!-- Content -->
-      <!-- Error Message -->
-      <div
-        v-if="errorMessage"
-        class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-      >
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:exclamation-circle" class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
-              Error Creating Page
-            </h3>
-            <p class="mt-1 text-sm text-red-700 dark:text-red-300">
-              {{ errorMessage }}
-            </p>
-          </div>
-          <button
-            @click="errorMessage = null"
-            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
-          >
-            <Icon name="heroicons:x-mark" class="h-5 w-5" />
-          </button>
+    <!-- Error Message -->
+    <div
+      v-if="errorMessage"
+      class="mb-6 mx-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+    >
+      <div class="flex items-start gap-3">
+        <Icon name="heroicons:exclamation-circle" class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+        <div class="flex-1">
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+            Error Creating Page
+          </h3>
+          <p class="mt-1 text-sm text-red-700 dark:text-red-300">
+            {{ errorMessage }}
+          </p>
+        </div>
+        <button
+          @click="errorMessage = null"
+          class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+        >
+          <Icon name="heroicons:x-mark" class="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 mx-6">
+      <div class="p-6">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+            Page Information
+          </h2>
+          <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Fill in all the details for your new page including content, template settings, and SEO options.
+          </p>
+        </div>
+
+        <!-- Page Form Component -->
+        <PageForm
+          :is-submitting="isSubmitting"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+        />
+      </div>
+    </div>
+
+    <!-- Help Text -->
+    <div class="mt-6 mx-6 mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div class="flex items-start gap-3">
+        <Icon name="heroicons:information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div class="flex-1">
+          <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">
+            Form Sections
+          </h3>
+          <ul class="mt-2 text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+            <li><strong>Core Fields:</strong> Title, slug, parent page, template, status, and description</li>
+            <li><strong>Content:</strong> Rich text editor with formatting options</li>
+            <li><strong>Template Settings:</strong> Template-specific options (varies by template)</li>
+            <li><strong>SEO Settings:</strong> Meta tags, social media, and structured data</li>
+          </ul>
         </div>
       </div>
-
-      <!-- Form Card -->
-      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
-        <div class="p-6 sm:p-8">
-          <div class="mb-6">
-            <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              Page Information
-            </h2>
-            <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              Fill in all the details for your new page including content, template settings, and SEO options.
-            </p>
-          </div>
-
-          <!-- Page Form Component -->
-          <PageForm
-            :is-submitting="isSubmitting"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </div>
-      </div>
-
-      <!-- Help Text -->
-      <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">
-              Form Sections
-            </h3>
-            <ul class="mt-2 text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-              <li><strong>Core Fields:</strong> Title, slug, parent page, template, status, and description</li>
-              <li><strong>Content:</strong> Rich text editor with formatting options</li>
-              <li><strong>Template Settings:</strong> Template-specific options (varies by template)</li>
-              <li><strong>SEO Settings:</strong> Meta tags, social media, and structured data</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+    </div>
   </div>
 </template>
 

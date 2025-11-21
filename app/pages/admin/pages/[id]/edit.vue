@@ -514,16 +514,16 @@ async function handleUnarchive() {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Loading State -->
-    <div v-if="isLoading" class="max-w-5xl mx-auto">
+    <div v-if="isLoading" class="mx-6 mt-6">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
         <p class="text-gray-600 dark:text-gray-400">Loading page data...</p>
       </div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="errorMessage" class="max-w-5xl mx-auto">
+    <div v-else-if="errorMessage" class="mx-6 mt-6">
       <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
         <h2 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">Error Loading Page</h2>
         <p class="text-red-700 dark:text-red-300">{{ errorMessage }}</p>
@@ -534,8 +534,8 @@ async function handleUnarchive() {
     </div>
 
     <!-- Edit Form -->
-    <div v-else-if="initialFormData" class="max-w-5xl mx-auto">
-      <div class="mb-6">
+    <div v-else-if="initialFormData">
+      <div class="mb-6 px-6 pt-6">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Page</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-2">Update page content, SEO settings, and metadata</p>
       </div>
@@ -543,7 +543,7 @@ async function handleUnarchive() {
       <!-- Error Message -->
       <div
         v-if="errorMessage"
-        class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start justify-between"
+        class="mb-6 mx-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start justify-between"
       >
         <div class="flex items-start gap-3">
           <svg class="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -561,16 +561,18 @@ async function handleUnarchive() {
         </button>
       </div>
 
-      <PageForm
-        :initial-data="initialFormData"
-        :is-edit-mode="true"
-        :is-submitting="isSubmitting"
-        @submit="handleSubmit"
-        @cancel="handleCancel"
-      />
+      <div class="mx-6">
+        <PageForm
+          :initial-data="initialFormData"
+          :is-edit-mode="true"
+          :is-submitting="isSubmitting"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+        />
+      </div>
 
       <!-- Archive / Delete / Unarchive Section -->
-      <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <div class="mt-8 pt-8 mx-6 mb-6 border-t border-gray-200 dark:border-gray-700">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Danger Zone</h2>
         <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <!-- Archive Button (for pages with children) -->
