@@ -77,7 +77,7 @@ const useStandardImg = computed(() => {
 // Build contractor profile URL
 const contractorUrl = computed(() => {
   // return `/contractors/${props.contractorSlug}`
-  return `/`
+  return `/listing-details`
 })
 
 // Border width classes

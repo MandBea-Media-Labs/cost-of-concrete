@@ -153,8 +153,8 @@ onUnmounted(() => {
           />
         </NuxtLink>
 
-        <!-- Desktop Navigation (Center) - Hidden on mobile -->
-        <div class="hidden flex-1 items-center justify-center md:flex">
+        <!-- Desktop Navigation (Center) - Hidden on mobile/tablet -->
+        <div class="hidden flex-1 items-center justify-center lg:flex">
           <NavigationMenuRoot class="relative z-50">
             <NavigationMenuList class="flex items-center gap-1">
               <!-- Loop through navigation items -->
@@ -227,8 +227,8 @@ onUnmounted(() => {
           </NavigationMenuRoot>
         </div>
 
-        <!-- Desktop: Auth Buttons - Hidden on mobile -->
-        <div class="hidden flex-shrink-0 items-center gap-3 md:flex">
+        <!-- Desktop: Auth Buttons - Hidden on mobile/tablet -->
+        <div class="hidden flex-shrink-0 items-center gap-3 lg:flex">
           <Button
             :text="authButtonText"
             :location="authButtonLocation"
@@ -250,10 +250,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- Mobile: Hamburger Menu Button - Visible only on mobile -->
+        <!-- Mobile/Tablet: Hamburger Menu Button - Visible on mobile and tablet -->
         <button
           @click="openMobileMenu"
-          class="flex-shrink-0 rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400 md:hidden"
+          class="flex-shrink-0 rounded-lg p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-blue-400 lg:hidden"
           aria-label="Open menu"
         >
           <Icon name="heroicons:bars-3" class="h-6 w-6" />
@@ -273,7 +273,7 @@ onUnmounted(() => {
       <div
         v-if="isMobileMenuOpen"
         @click="closeMobileMenu"
-        class="fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-sm dark:bg-neutral-950/70 md:hidden"
+        class="fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-sm dark:bg-neutral-950/70 lg:hidden"
         aria-hidden="true"
       />
     </Transition>
@@ -289,7 +289,7 @@ onUnmounted(() => {
     >
       <div
         v-if="isMobileMenuOpen"
-        class="fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] overflow-hidden bg-neutral-50 shadow-2xl dark:bg-neutral-900 md:hidden"
+        class="fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] overflow-hidden bg-neutral-50 shadow-2xl dark:bg-neutral-900 lg:hidden"
       >
         <!-- Main Menu -->
         <div
