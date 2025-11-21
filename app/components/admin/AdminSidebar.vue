@@ -75,6 +75,7 @@ onMounted(() => {
       <NuxtLink
         to="/"
         class="flex-shrink-0 transition-opacity hover:opacity-80"
+        target="_blank"
       >
         <!-- Collapsed Logo -->
         <img

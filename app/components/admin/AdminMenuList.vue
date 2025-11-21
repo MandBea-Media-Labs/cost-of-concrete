@@ -96,16 +96,16 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
     <!-- Empty State -->
     <div
       v-else-if="menus.length === 0"
-      class="flex flex-col items-center justify-center py-12 px-4"
+      class="flex flex-col items-center justify-center px-4 py-12"
     >
       <Icon
         name="heroicons:bars-3"
-        class="h-16 w-16 text-neutral-300 dark:text-neutral-600 mb-4"
+        class="mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-600"
       />
-      <h3 class="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+      <h3 class="mb-2 text-lg font-semibold text-neutral-700 dark:text-neutral-300">
         No menus found
       </h3>
-      <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-6 text-center max-w-md">
+      <p class="mb-6 max-w-md text-center text-sm text-neutral-500 dark:text-neutral-400">
         Get started by creating your first menu. Menus can be displayed in the header, footer, or both.
       </p>
     </div>
@@ -116,7 +116,7 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
       class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700"
     >
       <table class="w-full">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+        <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
               Name
@@ -138,11 +138,11 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700 bg-white dark:bg-neutral-900">
+        <tbody class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700 dark:bg-neutral-900">
           <tr
             v-for="menu in menus"
             :key="menu.id"
-            class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+            class="transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
           >
             <!-- Name -->
             <td class="px-6 py-4">
@@ -152,7 +152,7 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
                 </span>
                 <span
                   v-if="menu.description"
-                  class="text-xs text-neutral-500 dark:text-neutral-400 mt-1"
+                  class="mt-1 text-xs text-neutral-500 dark:text-neutral-400"
                 >
                   {{ menu.description }}
                 </span>
@@ -161,18 +161,18 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
 
             <!-- Slug -->
             <td class="px-6 py-4">
-              <code class="text-xs bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded text-neutral-700 dark:text-neutral-300">
+              <code class="rounded bg-neutral-100 px-2 py-1 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
                 {{ menu.slug }}
               </code>
             </td>
 
             <!-- Location Badge -->
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="whitespace-nowrap px-6 py-4">
               <Badge
                 :text="getLocationText(menu)"
-                variant="ghost"
+                variant="blue-blue"
                 size="sm"
-                :class="getLocationColor(menu)"
+                border-width="thin"
               />
             </td>
 
