@@ -2,11 +2,8 @@
 // Catch-All Route for Dynamic Page Rendering
 // Handles all page paths and renders appropriate template based on database data
 
-import DefaultTemplate from '~/components/templates/DefaultTemplate.vue'
-import HubTemplate from '~/components/templates/HubTemplate.vue'
-import SpokeTemplate from '~/components/templates/SpokeTemplate.vue'
-import SubSpokeTemplate from '~/components/templates/SubSpokeTemplate.vue'
-import ArticleTemplate from '~/components/templates/ArticleTemplate.vue'
+import { consola } from 'consola'
+import { getTemplateComponent } from '~/utils/pageTemplateRegistry'
 
 // Get route params
 const route = useRoute()
@@ -76,26 +73,20 @@ usePageSeo(page.value)
 const templateComponent = computed(() => {
   const template = page.value?.template || 'default'
 
-  switch (template) {
-    case 'hub':
-      return HubTemplate
-    case 'spoke':
-      return SpokeTemplate
-    case 'sub-spoke':
-      return SubSpokeTemplate
-    case 'article':
-      return ArticleTemplate
-    case 'custom':
-      return DefaultTemplate // Custom templates use default for now
-    case 'default':
-    default:
-      return DefaultTemplate
+  if (import.meta.dev) {
+    consola.info('[PageRenderer] Selecting template component', {
+      template,
+      pageSlug: page.value?.slug,
+      pagePath: path.value
+    })
   }
+
+  return getTemplateComponent(template)
 })
 
 // Log page load in development
 if (import.meta.dev) {
-  console.log('Page loaded:', {
+  consola.success('[PageRenderer] Page loaded', {
     path: path.value,
     title: page.value?.title,
     template: page.value?.template,
