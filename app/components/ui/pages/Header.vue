@@ -44,6 +44,11 @@ const navigationItems = computed<NavigationItem[]>(() => {
 // Color mode
 const colorMode = useColorMode()
 
+// Authentication state
+const user = useSupabaseUser()
+const supabase = useSupabaseClient()
+const router = useRouter()
+
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
 const activeSubmenu = ref<string | null>(null)
@@ -56,6 +61,11 @@ const logoSrc = computed(() => {
   if (!isMounted.value) return '/images/logo-light.webp' // SSR fallback
   return colorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp'
 })
+
+// Computed: Auth button text and location based on user state
+const authButtonText = computed(() => user.value ? 'Dashboard' : 'Login')
+const authButtonLocation = computed(() => user.value ? '/admin' : '/admin/login')
+const secondaryButtonText = computed(() => user.value ? 'Logout' : 'Sign Up')
 
 // Open mobile menu
 const openMobileMenu = () => {
@@ -84,6 +94,24 @@ const openSubmenu = (category: string) => {
 // Close submenu (back to main menu)
 const closeSubmenu = () => {
   activeSubmenu.value = null
+}
+
+// Handle logout
+const handleLogout = async () => {
+  try {
+    await supabase.auth.signOut()
+    // Close mobile menu if open
+    if (isMobileMenuOpen.value) {
+      closeMobileMenu()
+    }
+    // Redirect to home page
+    await router.push('/')
+  }
+  catch (error) {
+    if (import.meta.dev) {
+      console.error('[Header] Logout error', error)
+    }
+  }
 }
 
 // Handle ESC key to close menu
@@ -197,15 +225,23 @@ onUnmounted(() => {
         <!-- Desktop: Auth Buttons - Hidden on mobile -->
         <div class="hidden flex-shrink-0 items-center gap-3 md:flex">
           <Button
-            text="Login"
-            location="/admin/login"
+            :text="authButtonText"
+            :location="authButtonLocation"
             variant="primary"
             size="md"
           />
           <Button
-            text="Sign Up"
+            v-if="!user"
+            :text="secondaryButtonText"
             variant="primary-outline"
             size="md"
+          />
+          <Button
+            v-else
+            :text="secondaryButtonText"
+            variant="primary-outline"
+            size="md"
+            @click="handleLogout"
           />
         </div>
 
@@ -319,15 +355,23 @@ onUnmounted(() => {
             <!-- Auth Buttons -->
             <div class="flex flex-col gap-3">
               <Button
-                text="Login"
-                location="/admin/login"
+                :text="authButtonText"
+                :location="authButtonLocation"
                 variant="primary"
                 size="lg"
               />
               <Button
-                text="Sign Up"
+                v-if="!user"
+                :text="secondaryButtonText"
                 variant="primary-outline"
                 size="lg"
+              />
+              <Button
+                v-else
+                :text="secondaryButtonText"
+                variant="primary-outline"
+                size="lg"
+                @click="handleLogout"
               />
             </div>
           </div>
