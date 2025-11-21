@@ -24,6 +24,7 @@ interface NavigationItem {
   label: string
   link?: string
   description?: string
+  openInNewTab?: boolean
   children?: NavigationItem[]
 }
 
@@ -33,10 +34,12 @@ const navigationItems = computed<NavigationItem[]>(() => {
   return headerMenuData.value.items.map(item => ({
     label: item.label,
     link: item.page_id && item.page?.full_path ? item.page.full_path : (item.custom_url || undefined),
+    openInNewTab: item.open_in_new_tab,
     children: item.children?.length > 0 ? item.children.map(child => ({
       label: child.label,
       link: child.page_id && child.page?.full_path ? child.page.full_path : (child.custom_url || undefined),
-      description: child.description || undefined
+      description: child.description || undefined,
+      openInNewTab: child.open_in_new_tab
     })) : undefined
   }))
 })
@@ -166,6 +169,7 @@ onUnmounted(() => {
                 >
                   <NuxtLink
                     :to="item.link"
+                    :target="item.openInNewTab ? '_blank' : undefined"
                     class="text-md rounded-md px-4 py-2 font-medium text-blue-600 transition-colors hover:bg-neutral-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-neutral-800 dark:hover:text-blue-300"
                   >
                     {{ item.label }}
@@ -193,6 +197,7 @@ onUnmounted(() => {
                     >
                       <NuxtLink
                         :to="child.link"
+                        :target="child.openInNewTab ? '_blank' : undefined"
                         class="flex items-start gap-1 rounded-md px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
                       >
                         <Icon
@@ -330,6 +335,7 @@ onUnmounted(() => {
                   <NuxtLink
                     v-if="!item.children"
                     :to="item.link"
+                    :target="item.openInNewTab ? '_blank' : undefined"
                     @click="closeMobileMenu"
                     class="block rounded-lg px-4 py-3 text-base font-medium text-blue-600 transition-colors hover:bg-neutral-100 dark:text-blue-400 dark:hover:bg-neutral-800"
                   >
@@ -412,6 +418,7 @@ onUnmounted(() => {
               >
                 <NuxtLink
                   :to="item?.link || '/search'"
+                  :target="item?.openInNewTab ? '_blank' : undefined"
                   @click="closeMobileMenu"
                   class="flex items-start gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >

@@ -15,7 +15,8 @@ const quickLinks = computed(() => {
 
   return footerMenuData.value.items.map(item => ({
     text: item.label,
-    to: item.page_id && item.page?.full_path ? item.page.full_path : (item.custom_url || '/')
+    to: item.page_id && item.page?.full_path ? item.page.full_path : (item.custom_url || '/'),
+    openInNewTab: item.open_in_new_tab
   }))
 })
 
@@ -66,6 +67,7 @@ const currentYear = new Date().getFullYear()
                 <li v-for="link in quickLinks" :key="link.text">
                   <NuxtLink
                     :to="link.to"
+                    :target="link.openInNewTab ? '_blank' : undefined"
                     class="text-neutral-300 transition-colors hover:text-white"
                   >
                     {{ link.text }}
