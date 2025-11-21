@@ -4,11 +4,54 @@ const garageImage = "http://localhost:3845/assets/6ca788727f12ebfbc896bc0ef51ee7
 
 const breadcrumbs = [
   { id: 'texas', title: 'Texas', full_path: '/texas' },
+  { id: 'houston', title: 'Houston', full_path: '/houston' },
   { id: 'provider', title: 'SolidStone Concrete LLC', full_path: '/listing-details' }
 ]
 
-const tabs = ['Overview', 'Products & Services', 'Photos', 'Reviews', 'Resources']
+const tabs = ['Overview', 'Products & Services', 'Photos', 'Reviews']
 const activeTab = ref('Overview')
+
+const services = [
+  {
+    title: 'Driveway Replacement',
+    description: 'Removal, re-grade, compact base, forms, control joints, broom finish.',
+    badge: 'Popular',
+    badgeVariant: 'blue-blue' as const
+  },
+  {
+    title: 'Stamped / Colored Patio',
+    description: 'Patterns & integral color with premium sealing.',
+    badge: 'Decorative',
+    badgeVariant: 'blue-blue' as const
+  },
+  {
+    title: 'Monolithic Slabs & Foundations',
+    description: 'Rebar per plan, vapor barrier, anchor bolts.',
+    badge: 'Structural',
+    badgeVariant: 'blue-blue' as const
+  },
+  {
+    title: 'Repair & Lifting',
+    description: 'Crack repair, slab section replacement, grinding trip hazards.',
+    badge: 'Safety',
+    badgeVariant: 'blue-blue' as const
+  }
+]
+
+const serviceInfo = [
+  {
+    title: 'Service Areas',
+    content: 'Houston, Bellaire, Memorial, Spring Branch, Katy'
+  },
+  {
+    title: 'Lead Time',
+    content: 'Site visits within 3–5 days; installs within 2–3 weeks.'
+  },
+  {
+    title: 'Warranty',
+    content: '1-year workmanship warranty; materials per manufacturer.'
+  }
+]
 </script>
 
 <template>
@@ -78,7 +121,7 @@ const activeTab = ref('Overview')
           border-width="thick"
           :border-color="['#e5e7eb', '#404040']"
         >
-          <div class="space-y-3 text-sm">
+          <div class="mt-5 space-y-3 text-sm">
             <div class="grid grid-cols-[100px_1fr] gap-2">
               <span class="font-bold text-neutral-900 dark:text-white">Service Area:</span>
               <span class="text-neutral-600 dark:text-neutral-400">Greater Houston</span>
@@ -112,7 +155,7 @@ const activeTab = ref('Overview')
             <Button
               text="Company Brochure (PDF)"
               variant="primary"
-              class="w-full justify-between"
+              class="justify-between"
               icon="heroicons:arrow-down-tray"
             />
           </div>
@@ -153,7 +196,6 @@ const activeTab = ref('Overview')
 
             <div class="grid grid-cols-2 gap-3">
               <Button text="Send" variant="primary" class="w-full" />
-              <Button text="Call (833) 555-1234" variant="primary-outline" class="w-full whitespace-nowrap px-2 text-sm" />
             </div>
           </form>
         </Card>
@@ -185,6 +227,7 @@ const activeTab = ref('Overview')
           border-width="thick"
           :border-color="['#e5e7eb', '#404040']"
         >
+          <!-- Overview Tab -->
           <div v-if="activeTab === 'Overview'" class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
               <div>
@@ -230,6 +273,50 @@ const activeTab = ref('Overview')
             </div>
           </div>
 
+          <!-- Products & Services Tab -->
+          <div v-else-if="activeTab === 'Products & Services'" class="space-y-8">
+            <!-- Services List -->
+            <div class="space-y-6">
+              <div
+                v-for="service in services"
+                :key="service.title"
+                class="flex items-start justify-between gap-4 border-b border-neutral-200 pb-6 last:border-b-0 dark:border-neutral-700"
+              >
+                <div class="flex-1 space-y-2">
+                  <h3 class="text-2xl font-bold text-neutral-900 dark:text-white">
+                    {{ service.title }}
+                  </h3>
+                  <p class="text-neutral-600 dark:text-neutral-400">
+                    {{ service.description }}
+                  </p>
+                </div>
+                <Badge
+                  :text="service.badge"
+                  :variant="service.badgeVariant"
+                  size="sm"
+                  class="shrink-0"
+                />
+              </div>
+            </div>
+
+            <!-- Service Info Cards -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div
+                v-for="info in serviceInfo"
+                :key="info.title"
+                class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-800/50"
+              >
+                <h4 class="mb-3 text-lg font-bold text-neutral-900 dark:text-white">
+                  {{ info.title }}
+                </h4>
+                <p class="text-neutral-600 dark:text-neutral-400">
+                  {{ info.content }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Tabs -->
           <div v-else class="flex h-64 items-center justify-center text-neutral-500">
             Content for {{ activeTab }} tab coming soon...
           </div>

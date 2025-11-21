@@ -11,7 +11,7 @@ interface Props {
    * The visual variant of the badge
    * @default 'primary-outline'
    */
-  variant?: 'primary-outline' | 'secondary-outline' | 'ghost'
+  variant?: 'primary-outline' | 'secondary-outline' | 'ghost' | 'blue-blue'
 
   /**
    * The size of the badge
@@ -94,7 +94,8 @@ const variantClasses = computed(() => {
   const variants = {
     'primary-outline': `${borderClasses.value} border-blue-400 bg-transparent text-blue-500 dark:border-blue-500 dark:text-blue-400`,
     'secondary-outline': `${borderClasses.value} border-neutral-500 bg-transparent text-neutral-700 dark:border-neutral-600 dark:text-neutral-300`,
-    'ghost': `${borderClasses.value} border-black bg-transparent text-black dark:border-white dark:text-white`
+    'ghost': `${borderClasses.value} border-black bg-transparent text-black dark:border-white dark:text-white`,
+    'blue-blue': 'border-0 bg-[#edf2fc] text-blue-500 dark:bg-blue-900/30 dark:text-blue-400'
   }
   return variants[props.variant]
 })

@@ -78,9 +78,9 @@ export const useComponentDocs = () => {
         },
         {
           name: 'variant',
-          type: "'primary-outline' | 'secondary-outline' | 'ghost'",
+          type: "'primary-outline' | 'secondary-outline' | 'ghost' | 'blue-blue'",
           default: "'primary-outline'",
-          description: 'The visual variant of the badge. Ghost variant has 2px border with no background - black in light mode, white in dark mode.'
+          description: 'The visual variant of the badge. Ghost variant has 2px border with no background - black in light mode, white in dark mode. Blue-blue variant has filled background (#edf2fc in light mode, blue-900/30 in dark mode) with no border.'
         },
         {
           name: 'size',
@@ -123,6 +123,10 @@ export const useComponentDocs = () => {
         {
           title: 'Ghost Variant',
           code: `<Badge text="Top Rated" variant="ghost" size="md" />`
+        },
+        {
+          title: 'Blue-Blue Variant',
+          code: `<Badge text="Popular" variant="blue-blue" size="md" />`
         },
         {
           title: 'Badge with Icon',
