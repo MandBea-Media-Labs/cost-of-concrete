@@ -1,0 +1,116 @@
+# 🧪 BAM-58 Testing Checklist
+
+## Pre-Test Setup
+
+- [ ] **Database has seed data** (templates and pages exist) ✅ Verified: 6 templates, 10+ pages
+- [ ] **Logged in as admin user** (andy@ridedrivemedia.com / password) ✅ Auto-logged in
+- [ ] **Browser console is open and actively monitored** (F12) to view dev logging ✅ Monitoring via Playwright
+- [ ] **Server console is open and actively monitored** (In VSCode) ✅ Monitoring
+
+---
+
+## Test 1: Hub Template (Depth 0)
+
+- [ ] **Navigate to a Hub page** (depth 0, typically the homepage `/`)
+- [ ] **Verify the page renders correctly** with the Hub template layout
+- [ ] **Check console for logs:**
+  - [ ] Look for `[TemplateRegistry] Getting component for template` with `slug: 'hub'`
+  - [ ] Look for `[TemplateRegistry] Component found` with `slug: 'hub'`
+  - [ ] Look for `[PageRenderer] Selecting template component` with `template: 'hub'`
+  - [ ] Look for `[PageRenderer] Page loaded` with page details
+- [ ] **Verify no errors** in the console
+
+---
+
+## Test 2: Spoke Template (Depth 1)
+
+- [ ] **Navigate to a Spoke page** (depth 1, child of hub)
+- [ ] **Verify the page renders correctly** with the Spoke template layout
+- [ ] **Check console for logs:**
+  - [ ] Look for `[TemplateRegistry] Getting component for template` with `slug: 'spoke'`
+  - [ ] Look for `[TemplateRegistry] Component found` with `slug: 'spoke'`
+  - [ ] Look for `[PageRenderer] Selecting template component` with `template: 'spoke'`
+  - [ ] Look for `[PageRenderer] Page loaded` with page details
+- [ ] **Verify no errors** in the console
+
+---
+
+## Test 3: Sub-Spoke Template (Depth 2)
+
+- [ ] **Navigate to a Sub-Spoke page** (depth 2, child of spoke)
+- [ ] **Verify the page renders correctly** with the Sub-Spoke template layout
+- [ ] **Check console for logs:**
+  - [ ] Look for `[TemplateRegistry] Getting component for template` with `slug: 'sub-spoke'`
+  - [ ] Look for `[TemplateRegistry] Component found` with `slug: 'sub-spoke'`
+  - [ ] Look for `[PageRenderer] Selecting template component` with `template: 'sub-spoke'`
+  - [ ] Look for `[PageRenderer] Page loaded` with page details
+- [ ] **Verify no errors** in the console
+
+---
+
+## Test 4: Article Template
+
+- [ ] **Navigate to an Article page** (any depth with article template)
+- [ ] **Verify the page renders correctly** with the Article template layout
+- [ ] **Check console for logs:**
+  - [ ] Look for `[TemplateRegistry] Getting component for template` with `slug: 'article'`
+  - [ ] Look for `[TemplateRegistry] Component found` with `slug: 'article'`
+  - [ ] Look for `[PageRenderer] Selecting template component` with `template: 'article'`
+  - [ ] Look for `[PageRenderer] Page loaded` with page details
+- [ ] **Verify no errors** in the console
+
+---
+
+## Test 5: Default Template
+
+- [ ] **Navigate to a page using the Default template** (if one exists)
+- [ ] **Verify the page renders correctly** with the Default template layout
+- [ ] **Check console for logs:**
+  - [ ] Look for `[TemplateRegistry] Getting component for template` with `slug: 'default'`
+  - [ ] Look for `[TemplateRegistry] Component found` with `slug: 'default'`
+  - [ ] Look for `[PageRenderer] Selecting template component` with `template: 'default'`
+  - [ ] Look for `[PageRenderer] Page loaded` with page details
+- [ ] **Verify no errors** in the console
+
+---
+
+## Test 6: Page Navigation Flow
+
+- [ ] **Navigate between different template types** (hub → spoke → sub-spoke → article)
+- [ ] **Verify smooth transitions** between pages
+- [ ] **Verify each page loads the correct template** based on its database configuration
+- [ ] **Check console logs** appear for each page navigation
+- [ ] **Verify no JavaScript errors** during navigation
+
+---
+
+## Test 7: Fallback Behavior (Optional - Advanced)
+
+- [ ] **Use the Supabase MCP server**
+- [ ] **Find a test page** in the `pages` table
+- [ ] **Temporarily change its `template` column** to an unknown value (e.g., `'test-unknown-template'`)
+- [ ] **Navigate to that page** in the browser
+- [ ] **Verify the page renders** with the Default template (fallback)
+- [ ] **Check console for warning:**
+  - [ ] Look for `[TemplateRegistry] No mapping found for template, using DefaultTemplate`
+  - [ ] Verify it shows `slug: 'test-unknown-template'`
+  - [ ] Verify it lists `availableTemplates: ['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default']`
+- [ ] **Restore the original template value** in the database
+- [ ] **Refresh the page** and verify it renders correctly again
+
+---
+
+## Final Verification
+
+- [ ] **All pages render correctly** with their assigned templates
+- [ ] **All console logs appear** with proper `[TemplateRegistry]` and `[PageRenderer]` prefixes
+- [ ] **No JavaScript errors** in the console
+- [ ] **No TypeScript errors** in the IDE
+- [ ] **Template switching works** when navigating between different page types
+- [ ] **Fallback behavior works** (if tested)
+
+---
+
+## ✅ Testing Complete
+
+Once all checkboxes are marked, BAM-58 is fully tested and verified!
