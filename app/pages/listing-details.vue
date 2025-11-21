@@ -1,6 +1,5 @@
 <script setup lang="ts">
-const heroImage = "http://localhost:3845/assets/d482219c19a2dcbdbe5ea9578a02e19c44f230de.png"
-const garageImage = "http://localhost:3845/assets/6ca788727f12ebfbc896bc0ef51ee71c8817e47c.png"
+const garageImage = "/images/contractors/solidstone-concrete-llc/overview.png"
 
 const breadcrumbs = [
   { id: 'texas', title: 'Texas', full_path: '/texas' },
@@ -10,6 +9,12 @@ const breadcrumbs = [
 
 const tabs = ['Overview', 'Products & Services', 'Photos', 'Reviews']
 const activeTab = ref('Overview')
+
+// Contact form state
+const fullName = ref<string | null>(null)
+const email = ref<string | null>(null)
+const phone = ref<string | null>(null)
+const projectDetails = ref<string | null>(null)
 
 const services = [
   {
@@ -173,22 +178,26 @@ const serviceInfo = [
           <p class="mb-4 text-xs text-neutral-500">Replies within 24 hours</p>
 
           <form class="space-y-4" @submit.prevent>
-            <input
+            <TextInput
+              v-model="fullName"
               type="text"
               placeholder="Full Name"
-              class="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
-            >
-            <input
+              size="md"
+            />
+            <TextInput
+              v-model="email"
               type="email"
               placeholder="Email"
-              class="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
-            >
-            <input
+              size="md"
+            />
+            <TextInput
+              v-model="phone"
               type="tel"
               placeholder="Phone"
-              class="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
-            >
+              size="md"
+            />
             <textarea
+              v-model="projectDetails"
               placeholder="What Can We Build For You"
               rows="4"
               class="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
@@ -212,7 +221,7 @@ const serviceInfo = [
             :class="[
               'rounded-full px-6 py-2 text-sm font-bold transition-colors',
               activeTab === tab
-                ? 'bg-blue-600 text-white dark:bg-blue-500'
+                ? 'bg-blue-500 text-white dark:bg-blue-500'
                 : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
             ]"
           >
