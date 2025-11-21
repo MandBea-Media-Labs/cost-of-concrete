@@ -24,6 +24,18 @@ const emit = defineEmits<{
 
 const route = useRoute()
 
+// Color mode
+const colorMode = useColorMode()
+
+// Track if component is mounted (for SSR)
+const isMounted = ref(false)
+
+// Computed: Logo source based on color mode and sidebar state
+const logoSrc = computed(() => {
+  if (!isMounted.value) return '/images/logo-light.webp' // SSR fallback
+  return colorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp'
+})
+
 // Navigation items
 const navigationItems = [
   {
@@ -59,6 +71,11 @@ const isActive = (item: typeof navigationItems[0]) => {
   }
   return route.path.startsWith(item.href)
 }
+
+// Set mounted flag
+onMounted(() => {
+  isMounted.value = true
+})
 </script>
 
 <template>
@@ -68,21 +85,38 @@ const isActive = (item: typeof navigationItems[0]) => {
     :class="open ? 'lg:w-64' : 'lg:w-20'"
   >
     <!-- Logo / Brand -->
-    <div class="flex h-16 items-center border-b border-neutral-200 px-4 dark:border-neutral-700">
+    <div class="justify-left relative flex h-16 items-center border-b border-neutral-200 px-4 dark:border-neutral-700">
       <NuxtLink
         to="/admin"
-        class="flex items-center gap-3"
+        class="flex-shrink-0 transition-opacity hover:opacity-80"
       >
-        <div class="bg-primary-600 flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white">
-          CC
-        </div>
-        <span
-          v-if="open"
-          class="whitespace-nowrap text-lg font-semibold text-neutral-900 dark:text-neutral-100"
-        >
-          Cost of Concrete
-        </span>
+        <!-- Collapsed Logo -->
+        <img
+          v-if="!open"
+          src="/images/logo-collapsed.webp"
+          alt="Cost of Concrete"
+          class="h-8 w-auto"
+        />
+        <!-- Expanded Logo -->
+        <img
+          v-else
+          :src="logoSrc"
+          alt="Cost of Concrete"
+          class="h-8 w-auto"
+        />
       </NuxtLink>
+
+      <!-- Collapse Toggle Button (Desktop Only) - Small, positioned to the right -->
+      <button
+        type="button"
+        class="absolute -right-1 rounded-md p-1.5 text-neutral-600 dark:text-neutral-400"
+        @click="emit('toggle')"
+      >
+        <Icon
+          :name="open ? 'heroicons:chevron-left' : 'heroicons:chevron-right'"
+          class="h-4 w-4"
+        />
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -131,15 +165,14 @@ const isActive = (item: typeof navigationItems[0]) => {
     <div class="flex h-16 items-center justify-between border-b border-neutral-200 px-4 dark:border-neutral-700">
       <NuxtLink
         to="/admin"
-        class="flex items-center gap-3"
+        class="flex-shrink-0 transition-opacity hover:opacity-80"
         @click="emit('closeMobile')"
       >
-        <div class="bg-primary-600 flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white">
-          CC
-        </div>
-        <span class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Cost of Concrete
-        </span>
+        <img
+          :src="logoSrc"
+          alt="Cost of Concrete"
+          class="h-8 w-auto"
+        />
       </NuxtLink>
 
       <!-- Close Button -->

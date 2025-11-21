@@ -81,25 +81,11 @@ const handleLogout = async () => {
             <Icon name="heroicons:bars-3" class="h-6 w-6" />
           </button>
 
-          <!-- Desktop Sidebar Toggle -->
-          <button
-            type="button"
-            class="hidden lg:block p-2 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
-            @click="toggleSidebar"
-          >
-            <Icon
-              :name="sidebarOpen ? 'heroicons:chevron-left' : 'heroicons:chevron-right'"
-              class="h-5 w-5"
-            />
-          </button>
-
-          <!-- Breadcrumbs -->
-          <div class="flex-1 px-4">
-            <AdminBreadcrumbs />
-          </div>
+          <!-- Spacer for desktop -->
+          <div class="hidden lg:block flex-1" />
 
           <!-- User Menu -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 ml-auto lg:ml-0">
             <!-- Dark Mode Toggle -->
             <button
               type="button"
