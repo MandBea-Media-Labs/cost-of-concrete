@@ -267,20 +267,19 @@ function isMetaRobotSelected(value: string): boolean {
             Meta Robots
           </label>
           <div class="grid grid-cols-2 gap-2">
-            <label
+            <div
               v-for="option in metaRobotsOptions"
               :key="option.value"
-              class="flex items-center space-x-2 p-2 rounded border border-neutral-300 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 cursor-pointer"
+              class="flex items-center space-x-2 p-2 rounded border border-neutral-300 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700"
             >
-              <input
-                type="checkbox"
-                :checked="isMetaRobotSelected(option.value)"
-                @change="toggleMetaRobot(option.value)"
+              <Checkbox
+                :model-value="isMetaRobotSelected(option.value)"
+                @update:model-value="toggleMetaRobot(option.value)"
                 :disabled="disabled"
-                class="rounded border-neutral-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500"
+                size="sm"
               />
               <span class="text-sm text-neutral-700 dark:text-neutral-300">{{ option.label }}</span>
-            </label>
+            </div>
           </div>
           <p v-if="errors.metaRobots" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.metaRobots }}</p>
         </div>

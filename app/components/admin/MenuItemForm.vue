@@ -273,21 +273,14 @@ const onCancel = () => {
       </p>
 
       <!-- Open in New Tab (only for custom URLs) -->
-      <div class="flex items-center gap-2 mt-3">
-        <input
-          id="open_in_new_tab"
-          v-model="openInNewTab"
-          v-bind="openInNewTabAttrs"
-          type="checkbox"
-          class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-        />
-        <label
-          for="open_in_new_tab"
-          class="text-sm text-neutral-700 dark:text-neutral-300"
-        >
-          Open in new tab
-        </label>
-      </div>
+      <Checkbox
+        id="open_in_new_tab"
+        v-model="openInNewTab"
+        v-bind="openInNewTabAttrs"
+        label="Open in new tab"
+        name="open_in_new_tab"
+        class="mt-3"
+      />
     </div>
 
     <!-- Parent Dropdown (only for links, not dropdowns, and not for footer menus) -->
@@ -353,21 +346,13 @@ const onCancel = () => {
     </div>
 
     <!-- Enabled Checkbox -->
-    <div class="flex items-center gap-2">
-      <input
-        id="is_enabled"
-        v-model="isEnabled"
-        v-bind="isEnabledAttrs"
-        type="checkbox"
-        class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-      />
-      <label
-        for="is_enabled"
-        class="text-sm text-neutral-700 dark:text-neutral-300"
-      >
-        Enable this menu item
-      </label>
-    </div>
+    <Checkbox
+      id="is_enabled"
+      v-model="isEnabled"
+      v-bind="isEnabledAttrs"
+      label="Enable this menu item"
+      name="is_enabled"
+    />
 
     <!-- Form Actions -->
     <div class="flex items-center justify-end gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-700">

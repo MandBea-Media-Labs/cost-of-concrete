@@ -91,27 +91,16 @@ function getFieldValue(fieldName: string) {
     <div v-else-if="formFields.length > 0" class="space-y-4">
       <div v-for="field in formFields" :key="field.name" class="space-y-2">
         <!-- Boolean Field (Checkbox) -->
-        <div v-if="field.type === 'boolean'" class="flex items-start gap-3">
-          <div class="flex items-center h-6">
-            <input
-              :id="`metadata-${field.name}`"
-              type="checkbox"
-              :checked="getFieldValue(field.name)"
-              :disabled="disabled"
-              @change="updateField(field.name, ($event.target as HTMLInputElement).checked)"
-              class="h-5 w-5 rounded border-neutral-300 dark:border-neutral-600 text-blue-600 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900/30 focus:ring-offset-0 dark:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-            />
-          </div>
-          <div class="flex-1">
-            <label :for="`metadata-${field.name}`" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer">
-              {{ field.label }}
-              <span v-if="field.required" class="text-red-500">*</span>
-            </label>
-            <p v-if="field.helpText" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              {{ field.helpText }}
-            </p>
-          </div>
-        </div>
+        <Checkbox
+          v-if="field.type === 'boolean'"
+          :id="`metadata-${field.name}`"
+          :model-value="getFieldValue(field.name)"
+          @update:model-value="updateField(field.name, $event)"
+          :label="field.label"
+          :description="field.helpText"
+          :disabled="disabled"
+          :required="field.required"
+        />
 
         <!-- Select Field (Dropdown) -->
         <FilterSelect
