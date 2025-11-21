@@ -545,8 +545,8 @@ function onCancel() {
         </div>
       </div>
 
-      <!-- Right Column (1/3 width) -->
-      <div class="lg:col-span-1 space-y-6">
+      <!-- Right Column (1/3 width) - Sticky on desktop -->
+      <div class="lg:col-span-1 lg:sticky lg:top-6 lg:self-start space-y-6">
 
         <!-- Template Metadata Section -->
         <div v-if="template" class="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-neutral-50 dark:bg-neutral-800/50">
