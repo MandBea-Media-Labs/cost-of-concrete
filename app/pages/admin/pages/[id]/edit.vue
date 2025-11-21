@@ -124,6 +124,11 @@ function mapApiResponseToFormData(page: any): Partial<PageFormData> {
   // Extract SEO data from metadata.seo if it exists
   const seoMetadata = page.metadata?.seo || {}
 
+  // Extract nested OG, Twitter, and Schema data
+  const ogData = seoMetadata.og || {}
+  const twitterData = seoMetadata.twitter || {}
+  const schemaData = seoMetadata.schema || {}
+
   return {
     // Core fields
     title: page.title,
@@ -142,20 +147,20 @@ function mapApiResponseToFormData(page: any): Partial<PageFormData> {
     // Basic SEO fields (from metadata.seo)
     metaDescription: seoMetadata.metaDescription || null,
 
-    // Open Graph fields (from metadata.seo)
-    ogTitle: seoMetadata.ogTitle || null,
-    ogDescription: seoMetadata.ogDescription || null,
-    ogImage: page.og_image || null,
-    ogType: seoMetadata.ogType || null,
+    // Open Graph fields (from metadata.seo.og)
+    ogTitle: ogData.title || null,
+    ogDescription: ogData.description || null,
+    ogImage: page.og_image || null, // Still from column for backward compatibility
+    ogType: ogData.type || null,
 
-    // Twitter Card fields (from metadata.seo)
-    twitterCard: seoMetadata.twitterCard || null,
-    twitterTitle: seoMetadata.twitterTitle || null,
-    twitterDescription: seoMetadata.twitterDescription || null,
-    twitterImage: seoMetadata.twitterImage || null,
+    // Twitter Card fields (from metadata.seo.twitter)
+    twitterCard: twitterData.card || null,
+    twitterTitle: twitterData.title || null,
+    twitterDescription: twitterData.description || null,
+    twitterImage: twitterData.image || null,
 
-    // Schema.org fields (from metadata.seo)
-    schemaType: seoMetadata.schemaType || null,
+    // Schema.org fields (from metadata.seo.schema)
+    schemaType: schemaData['@type'] || null,
 
     // Advanced SEO fields (from columns)
     metaRobots: page.meta_robots || null,
@@ -165,12 +170,8 @@ function mapApiResponseToFormData(page: any): Partial<PageFormData> {
     redirectUrl: page.redirect_url || null,
     redirectType: page.redirect_type || null,
 
-    // Template metadata (excluding seo)
-    metadata: page.metadata && typeof page.metadata === 'object'
-      ? Object.fromEntries(
-          Object.entries(page.metadata).filter(([key]) => key !== 'seo')
-        )
-      : {}
+    // Template metadata (extract from metadata.template)
+    metadata: page.metadata?.template || {}
   }
 }
 
@@ -566,6 +567,7 @@ async function handleUnarchive() {
           :initial-data="initialFormData"
           :is-edit-mode="true"
           :is-submitting="isSubmitting"
+          :current-page-id="pageId"
           @submit="handleSubmit"
           @cancel="handleCancel"
         />

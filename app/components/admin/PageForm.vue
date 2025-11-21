@@ -23,12 +23,18 @@ interface Props {
    * @default false
    */
   isSubmitting?: boolean
+
+  /**
+   * Current page ID (for edit mode) - used to exclude current page from parent options
+   */
+  currentPageId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initialData: undefined,
   isEditMode: false,
-  isSubmitting: false
+  isSubmitting: false,
+  currentPageId: undefined
 })
 
 const emit = defineEmits<{
@@ -151,8 +157,14 @@ const hasTemplateChanged = computed(() => hasFieldChanged('template'))
 const { pages: availablePages, pending: isLoadingParentPages, fetchPages } = useAdminPages()
 
 // Transform pages into dropdown options with hierarchical indentation
+// Exclude current page in edit mode to prevent circular parent reference
 const parentPageOptions = computed(() => {
-  const pageOptions = availablePages.value.map((page) => ({
+  // Filter out current page if in edit mode
+  const filteredPages = props.isEditMode && props.currentPageId
+    ? availablePages.value.filter(page => page.id !== props.currentPageId)
+    : availablePages.value
+
+  const pageOptions = filteredPages.map((page) => ({
     value: page.id,
     label: `${'  '.repeat(page.depth)}${page.title}` // Indent based on depth
   }))

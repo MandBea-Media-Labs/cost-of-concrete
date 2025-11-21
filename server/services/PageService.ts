@@ -432,6 +432,11 @@ export class PageService {
       ...(data.metadata?.seo || {})
     }
 
+    // Add metaDescription to SEO metadata if provided
+    if (data.metaDescription) {
+      seoMetadata.metaDescription = data.metaDescription
+    }
+
     // Add Open Graph data if provided
     if (data.ogTitle || data.ogDescription || data.ogImage || data.ogType) {
       seoMetadata.og = {
@@ -463,8 +468,14 @@ export class PageService {
       }
     }
 
+    // Build template metadata structure
+    // Support both direct metadata (from form) and nested metadata.template (from API)
+    const templateMetadata = data.metadata?.template
+      ? { ...defaultMetadata, ...data.metadata.template }
+      : { ...defaultMetadata, ...(data.metadata || {}) }
+
     const metadata = {
-      template: { ...defaultMetadata, ...(data.metadata?.template || {}) },
+      template: templateMetadata,
       seo: seoMetadata
     }
 
@@ -488,7 +499,7 @@ export class PageService {
       depth,
       template,
       title: data.title,
-      description: data.metaDescription || data.description || null, // metaDescription takes priority
+      description: data.description || null, // Store actual description, not metaDescription
       content: data.content,
       status: data.status || 'draft',
       meta_title: data.metaTitle || null,
