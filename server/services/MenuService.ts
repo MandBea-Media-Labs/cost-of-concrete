@@ -10,10 +10,16 @@ import type { Database } from '~/types/supabase'
 import { MenuRepository } from '../repositories/MenuRepository'
 import { MenuItemRepository } from '../repositories/MenuItemRepository'
 
+type Menu = Database['public']['Tables']['menus']['Row']
 type MenuInsert = Database['public']['Tables']['menus']['Insert']
 type MenuUpdate = Database['public']['Tables']['menus']['Update']
 type MenuItemInsert = Database['public']['Tables']['menu_items']['Insert']
 type MenuItemUpdate = Database['public']['Tables']['menu_items']['Update']
+
+export interface MenuUpdateResult {
+  menu: Menu
+  disabledMenu?: Menu
+}
 
 export class MenuService {
   private menuRepo: MenuRepository
@@ -65,8 +71,8 @@ export class MenuService {
           })
         }
 
-        // Force flag is true - unset the existing menu
-        await this.menuRepo.unsetLocation(existingMenu.id, location, userId)
+        // Force flag is true - disable the existing menu (keep location assignment)
+        await this.menuRepo.update(existingMenu.id, { is_enabled: false }, userId)
       }
     }
 
@@ -76,7 +82,7 @@ export class MenuService {
   /**
    * Update an existing menu
    */
-  async updateMenu(id: string, data: MenuUpdate, userId: string, force: boolean = false) {
+  async updateMenu(id: string, data: MenuUpdate, userId: string, force: boolean = false): Promise<MenuUpdateResult> {
     // If slug is being updated, validate uniqueness
     if (data.slug) {
       const isUnique = await this.menuRepo.isSlugUnique(data.slug, id)
@@ -88,9 +94,27 @@ export class MenuService {
       }
     }
 
+    // Get current menu state to check for location conflicts
+    const currentMenu = await this.menuRepo.getById(id)
+    if (!currentMenu) {
+      throw createError({
+        statusCode: 404,
+        message: 'Menu not found'
+      })
+    }
+
     // Check if location is being changed
     const isChangingToHeader = data.show_in_header === true
     const isChangingToFooter = data.show_in_footer === true
+
+    // Check if enabling a menu that already has a location set
+    const isEnablingWithHeader = data.is_enabled === true && currentMenu.is_enabled === false && currentMenu.show_in_header === true
+    const isEnablingWithFooter = data.is_enabled === true && currentMenu.is_enabled === false && currentMenu.show_in_footer === true
+
+    // Detect if we're ONLY toggling is_enabled (no location fields being changed)
+    const isToggleOnly = data.is_enabled !== undefined &&
+      data.show_in_header === undefined &&
+      data.show_in_footer === undefined
 
     // Validate: Footer menus cannot have dropdown items
     if (isChangingToFooter) {
@@ -106,15 +130,23 @@ export class MenuService {
       }
     }
 
-    // Check for location conflicts
-    if (isChangingToHeader || isChangingToFooter) {
-      const location = isChangingToHeader ? 'header' : 'footer'
+    // Track disabled menu for return value
+    let disabledMenu: Menu | undefined
+
+    // Check for location conflicts when:
+    // 1. Changing location (show_in_header or show_in_footer)
+    // 2. Enabling a menu that already has a location set
+    if (isChangingToHeader || isChangingToFooter || isEnablingWithHeader || isEnablingWithFooter) {
+      const location = (isChangingToHeader || isEnablingWithHeader) ? 'header' : 'footer'
       const existingMenu = await this.menuRepo.findByLocation(location)
 
-      // If another menu is already in this location
+      // If another menu is already enabled in this location
       if (existingMenu && existingMenu.id !== id) {
-        if (!force) {
-          // Return conflict error with existing menu info
+        // In toggle-only context, auto-disable conflicting menu without requiring force flag
+        if (isToggleOnly) {
+          disabledMenu = await this.menuRepo.update(existingMenu.id, { is_enabled: false }, userId)
+        } else if (!force) {
+          // For edit/create forms, show conflict dialog
           throw createError({
             statusCode: 409,
             statusMessage: 'Location Conflict',
@@ -126,14 +158,19 @@ export class MenuService {
               }
             }
           })
+        } else {
+          // Force flag is true - disable the existing menu
+          disabledMenu = await this.menuRepo.update(existingMenu.id, { is_enabled: false }, userId)
         }
-
-        // Force flag is true - unset the existing menu
-        await this.menuRepo.unsetLocation(existingMenu.id, location, userId)
       }
     }
 
-    return await this.menuRepo.update(id, data, userId)
+    const updatedMenu = await this.menuRepo.update(id, data, userId)
+
+    return {
+      menu: updatedMenu,
+      disabledMenu
+    }
   }
 
   /**

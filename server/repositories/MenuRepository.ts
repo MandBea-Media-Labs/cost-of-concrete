@@ -54,7 +54,7 @@ export class MenuRepository {
   }
 
   /**
-   * Find menu currently assigned to a location
+   * Find menu currently assigned to a location (enabled menus only)
    * @param location - 'header' or 'footer'
    * @returns Menu or null if no menu assigned to location
    */
@@ -65,6 +65,7 @@ export class MenuRepository {
       .from('menus')
       .select('*')
       .eq(column, true)
+      .eq('is_enabled', true)
       .is('deleted_at', null)
       .maybeSingle()
 

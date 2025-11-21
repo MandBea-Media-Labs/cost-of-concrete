@@ -86,8 +86,20 @@ const handleToggleEnabled = async (menuId: string, value: boolean) => {
   }
 
   try {
-    await updateMenu(menuId, { is_enabled: value })
-    toast.success(`Menu ${value ? 'enabled' : 'disabled'}`)
+    const result = await updateMenu(menuId, { is_enabled: value })
+
+    if (result?.disabledMenu) {
+      // Optimistically update the disabled menu's state
+      const disabledMenuIndex = menus.value.findIndex(m => m.id === result.disabledMenu!.id)
+      if (disabledMenuIndex !== -1) {
+        menus.value[disabledMenuIndex].is_enabled = false
+      }
+
+      // Show enhanced toast when another menu was auto-disabled
+      toast.success(`Menu ${value ? 'enabled' : 'disabled'}. '${result.disabledMenu.name}' was automatically disabled.`)
+    } else {
+      toast.success(`Menu ${value ? 'enabled' : 'disabled'}`)
+    }
   } catch (err) {
     // Revert the optimistic update on error
     if (menuIndex !== -1) {

@@ -65,20 +65,22 @@ export default defineEventHandler(async (event) => {
     const menuService = new MenuService(client)
 
     // Update menu using service (handles location conflicts and footer dropdown validation)
-    const updatedMenu = await menuService.updateMenu(id, validatedData, userId, force)
+    const result = await menuService.updateMenu(id, validatedData, userId, force)
 
     if (import.meta.dev) {
       consola.success(`PATCH /api/menus/${id} - Menu updated:`, {
-        id: updatedMenu.id,
-        name: updatedMenu.name,
-        slug: updatedMenu.slug,
-        location: updatedMenu.show_in_header ? 'header' : updatedMenu.show_in_footer ? 'footer' : 'none'
+        id: result.menu.id,
+        name: result.menu.name,
+        slug: result.menu.slug,
+        location: result.menu.show_in_header ? 'header' : result.menu.show_in_footer ? 'footer' : 'none',
+        disabledMenu: result.disabledMenu ? result.disabledMenu.name : null
       })
     }
 
     return {
       success: true,
-      data: updatedMenu,
+      data: result.menu,
+      disabledMenu: result.disabledMenu,
       message: 'Menu updated successfully'
     }
   } catch (error) {

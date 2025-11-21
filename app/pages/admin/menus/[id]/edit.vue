@@ -118,9 +118,9 @@ async function handleSubmit(formData: MenuFormData) {
       consola.info('[EditMenu] API input:', input)
     }
 
-    const success = await updateMenu(menuId.value, input)
+    const result = await updateMenu(menuId.value, input)
 
-    if (success) {
+    if (result) {
       toast.success('Menu updated successfully')
 
       // Redirect to menu list
@@ -193,9 +193,9 @@ async function handleForceUpdate() {
     }
 
     // Call API with force=true
-    const success = await updateMenu(menuId.value, input, true)
+    const result = await updateMenu(menuId.value, input, true)
 
-    if (success) {
+    if (result) {
       toast.success('Menu updated successfully')
       router.push('/admin/menus')
     } else {
@@ -274,7 +274,7 @@ function handleCancelConflict() {
         <Dialog
           :open="showConflictDialog"
           title="Location Conflict"
-          :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will remove it from that location. Continue?`"
+          :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will disable '${conflictingMenu?.name}'. Continue?`"
           @close="handleCancelConflict"
         >
           <template #actions>

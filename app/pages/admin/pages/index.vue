@@ -166,6 +166,7 @@ const handleCreatePage = () => {
           <div class="md:col-span-1">
             <TextInput
               v-model="searchQuery"
+              label="Search"
               placeholder="Search pages..."
               icon="heroicons:magnifying-glass"
               clearable

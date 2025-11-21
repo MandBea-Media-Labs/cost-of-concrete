@@ -206,7 +206,7 @@ function handleCancelConflict() {
       <Dialog
         :open="showConflictDialog"
         title="Location Conflict"
-        :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will remove it from that location. Continue?`"
+        :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will disable '${conflictingMenu?.name}'. Continue?`"
         @close="handleCancelConflict"
       >
         <template #actions>

@@ -135,18 +135,19 @@ export function useMenus() {
    * @param id - Menu ID
    * @param menuData - Menu data to update
    * @param force - Force update even if location conflict exists (unsets existing menu)
+   * @returns Full response object including menu and optional disabledMenu
    */
-  const updateMenu = async (id: string, menuData: MenuUpdate, force: boolean = false): Promise<Menu | null> => {
+  const updateMenu = async (id: string, menuData: MenuUpdate, force: boolean = false): Promise<{ success: boolean; data: Menu; disabledMenu?: Menu } | null> => {
     try {
       const url = force ? `/api/menus/${id}?force=true` : `/api/menus/${id}`
 
-      const response = await $fetch<{ success: boolean; data: Menu }>(url, {
+      const response = await $fetch<{ success: boolean; data: Menu; disabledMenu?: Menu }>(url, {
         method: 'PATCH',
         body: menuData
       })
 
       if (response.success) {
-        return response.data
+        return response
       }
 
       return null
