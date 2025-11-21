@@ -145,14 +145,23 @@ const handleReorder = async (updates: Array<{ id: string; display_order: number 
 
 // Handle toggle enabled
 const handleToggleEnabled = async (itemId: string, value: boolean) => {
+  // Optimistically update the local state
+  const itemIndex = menuItems.value.findIndex(item => item.id === itemId)
+  if (itemIndex !== -1) {
+    menuItems.value[itemIndex].is_enabled = value
+  }
+
   try {
     await $fetch(`/api/menu-items/${itemId}`, {
       method: 'PATCH',
       body: { is_enabled: value }
     })
     toast.success(`Menu item ${value ? 'enabled' : 'disabled'}`)
-    await fetchMenuItems() // Refresh list
   } catch (error) {
+    // Revert the optimistic update on error
+    if (itemIndex !== -1) {
+      menuItems.value[itemIndex].is_enabled = !value
+    }
     consola.error('[MenuItems] Error toggling enabled:', error)
     toast.error('Failed to update menu item')
   }

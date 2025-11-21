@@ -79,11 +79,20 @@ const cancelDelete = () => {
 
 // Handle toggle enabled action
 const handleToggleEnabled = async (menuId: string, value: boolean) => {
+  // Optimistically update the local state
+  const menuIndex = menus.value.findIndex(m => m.id === menuId)
+  if (menuIndex !== -1) {
+    menus.value[menuIndex].is_enabled = value
+  }
+
   try {
     await updateMenu(menuId, { is_enabled: value })
     toast.success(`Menu ${value ? 'enabled' : 'disabled'}`)
-    await fetchMenus() // Refresh list
   } catch (err) {
+    // Revert the optimistic update on error
+    if (menuIndex !== -1) {
+      menus.value[menuIndex].is_enabled = !value
+    }
     consola.error('Error toggling enabled:', err)
     toast.error('Failed to update menu')
   }

@@ -294,12 +294,13 @@ const { sortable } = useSortable(el, localItems, {
 
             <!-- Enabled Toggle -->
             <td class="px-6 py-4 text-center">
-              <input
-                type="checkbox"
-                :checked="item.is_enabled"
-                @change="handleToggleEnabled(item.id, !item.is_enabled)"
-                class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-              />
+              <div class="flex justify-center">
+                <Switch
+                  :model-value="item.is_enabled"
+                  size="sm"
+                  @update:model-value="handleToggleEnabled(item.id, $event)"
+                />
+              </div>
             </td>
 
             <!-- Actions -->

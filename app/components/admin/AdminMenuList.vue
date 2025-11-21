@@ -178,12 +178,13 @@ const handleToggleEnabled = (menuId: string, value: boolean) => {
 
             <!-- Enabled Toggle -->
             <td class="px-6 py-4 text-center">
-              <input
-                type="checkbox"
-                :checked="menu.is_enabled"
-                @change="handleToggleEnabled(menu.id, !menu.is_enabled)"
-                class="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800"
-              />
+              <div class="flex justify-center">
+                <Switch
+                  :model-value="menu.is_enabled"
+                  size="sm"
+                  @update:model-value="handleToggleEnabled(menu.id, $event)"
+                />
+              </div>
             </td>
 
             <!-- Updated -->

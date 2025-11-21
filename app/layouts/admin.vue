@@ -54,22 +54,22 @@ watch(() => route.path, () => {
       :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'"
     >
       <!-- Top Header Bar -->
-      <header class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 z-10">
+      <header class="z-10 border-b border-neutral-200 bg-[#fcfcfc] dark:border-neutral-700 dark:bg-neutral-800">
         <div class="flex items-center justify-between px-4 py-3">
           <!-- Mobile Menu Button -->
           <button
             type="button"
-            class="lg:hidden p-2 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
+            class="rounded-md p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700 lg:hidden"
             @click="toggleMobileMenu"
           >
             <Icon name="heroicons:bars-3" class="h-6 w-6" />
           </button>
 
           <!-- Spacer for desktop -->
-          <div class="hidden lg:block flex-1" />
+          <div class="hidden flex-1 lg:block" />
 
           <!-- User Menu -->
-          <div class="flex items-center gap-3 ml-auto lg:ml-0">
+          <div class="ml-auto flex items-center gap-3 lg:ml-0">
             <!-- User Menu Dropdown -->
             <AdminUserMenu />
           </div>

@@ -67,13 +67,13 @@ onMounted(() => {
 <template>
   <!-- Desktop Sidebar -->
   <aside
-    class="hidden border-r border-neutral-200 bg-white transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800 lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:flex-col"
+    class="hidden border-r border-neutral-200 bg-[#fcfcfc] transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800 lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:flex-col"
     :class="open ? 'lg:w-64' : 'lg:w-20'"
   >
     <!-- Logo / Brand -->
-    <div class="justify-left relative flex h-16 items-center border-b border-neutral-200 px-4 dark:border-neutral-700">
+    <div class="justify-left relative flex h-16 items-center px-4">
       <NuxtLink
-        to="/admin"
+        to="/"
         class="flex-shrink-0 transition-opacity hover:opacity-80"
       >
         <!-- Collapsed Logo -->
