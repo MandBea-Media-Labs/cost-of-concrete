@@ -57,14 +57,14 @@ const serviceInfo = [
 <template>
   <div class="pb-20">
     <!-- Hero Section -->
-    <section class="mb-8 rounded-3xl bg-[#F2F6FA] px-8 py-12 dark:bg-blue-900/20">
-      <div class="mb-6 px-20">
+    <section class="mb-8 rounded-3xl bg-[#F2F6FA] px-4 py-12 dark:bg-blue-900/20 sm:px-6 md:px-8 lg:px-12 xl:px-20">
+      <div class="mb-6 px-0 sm:px-2 md:px-4 lg:px-8 xl:px-20">
         <Breadcrumbs :items="breadcrumbs" />
       </div>
 
-      <div class="flex flex-col justify-between gap-8 px-20 lg:flex-row lg:items-start">
+      <div class="flex flex-col justify-between gap-8 px-0 sm:px-2 md:px-4 lg:flex-row lg:items-start lg:px-8 xl:px-20">
         <div class="space-y-4">
-          <h1 class="font-heading text-5xl font-bold text-neutral-900 dark:text-white md:text-6xl">
+          <h1 class="font-heading text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl">
             SolidStone Concrete LLC
           </h1>
 
@@ -88,7 +88,7 @@ const serviceInfo = [
             <span>Licensed & Insured</span>
           </div>
 
-          <p class="max-w-3xl text-lg text-neutral-600 dark:text-neutral-300">
+          <p class="max-w-3xl text-base text-neutral-600 dark:text-neutral-300 sm:text-lg">
             Explore verified pros for driveways, patios, foundations, and decorative concrete.
             Compare services, reviews, and pricing—then contact your top choices with confidence.
           </p>
@@ -109,7 +109,7 @@ const serviceInfo = [
       </div>
     </section>
 
-    <div class="grid grid-cols-1 gap-8 px-20 lg:grid-cols-12">
+    <div class="grid grid-cols-1 gap-8 px-4 sm:px-6 md:px-8 lg:grid-cols-12 lg:px-12 xl:px-20">
       <!-- Sidebar -->
       <div class="space-y-6 lg:col-span-4">
         <!-- Company Info Card -->
@@ -122,23 +122,23 @@ const serviceInfo = [
           :border-color="['#e5e7eb', '#404040']"
         >
           <div class="mt-5 space-y-3 text-sm">
-            <div class="grid grid-cols-[100px_1fr] gap-2">
+            <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Service Area:</span>
               <span class="text-neutral-600 dark:text-neutral-400">Greater Houston</span>
             </div>
-            <div class="grid grid-cols-[100px_1fr] gap-2">
+            <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Hours:</span>
               <span class="text-neutral-600 dark:text-neutral-400">Mon-Sat · 8am-6pm</span>
             </div>
-            <div class="grid grid-cols-[100px_1fr] gap-2">
+            <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">License:</span>
               <span class="text-neutral-600 dark:text-neutral-400">TX-CON-44210</span>
             </div>
-            <div class="grid grid-cols-[100px_1fr] gap-2">
+            <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Insurance:</span>
               <span class="text-neutral-600 dark:text-neutral-400">$2M liability</span>
             </div>
-            <div class="grid grid-cols-[100px_1fr] gap-2">
+            <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Website:</span>
               <a href="#" class="text-blue-500 hover:underline">solidstone.example</a>
             </div>
@@ -194,7 +194,7 @@ const serviceInfo = [
               class="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800"
             ></textarea>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button text="Send" variant="primary" class="w-full" />
             </div>
           </form>
