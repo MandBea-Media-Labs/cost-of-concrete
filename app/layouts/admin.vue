@@ -29,22 +29,6 @@ const route = useRoute()
 watch(() => route.path, () => {
   mobileMenuOpen.value = false
 })
-
-// Supabase logout handling
-const supabase = useSupabaseClient()
-const router = useRouter()
-
-const handleLogout = async () => {
-  try {
-    await supabase.auth.signOut()
-    await router.replace('/admin/login')
-  }
-  catch (error) {
-    if (import.meta.dev) {
-      console.error('[AdminLayout] Logout error', error)
-    }
-  }
-}
 </script>
 
 <template>
@@ -86,31 +70,8 @@ const handleLogout = async () => {
 
           <!-- User Menu -->
           <div class="flex items-center gap-3 ml-auto lg:ml-0">
-            <!-- Dark Mode Toggle -->
-            <button
-              type="button"
-              class="p-2 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
-              @click="$colorMode.preference = $colorMode.value === 'dark' ? 'light' : 'dark'"
-            >
-              <Icon
-                :name="$colorMode.value === 'dark' ? 'heroicons:sun' : 'heroicons:moon'"
-                class="h-5 w-5"
-              />
-            </button>
-
-            <!-- Logout Button -->
-            <button
-              type="button"
-              class="rounded-md px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 hover:text-red-600 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:hover:text-red-400"
-              @click="handleLogout"
-            >
-              Logout
-            </button>
-
-            <!-- User Avatar Placeholder -->
-            <div class="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
-              A
-            </div>
+            <!-- User Menu Dropdown -->
+            <AdminUserMenu />
           </div>
         </div>
       </header>
