@@ -18,6 +18,7 @@ logs
 .fleet
 .idea
 _ignore
+.trees
 
 # Local env files
 .env
