@@ -42,6 +42,11 @@ const navigationItems = [
     icon: 'heroicons:home'
   },
   {
+    name: 'Contractors',
+    href: '/admin/contractors/import',
+    icon: 'heroicons:building-office-2'
+  },
+  {
     name: 'Menus',
     href: '/admin/menus',
     icon: 'heroicons:bars-3'

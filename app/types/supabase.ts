@@ -84,6 +84,127 @@ export type Database = {
         }
         Relationships: []
       }
+      cities: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          metadata: Json | null
+          name: string
+          slug: string
+          state_code: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          name: string
+          slug: string
+          state_code: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          name?: string
+          slug?: string
+          state_code?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      contractors: {
+        Row: {
+          city_id: string | null
+          company_name: string
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          email: string | null
+          google_cid: string | null
+          google_place_id: string | null
+          id: string
+          images_processed: boolean
+          lat: number | null
+          lng: number | null
+          metadata: Json | null
+          phone: string | null
+          postal_code: string | null
+          rating: number | null
+          review_count: number | null
+          slug: string
+          status: string
+          street_address: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          city_id?: string | null
+          company_name: string
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          email?: string | null
+          google_cid?: string | null
+          google_place_id?: string | null
+          id?: string
+          images_processed?: boolean
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug: string
+          status?: string
+          street_address?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          city_id?: string | null
+          company_name?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          email?: string | null
+          google_cid?: string | null
+          google_place_id?: string | null
+          id?: string
+          images_processed?: boolean
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string
+          status?: string
+          street_address?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractors_city_id_fkey"
+            columns: ["city_id"]
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           created_at: string | null
@@ -368,6 +489,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_types: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          is_enabled: boolean
+          metadata: Json | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -83,6 +83,10 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-only keys (never exposed to client)
+    googleGeocodingApiKey: process.env.GOOGLE_GEOCODING_API_KEY || '',
+    imageAllowlist: process.env.IMAGE_ALLOWLIST || 'lh3.googleusercontent.com,streetviewpixels-pa.googleapis.com',
+
     public: {
       siteUrl: process.env.NUXT_SITE_URL || 'https://costofconcrete.com',
       siteName: process.env.NUXT_SITE_NAME || 'Cost of Concrete',
