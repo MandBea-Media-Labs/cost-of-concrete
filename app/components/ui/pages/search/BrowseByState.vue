@@ -3,66 +3,10 @@
  * BrowseByState - Directory navigation component for finding contractors by US state
  * Displays all 50 states in an alphabetically ordered, responsive grid
  */
+import { US_STATES } from '~/utils/usStates'
 
-interface State {
-  name: string
-  slug: string
-  abbreviation: string
-}
-
-// All 50 US states - alphabetically ordered
-const states: State[] = [
-  { name: 'Alabama', slug: 'alabama', abbreviation: 'AL' },
-  { name: 'Alaska', slug: 'alaska', abbreviation: 'AK' },
-  { name: 'Arizona', slug: 'arizona', abbreviation: 'AZ' },
-  { name: 'Arkansas', slug: 'arkansas', abbreviation: 'AR' },
-  { name: 'California', slug: 'california', abbreviation: 'CA' },
-  { name: 'Colorado', slug: 'colorado', abbreviation: 'CO' },
-  { name: 'Connecticut', slug: 'connecticut', abbreviation: 'CT' },
-  { name: 'Delaware', slug: 'delaware', abbreviation: 'DE' },
-  { name: 'Florida', slug: 'florida', abbreviation: 'FL' },
-  { name: 'Georgia', slug: 'georgia', abbreviation: 'GA' },
-  { name: 'Hawaii', slug: 'hawaii', abbreviation: 'HI' },
-  { name: 'Idaho', slug: 'idaho', abbreviation: 'ID' },
-  { name: 'Illinois', slug: 'illinois', abbreviation: 'IL' },
-  { name: 'Indiana', slug: 'indiana', abbreviation: 'IN' },
-  { name: 'Iowa', slug: 'iowa', abbreviation: 'IA' },
-  { name: 'Kansas', slug: 'kansas', abbreviation: 'KS' },
-  { name: 'Kentucky', slug: 'kentucky', abbreviation: 'KY' },
-  { name: 'Louisiana', slug: 'louisiana', abbreviation: 'LA' },
-  { name: 'Maine', slug: 'maine', abbreviation: 'ME' },
-  { name: 'Maryland', slug: 'maryland', abbreviation: 'MD' },
-  { name: 'Massachusetts', slug: 'massachusetts', abbreviation: 'MA' },
-  { name: 'Michigan', slug: 'michigan', abbreviation: 'MI' },
-  { name: 'Minnesota', slug: 'minnesota', abbreviation: 'MN' },
-  { name: 'Mississippi', slug: 'mississippi', abbreviation: 'MS' },
-  { name: 'Missouri', slug: 'missouri', abbreviation: 'MO' },
-  { name: 'Montana', slug: 'montana', abbreviation: 'MT' },
-  { name: 'Nebraska', slug: 'nebraska', abbreviation: 'NE' },
-  { name: 'Nevada', slug: 'nevada', abbreviation: 'NV' },
-  { name: 'New Hampshire', slug: 'new-hampshire', abbreviation: 'NH' },
-  { name: 'New Jersey', slug: 'new-jersey', abbreviation: 'NJ' },
-  { name: 'New Mexico', slug: 'new-mexico', abbreviation: 'NM' },
-  { name: 'New York', slug: 'new-york', abbreviation: 'NY' },
-  { name: 'North Carolina', slug: 'north-carolina', abbreviation: 'NC' },
-  { name: 'North Dakota', slug: 'north-dakota', abbreviation: 'ND' },
-  { name: 'Ohio', slug: 'ohio', abbreviation: 'OH' },
-  { name: 'Oklahoma', slug: 'oklahoma', abbreviation: 'OK' },
-  { name: 'Oregon', slug: 'oregon', abbreviation: 'OR' },
-  { name: 'Pennsylvania', slug: 'pennsylvania', abbreviation: 'PA' },
-  { name: 'Rhode Island', slug: 'rhode-island', abbreviation: 'RI' },
-  { name: 'South Carolina', slug: 'south-carolina', abbreviation: 'SC' },
-  { name: 'South Dakota', slug: 'south-dakota', abbreviation: 'SD' },
-  { name: 'Tennessee', slug: 'tennessee', abbreviation: 'TN' },
-  { name: 'Texas', slug: 'texas', abbreviation: 'TX' },
-  { name: 'Utah', slug: 'utah', abbreviation: 'UT' },
-  { name: 'Vermont', slug: 'vermont', abbreviation: 'VT' },
-  { name: 'Virginia', slug: 'virginia', abbreviation: 'VA' },
-  { name: 'Washington', slug: 'washington', abbreviation: 'WA' },
-  { name: 'West Virginia', slug: 'west-virginia', abbreviation: 'WV' },
-  { name: 'Wisconsin', slug: 'wisconsin', abbreviation: 'WI' },
-  { name: 'Wyoming', slug: 'wyoming', abbreviation: 'WY' }
-]
+// Use shared states data
+const states = US_STATES
 
 /**
  * Generate the URL for a specific state
