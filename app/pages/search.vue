@@ -136,6 +136,12 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
       </div>
     </div>
 
+    <!-- Popular Services Section -->
+    <PopularServices />
+
+    <!-- Browse by State Section -->
+    <BrowseByState />
+
     <!-- Bottom CTA -->
     <BottomCta />
   </div>
