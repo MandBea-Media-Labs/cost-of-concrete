@@ -1,4 +1,5 @@
 import type { ContractorResult } from '~/composables/useSearchFilters'
+import { generateReviews } from './reviews'
 
 /**
  * Mock contractor data for development and testing
@@ -6,7 +7,7 @@ import type { ContractorResult } from '~/composables/useSearchFilters'
  *
  * Images are stored in public/images/mock-data/contractors/
  */
-export const contractors: ContractorResult[] = [
+const contractorsData: Omit<ContractorResult, 'reviews'>[] = [
   {
     id: '1',
     companyName: 'ABC Concrete Solutions',
@@ -345,3 +346,11 @@ export const contractors: ContractorResult[] = [
   }
 ]
 
+/**
+ * Export contractors with generated reviews
+ * Each contractor gets 10 realistic reviews
+ */
+export const contractors: ContractorResult[] = contractorsData.map(contractor => ({
+  ...contractor,
+  reviews: generateReviews(contractor.id, contractor.serviceType, 10)
+}))

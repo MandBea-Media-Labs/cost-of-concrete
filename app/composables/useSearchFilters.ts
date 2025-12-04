@@ -12,6 +12,32 @@ export interface SearchFilters {
 }
 
 /**
+ * Review interface for contractor reviews
+ */
+export interface Review {
+  /** Unique identifier for the review */
+  id: string
+  /** Name of the reviewer */
+  authorName: string
+  /** Initials for avatar display (e.g., "JD" for John Doe) */
+  authorInitials: string
+  /** Rating from 1-5 */
+  rating: number
+  /** ISO date string of when the review was posted */
+  date: string
+  /** Review headline/title */
+  title: string
+  /** Full review content */
+  content: string
+  /** Whether the reviewer is verified */
+  verified: boolean
+  /** Type of service received (e.g., "Driveway Replacement") */
+  serviceType: string
+  /** Number of "helpful" votes */
+  helpful: number
+}
+
+/**
  * Contractor result interface (example - adjust based on your data model)
  */
 export interface ContractorResult {
@@ -26,6 +52,7 @@ export interface ContractorResult {
   priceRange: string
   image?: string
   slug: string
+  reviews?: Review[]
   [key: string]: any // Allow additional properties
 }
 
@@ -43,10 +70,10 @@ export interface UseSearchFiltersReturn {
 
 /**
  * Composable for managing search filters and filtering results
- * 
+ *
  * @param initialData - Array of contractor results to filter
  * @returns Object containing filters, filtered results, and helper methods
- * 
+ *
  * @example
  * ```ts
  * const contractors = ref([...])
@@ -76,7 +103,7 @@ export function useSearchFilters(initialData: ContractorResult[]): UseSearchFilt
    */
   const filterByDistance = (contractors: ContractorResult[]): ContractorResult[] => {
     if (!filters.distance || filters.distance === 'all') return contractors
-    
+
     const maxDistance = Number(filters.distance)
     return contractors.filter(contractor => {
       if (!contractor.distance) return true // Include if distance not specified
@@ -89,7 +116,7 @@ export function useSearchFilters(initialData: ContractorResult[]): UseSearchFilt
    */
   const filterByRating = (contractors: ContractorResult[]): ContractorResult[] => {
     if (!filters.rating || filters.rating === 'all') return contractors
-    
+
     const minRating = Number(filters.rating)
     return contractors.filter(contractor => contractor.rating >= minRating)
   }
