@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { Review } from '~/composables/useSearchFilters'
+import { contractors } from '~/mock-data/contractors'
+
 const garageImage = "/images/contractors/solidstone-concrete-llc/overview.png"
 
 const breadcrumbs = [
@@ -9,6 +12,79 @@ const breadcrumbs = [
 
 const tabs = ['Overview', 'Products & Services', 'Photos', 'Reviews']
 const activeTab = ref('Overview')
+
+// ============================================
+// Reviews Tab State & Logic
+// ============================================
+
+// Get reviews from first contractor (simulating current listing)
+const allReviews = ref<Review[]>(contractors[0]?.reviews || [])
+
+// Sorting state
+type ReviewSortOption = 'recent' | 'highest' | 'lowest'
+const reviewSortBy = ref<ReviewSortOption>('recent')
+
+// Sort options
+const sortOptions: { value: ReviewSortOption; label: string }[] = [
+  { value: 'recent', label: 'Most Recent' },
+  { value: 'highest', label: 'Highest Rated' },
+  { value: 'lowest', label: 'Lowest Rated' }
+]
+
+// Sorted reviews
+const sortedReviews = computed(() => {
+  const reviews = [...allReviews.value]
+  switch (reviewSortBy.value) {
+    case 'recent':
+      return reviews.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    case 'highest':
+      return reviews.sort((a, b) => b.rating - a.rating)
+    case 'lowest':
+      return reviews.sort((a, b) => a.rating - b.rating)
+    default:
+      return reviews
+  }
+})
+
+// Pagination
+const reviewsPerPage = 5
+const currentReviewPage = ref(1)
+
+const totalReviewPages = computed(() => Math.ceil(sortedReviews.value.length / reviewsPerPage))
+
+const paginatedReviews = computed(() => {
+  const start = (currentReviewPage.value - 1) * reviewsPerPage
+  return sortedReviews.value.slice(start, start + reviewsPerPage)
+})
+
+// Reset to page 1 when sort changes
+watch(reviewSortBy, () => {
+  currentReviewPage.value = 1
+})
+
+// Handle page change
+const handleReviewPageChange = (page: number) => {
+  currentReviewPage.value = page
+}
+
+// Calculate overall rating
+const overallRating = computed(() => {
+  if (allReviews.value.length === 0) return 0
+  const sum = allReviews.value.reduce((acc, r) => acc + r.rating, 0)
+  return (sum / allReviews.value.length).toFixed(1)
+})
+
+// Calculate rating distribution
+const ratingDistribution = computed(() => {
+  const total = allReviews.value.length
+  if (total === 0) return []
+
+  return [5, 4, 3, 2, 1].map(rating => {
+    const count = allReviews.value.filter(r => r.rating === rating).length
+    const percentage = Math.round((count / total) * 100)
+    return { rating, count, percentage }
+  })
+})
 
 // Contact form state
 const fullName = ref<string | null>(null)
@@ -385,7 +461,100 @@ const openLightbox = (index: number) => {
             />
           </div>
 
-          <!-- Other Tabs (Reviews, etc.) -->
+          <!-- Reviews Tab -->
+          <div v-else-if="activeTab === 'Reviews'" class="space-y-8">
+            <!-- Summary Header -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <!-- Overall Rating -->
+              <div class="flex items-center gap-4">
+                <div class="flex flex-col items-center rounded-2xl border border-neutral-200 p-6 dark:border-neutral-700">
+                  <span class="font-heading text-5xl font-bold text-neutral-900 dark:text-white">
+                    {{ overallRating }}
+                  </span>
+                  <div class="mt-2 flex items-center gap-0.5">
+                    <Icon
+                      v-for="i in 5"
+                      :key="i"
+                      name="heroicons:star-solid"
+                      class="h-5 w-5 text-yellow-400"
+                    />
+                  </div>
+                  <span class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ allReviews.length }} reviews
+                  </span>
+                </div>
+              </div>
+
+              <!-- Rating Distribution -->
+              <div class="space-y-2">
+                <div
+                  v-for="item in ratingDistribution"
+                  :key="item.rating"
+                  class="flex items-center gap-3"
+                >
+                  <span class="w-16 text-sm text-neutral-600 dark:text-neutral-400">
+                    {{ item.rating }} stars
+                  </span>
+                  <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                    <div
+                      class="h-full rounded-full bg-yellow-400 transition-all duration-300"
+                      :style="{ width: `${item.percentage}%` }"
+                    />
+                  </div>
+                  <span class="w-12 text-right text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ item.count }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sorting Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 pb-4 dark:border-neutral-700">
+              <span class="text-sm text-neutral-500 dark:text-neutral-400">
+                Showing {{ paginatedReviews.length }} of {{ allReviews.length }} reviews
+              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-neutral-600 dark:text-neutral-400">Sort by:</span>
+                <div class="flex gap-1">
+                  <button
+                    v-for="option in sortOptions"
+                    :key="option.value"
+                    type="button"
+                    :class="[
+                      'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                      reviewSortBy === option.value
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    ]"
+                    @click="reviewSortBy = option.value"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review List -->
+            <div class="space-y-6">
+              <ReviewCard
+                v-for="review in paginatedReviews"
+                :key="review.id"
+                :review="review"
+              />
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="totalReviewPages > 1" class="pt-4">
+              <Pagination
+                :current-page="currentReviewPage"
+                :total-pages="totalReviewPages"
+                size="md"
+                @update:current-page="handleReviewPageChange"
+              />
+            </div>
+          </div>
+
+          <!-- Fallback for other tabs -->
           <div v-else class="flex h-64 items-center justify-center text-neutral-500">
             Content for {{ activeTab }} tab coming soon...
           </div>
