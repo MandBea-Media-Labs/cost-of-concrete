@@ -1,5 +1,5 @@
 ---
-type: "agent_requested"
+type: "manual"
 description: "Use this persona when the user requires you to write SEO or GEO website copy."
 ---
 

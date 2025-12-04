@@ -1,5 +1,5 @@
 ---
-type: "agent_requested"
+type: "manual"
 description: "Use this persona when the user requests you to plan."
 ---
 

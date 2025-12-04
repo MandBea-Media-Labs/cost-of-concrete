@@ -2,32 +2,36 @@
 type: "always_apply"
 ---
 
-# General Rules & Guidelines
-- The package manager of choice is ALWAYS pnpm
-- Use the Context7 MCP server to look up documentation when using specific modules before you start coding to get a firm understanding on the architecture, syntax and patterns needed to implement successfully.
-- Use Context7 to look up the correct patterns and syntax for specific modules so you get a firm understanding of how to implement the best possible code.
-- You will NEVER open or read .env, even if the user asks you too. I repeat, you will never OPEN .env. You will only instruct the user on how or what to modify in .env while providing solutions in a .env.example
-- Stay on task, do not start to drift off task by fixing TypeScript errors or other small issues that are not application breaking.
-- Whenever working on Nuxt components or files that require a <script></script> section and a <template></template> section, the sections will always go in this order:
+# 0. PRIMARY DIRECTIVES (NON-NEGOTIABLE)
+- **Package Manager:** ALWAYS use `pnpm`.
+- **Security:** You will **NEVER** open, read, or display the contents of `.env`. If environment variables are needed, instruct the user to check them or provide a `.env.example`.
+- **Project Root:** The Nuxt application logic resides in `..\app\`. Store application files there. Be aware of sibling directories like `..\server\` and `..\public\`.
 
-<script setup lang="ts"></script>
+# 1. WORKFLOW & APPROVAL PROTOCOL
+- **Plan First, Act Second:** When starting a new task, outline your plan and wait for my approval. **Do not generate code immediately.**
+- **Step-by-Step Validation:** After completing a task, summarize the changes and ask for permission to proceed to the next step.
+- **Operational Constraints:**
+  - **Never** run `git commit` without explicit permission.
+  - **Never** start the dev server; ask the user to do it if required.
 
-<template></template>
+# 2. DOCUMENTATION & EXTERNAL KNOWLEDGE
+- **Context7 Usage:** Before implementing specific modules or external libraries, you MUST use the `Context7` MCP server to retrieve current documentation. Do not rely on training data for syntax that may be outdated.
+- **Linear Integration:** All Linear MCP tickets and issues must be saved to the **"Cost of Concrete"** project.
 
-<style scoped></style>
+# 3. NUXT & CODE STANDARDS
+- **SFC Structure:** Vue/Nuxt components must strictly follow this order:
+  1. `<script setup lang="ts">`
+  2. `<template>`
+  3. `<style scoped>`
+- **Logging Strategy:**
+  - Use `consola` liberally for server-side/build-time logging.
+  - Browser/Client logging must be wrapped to ensure it **only** executes in the `dev` environment.
+- **Focus:** Do not fix unrelated TypeScript errors or minor linting issues unless they break the application or strictly relate to the current task.
 
-- When starting a new chat with me and you come up with a plan, before you begin you will ask me to review the play and only proceed on my approval. You will not start coding right away.
-- After completing each task, you will review your work and ask for my permission to proceed before continuing, this is IMPORTANT.
-- Always use domain-specific naming conventions for single files and folders.
-- Always examine the installed modules so we take full advantage of the applications abilities.
-- Always design the UI with a mobile-first approach.
-- Always include light and dark Tailwind CSS styling when creating UI components.
-- The root nuxt application directory is in ..\app\ and you need to store MOST of the application files here with the exception of ..\server\, ..\public\, etc so keep this mind.
+# 4. UI/UX & STYLING
+- **Mobile-First:** Always design CSS/Tailwind with mobile constraints as the default, adding breakpoints (`md:`, `lg:`) for larger screens.
+- **Theme Support:** Every UI component must include both `light` and `dark` mode Tailwind classes.
+- **Module Awareness:** Always examine `package.json` or installed modules to ensure you are using existing tools rather than reinventing functionality.
 
-# MISSION CRITICAL RULES
-- consola is installed for logging, and we want to use it effectively and liberally within our application.
-- All logging in the browser console should only be available in the dev environment, so keep this in mind.
-- Never git commit without asking first.
-- Never start the dev server, if this is require ask the user to start it.
-- All Linear MCP tickets and issues are to always be saved in to the "Cost of Concrete" project
-- You will always **ultra think** on every task, decision or request.
+# 5. COGNITIVE PROCESS
+- **"Ultra-Think" Mode:** On every task, internally simulate the execution path and side effects before outputting the solution. Prioritize correctness over speed.
