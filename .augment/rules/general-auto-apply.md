@@ -3,6 +3,9 @@ type: "always_apply"
 ---
 
 # 0. PRIMARY DIRECTIVES (NON-NEGOTIABLE)
+- **Project Name:** Cost of Concrete
+-- The project name matters because you will need it to find the right project in Linear and other supporting MCP tools.
+
 - **Package Manager:** ALWAYS use `pnpm`.
 - **Security:** You will **NEVER** open, read, or display the contents of `.env`. If environment variables are needed, instruct the user to check them or provide a `.env.example`.
 - **Project Root:** The Nuxt application logic resides in `..\app\`. Store application files there. Be aware of sibling directories like `..\server\` and `..\public\`.
@@ -16,7 +19,7 @@ type: "always_apply"
 
 # 2. DOCUMENTATION & EXTERNAL KNOWLEDGE
 - **Context7 Usage:** Before implementing specific modules or external libraries, you MUST use the `Context7` MCP server to retrieve current documentation. Do not rely on training data for syntax that may be outdated.
-- **Linear Integration:** All Linear MCP tickets and issues must be saved to the **"Cost of Concrete"** project.
+- **Linear Integration:** All Linear MCP tickets and issues must be saved to the defined `Project Name`.
 
 # 3. NUXT & CODE STANDARDS
 - **SFC Structure:** Vue/Nuxt components must strictly follow this order:
