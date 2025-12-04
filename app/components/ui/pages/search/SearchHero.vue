@@ -129,7 +129,7 @@ const hasActiveFilters = computed(() => {
 })
 
 // Handle search submission
-const handleSearch = (value: any) => {
+const handleSearch = (value: { location: string, service: ServiceOption | null }) => {
   emit('search', value)
 }
 

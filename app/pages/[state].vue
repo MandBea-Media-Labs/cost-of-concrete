@@ -60,9 +60,8 @@ const {
 })
 
 // Handle search submission from Hero
-const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
-  console.log('Search submitted:', value)
-  // TODO: Implement search logic
+const handleHeroSearch = (_value: { location: string, service: ServiceOption | null }) => {
+  // Search logic will be implemented when dynamic data is added
 }
 </script>
 
