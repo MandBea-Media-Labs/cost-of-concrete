@@ -38,9 +38,20 @@ interface Props {
    * Filter options for Sort By
    */
   sortByFilterOptions?: FilterOption[]
+
+  /**
+   * Optional state name for state-specific search pages
+   * When provided, the hero displays state-contextualized content
+   */
+  stateName?: string
+
+  /**
+   * Optional state abbreviation (e.g., 'TX', 'CA')
+   */
+  stateAbbreviation?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   backgroundColor: '#E8EBF3',
   serviceOptions: () => [
     { id: null, name: 'All Services', slug: null },
@@ -64,7 +75,30 @@ withDefaults(defineProps<Props>(), {
   ],
   sortByFilterOptions: () => [
     { value: 'default', label: 'Search By: Top Rated' }
-  ]
+  ],
+  stateName: undefined,
+  stateAbbreviation: undefined
+})
+
+// Computed text based on state context
+const isStateSearch = computed(() => !!props.stateName)
+
+const eyebrowText = computed(() => {
+  return isStateSearch.value
+    ? `Find Contractors in ${props.stateName}`
+    : 'Find the Perfect Concrete Contractor'
+})
+
+const headingText = computed(() => {
+  return isStateSearch.value
+    ? `Concrete Contractors in ${props.stateName}`
+    : 'Find Trusted Concrete Contractors Near You'
+})
+
+const subheadlineText = computed(() => {
+  return isStateSearch.value
+    ? `Discover top-rated concrete professionals across ${props.stateName}. Compare services, read reviews, and get quotes from verified contractors in your area.`
+    : 'Explore verified pros for driveways, patios, foundations, and decorative concrete. Compare services, reviews, and pricing—then contact your top choices with confidence.'
 })
 
 // Emits
@@ -116,7 +150,7 @@ const handleResetFilters = () => {
         <!-- Eyebrow -->
         <div class="mb-6 flex justify-center">
           <Eyebrow
-            text="Find the Perfect Concrete Contractor"
+            :text="eyebrowText"
             variant="white-blue"
             size="md"
           />
@@ -124,12 +158,12 @@ const handleResetFilters = () => {
 
         <!-- Heading -->
         <h1 class="mb-4 text-center font-heading text-4xl font-bold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
-          Find Trusted Concrete Contractors Near You
+          {{ headingText }}
         </h1>
 
         <!-- Subheadline -->
         <p class="mb-8 text-center text-base text-neutral-700 md:text-lg">
-          Explore verified pros for driveways, patios, foundations, and decorative concrete. Compare services, reviews, and pricing—then contact your top choices with confidence.
+          {{ subheadlineText }}
         </p>
 
         <!-- SearchInput with Service Dropdown -->
