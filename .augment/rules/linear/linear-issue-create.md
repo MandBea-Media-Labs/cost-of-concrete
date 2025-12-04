@@ -2,23 +2,50 @@
 type: "manual"
 ---
 
-# Linear Issue Create
-- I want you to use the Linear MCP to search for the project related to this application and create an issue for each this implementation.
+# Linear Workflow & Issue Management
 
-- Inside of the issue, create a sub-issue for each Phase.
+**Trigger:** Use this protocol whenever we begin a new Feature, Refactor, or Implementation Plan.
 
-- For the batches of tasks under each Phase, make sure create a markdown check list within the sub-issue for all batches of tasks related to the Phase.
+### 1. Initialization & Context
+*   **Project Enforcement:** Per global rules, target the **"Cost of Concrete"** project.
+*   **Discovery:** Before creating *any* tickets, use the Linear MCP to query the project and retrieve the correct `Team ID` and `Project ID` to ensure we don't create orphaned tickets.
+*   **Context Linking:** If the user provided a PRD or a specific goal, reference it in the main issue description.
 
-- You shall create the Phases/Sub-Issues in sequential order.
+### 2. Hierarchy Creation Strategy
+You will organize the work using a strict **Parent-Child** relationship:
 
-- Only proceed if you fully understand, otherwise ask clarifying questions.
+*   **Step A: The Root Issue**
+    *   Create **ONE** high-level Issue acting as the container for the entire implementation.
+    *   **Title Format:** `[Feat] {Implementation Name}` or `[Refactor] {Scope Name}`.
+    *   **Description:** High-level summary of the goal.
 
-----
+*   **Step B: The Phase Sub-Issues**
+    *   Create a **Sub-Issue** (linked to the Root Issue) for *each* Phase of the plan.
+    *   **Ordering:** Create these strictly in sequential order (Phase 1, Phase 2, etc.).
+    *   **Title Format:** `Phase {X}: {Phase Title}`.
 
-After completing a Phase:
+*   **Step C: The Task Checklists**
+    *   **Do not** create separate issues for every small task.
+    *   Inside each **Phase Sub-Issue**, create a **Markdown Checklist** in the description for the specific batches of tasks.
+    *   *Example:*
+        ```markdown
+        - [ ] Create Component X
+        - [ ] Add Unit Tests
+        - [ ] Integrate with Store
+        ```
 
-- Create a comment with a detailed summary in the active working issue/sub-issue.
+### 3. Execution & Completion Protocol
+**Only proceed to the next phase after completing the following loop:**
 
-- Git commit the progress.
+1.  **The "Paper Trail" Comment:**
+    *   Upon completing a Phase, use the Linear MCP to post a comment on the **current Sub-Issue**.
+    *   **Comment Content:** A brief summary of what was achieved and any technical decisions made (e.g., "Implemented generic data fetcher, opted to use existing Zod schema").
+2.  **Git State:**
+    *   **Stage** the changes.
+    *   **Generate** a commit message following Conventional Commits (e.g., `feat: complete phase 1 component logic`).
+    *   **PAUSE:** Display the commit message and ask: *"Ready to commit and proceed to Phase {X}?"*
+3.  **Phase Closure:**
+    *   Once approved and committed, mark the Linear Sub-Issue as **Done** (or your team's equivalent state).
 
-- Ask the user if it's ok to proceed.
+### 4. Safety Check
+*   **Clarification:** If the implementation plan seems vague, ask: *"I am about to create {X} tickets in Linear. Do you want to review the ticket titles first?"*
