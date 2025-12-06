@@ -70,6 +70,23 @@ export class LookupRepository {
     },
 
     /**
+     * Find city by slug only (returns first match if multiple states have same city name)
+     * Useful for public pages where state might not be in URL
+     */
+    findBySlugOnly: async (slug: string, includeDeleted = false): Promise<City | null> => {
+      let query = this.client
+        .from('cities')
+        .select('*')
+        .eq('slug', slug)
+
+      if (!includeDeleted) query = query.is('deleted_at', null)
+
+      const { data, error } = await query.limit(1).maybeSingle()
+      if (error) throw error
+      return data
+    },
+
+    /**
      * Find or create a city (upsert with ON CONFLICT DO NOTHING behavior)
      */
     findOrCreate: async (data: CityInsert): Promise<City> => {
