@@ -15,6 +15,16 @@ const stateSlug = computed(() => route.params.state as string)
 const stateCode = computed(() => stateSlug.value.toUpperCase())
 const citySlug = computed(() => route.params.citySlug as string)
 
+// Supabase client for building storage URLs
+const supabase = useSupabaseClient()
+
+// Build image URL from storage path
+function buildImageUrl(storagePath: string | undefined): string | undefined {
+  if (!storagePath) return undefined
+  const { data } = supabase.storage.from('contractors').getPublicUrl(storagePath)
+  return data.publicUrl
+}
+
 // Pagination and filters
 const page = ref(1)
 const limit = 20
@@ -142,8 +152,10 @@ function getContractorUrl(contractor: { citySlug: string; slug: string }) {
           :city-slug="contractor.citySlug"
           :state-code="stateSlug"
           :distance-miles="contractor.distanceMiles"
-          :image="contractor.metadata?.images?.[0]?.url"
-        />
+          :image="buildImageUrl(contractor.metadata?.primary_image || contractor.metadata?.images?.[0])"
+        >
+          {{ contractor.description || contractor.metadata?.categories?.join(', ') || '' }}
+        </ContractorCard>
       </div>
 
       <!-- Empty State -->
