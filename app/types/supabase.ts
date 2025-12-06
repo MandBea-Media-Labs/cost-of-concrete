@@ -126,9 +126,69 @@ export type Database = {
         }
         Relationships: []
       }
+      business_claims: {
+        Row: {
+          admin_notes: string | null
+          claimant_email: string
+          claimant_name: string | null
+          claimant_phone: string | null
+          claimant_user_id: string | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+          verification_method: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          claimant_email: string
+          claimant_name?: string | null
+          claimant_phone?: string | null
+          claimant_user_id?: string | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          verification_method?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          claimant_email?: string
+          claimant_name?: string | null
+          claimant_phone?: string | null
+          claimant_user_id?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          verification_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_claims_contractor_id_fkey"
+            columns: ["contractor_id"]
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractors: {
         Row: {
           city_id: string | null
+          claimed_at: string | null
+          claimed_by: string | null
           company_name: string
           coordinates: unknown
           created_at: string | null
@@ -139,6 +199,7 @@ export type Database = {
           google_place_id: string | null
           id: string
           images_processed: boolean
+          is_claimed: boolean
           lat: number | null
           lng: number | null
           metadata: Json | null
@@ -154,6 +215,8 @@ export type Database = {
         }
         Insert: {
           city_id?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           company_name: string
           coordinates?: unknown
           created_at?: string | null
@@ -164,6 +227,7 @@ export type Database = {
           google_place_id?: string | null
           id?: string
           images_processed?: boolean
+          is_claimed?: boolean
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
@@ -179,6 +243,8 @@ export type Database = {
         }
         Update: {
           city_id?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           company_name?: string
           coordinates?: unknown
           created_at?: string | null
@@ -189,6 +255,7 @@ export type Database = {
           google_place_id?: string | null
           id?: string
           images_processed?: boolean
+          is_claimed?: boolean
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
