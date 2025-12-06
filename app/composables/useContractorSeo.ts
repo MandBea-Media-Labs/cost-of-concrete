@@ -1,0 +1,149 @@
+/**
+ * Composable for generating SEO meta tags for contractor profile pages
+ *
+ * Features:
+ * - Schema.org LocalBusiness JSON-LD
+ * - Open Graph tags
+ * - Twitter Card tags
+ * - Canonical URL
+ * - SSR-compatible
+ */
+
+export interface ContractorSeoData {
+  companyName: string
+  slug: string
+  description?: string | null
+  streetAddress?: string | null
+  postalCode?: string | null
+  phone?: string | null
+  email?: string | null
+  website?: string | null
+  rating?: number | null
+  reviewCount?: number | null
+  cityName?: string
+  citySlug?: string
+  stateCode?: string
+  lat?: number | null
+  lng?: number | null
+  images?: { url: string; alt?: string }[]
+  categories?: string[]
+  openingHours?: Record<string, string>
+}
+
+export function useContractorSeo(contractor: ContractorSeoData) {
+  const config = useRuntimeConfig()
+  const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
+  const siteName = config.public.siteName || 'Cost of Concrete'
+
+  // Build canonical URL
+  const canonicalPath = `/${contractor.citySlug}/contractors/${contractor.slug}`
+  const fullUrl = `${siteUrl}${canonicalPath}`
+
+  // Build location string
+  const locationParts = [contractor.cityName, contractor.stateCode].filter(Boolean)
+  const locationStr = locationParts.join(', ')
+
+  // Generate page title
+  const pageTitle = `${contractor.companyName} | Concrete Contractor in ${locationStr}`
+
+  // Generate description (use provided or generate default)
+  const pageDescription = contractor.description
+    || `${contractor.companyName} is a concrete contractor serving ${locationStr}. ${contractor.rating ? `Rated ${contractor.rating}/5` : ''} ${contractor.reviewCount ? `with ${contractor.reviewCount} reviews.` : ''}`
+
+  // Primary image for OG/Twitter
+  const primaryImage = contractor.images?.[0]?.url
+
+  // Set SEO meta tags
+  useSeoMeta({
+    title: pageTitle,
+    description: pageDescription.slice(0, 160),
+    canonicalUrl: fullUrl,
+
+    // Open Graph
+    ogTitle: pageTitle,
+    ogDescription: pageDescription.slice(0, 200),
+    ogType: 'business.business',
+    ogUrl: fullUrl,
+    ogSiteName: siteName,
+    ogLocale: 'en_US',
+    ogImage: primaryImage,
+    ogImageAlt: `${contractor.companyName} - Concrete Contractor`,
+
+    // Twitter Card
+    twitterCard: 'summary_large_image',
+    twitterTitle: pageTitle,
+    twitterDescription: pageDescription.slice(0, 200),
+    twitterImage: primaryImage
+  })
+
+  // Build Schema.org LocalBusiness JSON-LD
+  const localBusinessSchema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': fullUrl,
+    name: contractor.companyName,
+    description: contractor.description,
+    url: contractor.website || fullUrl,
+    telephone: contractor.phone,
+    email: contractor.email
+  }
+
+  // Add address
+  if (contractor.streetAddress || contractor.cityName) {
+    localBusinessSchema.address = {
+      '@type': 'PostalAddress',
+      streetAddress: contractor.streetAddress,
+      addressLocality: contractor.cityName,
+      addressRegion: contractor.stateCode,
+      postalCode: contractor.postalCode,
+      addressCountry: 'US'
+    }
+  }
+
+  // Add geo coordinates
+  if (contractor.lat && contractor.lng) {
+    localBusinessSchema.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: contractor.lat,
+      longitude: contractor.lng
+    }
+  }
+
+  // Add aggregate rating
+  if (contractor.rating && contractor.reviewCount && contractor.reviewCount > 0) {
+    localBusinessSchema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: contractor.rating,
+      reviewCount: contractor.reviewCount,
+      bestRating: 5,
+      worstRating: 1
+    }
+  }
+
+  // Add images
+  if (contractor.images && contractor.images.length > 0) {
+    localBusinessSchema.image = contractor.images.map(img => img.url)
+  }
+
+  // Add to head
+  useHead({
+    title: pageTitle,
+    link: [
+      { rel: 'canonical', href: fullUrl }
+    ],
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(localBusinessSchema)
+      }
+    ]
+  })
+
+  return {
+    pageTitle,
+    pageDescription,
+    canonicalUrl: fullUrl,
+    localBusinessSchema
+  }
+}
+
