@@ -3,7 +3,6 @@ import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
 import { getStateBySlug } from '~/utils/usStates'
 import {
   serviceOptions,
-  contractors as mockContractors,
   serviceTypeOptions,
   distanceOptions,
   ratingOptions,
@@ -38,31 +37,67 @@ useHead({
   ]
 })
 
-// Use mock contractor data (replace with API call in production)
-const contractors = ref(mockContractors)
+// Pagination and filter state
+const currentPage = ref(1)
+const limit = 12
+const selectedCategory = ref<string | undefined>()
+const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
-// Use the search filters composable
-const { filters, filteredResults, resultCount, resetFilters } = useSearchFilters(contractors.value)
-
-// Use the pagination composable
-const {
-  paginatedData: paginatedResults,
-  currentPage,
-  totalPages,
-  isLoading
-} = usePagination({
-  mode: 'client',
-  data: filteredResults,
-  itemsPerPage: 8,
-  syncUrl: true,
-  scrollToTop: true,
-  scrollTarget: '#results-section'
+// Local filter state for UI (these filters are client-side for now)
+const filters = reactive({
+  serviceType: null as string | null,
+  distance: null as string | null,
+  rating: null as string | null,
+  availability: null as string | null,
+  sortBy: 'top-rated' as string
 })
+
+// Fetch contractors from API
+const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
+  query: computed(() => ({
+    stateCode: stateData.value?.abbreviation,
+    category: selectedCategory.value,
+    limit,
+    offset: (currentPage.value - 1) * limit,
+    orderBy: sortBy.value
+  })),
+  watch: [currentPage, selectedCategory, sortBy]
+})
+
+// Computed values for display
+const contractors = computed(() => contractorsData.value?.contractors || [])
+const totalContractors = computed(() => contractorsData.value?.total || 0)
+const totalPages = computed(() => Math.ceil(totalContractors.value / limit))
+
+// Reset filters
+const resetFilters = () => {
+  selectedCategory.value = undefined
+  sortBy.value = 'rating'
+  currentPage.value = 1
+  filters.serviceType = null
+  filters.distance = null
+  filters.rating = null
+  filters.availability = null
+  filters.sortBy = 'top-rated'
+}
 
 // Handle search submission from Hero
 const handleHeroSearch = (_value: { location: string, service: ServiceOption | null }) => {
-  // Search logic will be implemented when dynamic data is added
+  // Could navigate to a city page if location is provided
 }
+
+// Watch for filter changes to update the API query
+watch(() => filters.sortBy, (newValue) => {
+  if (newValue === 'top-rated') sortBy.value = 'rating'
+  else if (newValue === 'most-reviews') sortBy.value = 'review_count'
+  else if (newValue === 'a-z') sortBy.value = 'company_name'
+  currentPage.value = 1
+})
+
+watch(() => filters.serviceType, (newValue) => {
+  selectedCategory.value = newValue || undefined
+  currentPage.value = 1
+})
 </script>
 
 <template>
@@ -107,13 +142,13 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
       <!-- Results Count -->
       <div class="mb-6">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
-          Showing <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ resultCount }}</span>
-          of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ contractors.length }}</span> contractors in {{ stateData?.name }}
+          Showing <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ contractors.length }}</span>
+          of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ totalContractors }}</span> contractors in {{ stateData?.name }}
         </p>
       </div>
 
       <!-- Loading Overlay -->
-      <div v-if="isLoading" class="relative">
+      <div v-if="pending" class="relative min-h-[200px]">
         <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80">
           <div class="flex flex-col items-center gap-3">
             <Icon name="svg-spinners:ring-resize" class="h-12 w-12 text-blue-600 dark:text-blue-500" />
@@ -123,15 +158,15 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
       </div>
 
       <!-- Results Grid -->
-      <div v-if="filteredResults.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div v-else-if="contractors.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ContractorCard
-          v-for="contractor in paginatedResults"
+          v-for="contractor in contractors"
           :key="contractor.id"
-          :image="contractor.image"
+          :image="contractor.metadata?.images?.[0]?.url"
           :company-name="contractor.companyName"
-          :location="contractor.location"
-          :rating="contractor.rating"
-          :review-count="contractor.reviewCount"
+          :location="`${contractor.cityName}, ${contractor.stateCode}`"
+          :rating="contractor.rating || 0"
+          :review-count="contractor.reviewCount || 0"
           :contractor-id="contractor.id"
           :contractor-slug="contractor.slug"
           :city-slug="contractor.citySlug || 'unknown'"
@@ -150,7 +185,7 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
       </div>
 
       <!-- Pagination Controls -->
-      <div v-if="filteredResults.length > 0 && totalPages > 1" class="mt-12">
+      <div v-if="contractors.length > 0 && totalPages > 1" class="mt-12">
         <Pagination v-model:current-page="currentPage" :total-pages="totalPages" size="sm" />
       </div>
     </div>
