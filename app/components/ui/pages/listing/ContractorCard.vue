@@ -41,6 +41,16 @@ interface Props {
   contractorSlug: string
 
   /**
+   * The city slug for building profile URL
+   */
+  citySlug: string
+
+  /**
+   * Distance from search location in miles (optional)
+   */
+  distanceMiles?: number | null
+
+  /**
    * Whether to display a border around the card
    * @default true
    */
@@ -76,8 +86,7 @@ const useStandardImg = computed(() => {
 
 // Build contractor profile URL
 const contractorUrl = computed(() => {
-  // return `/contractors/${props.contractorSlug}`
-  return `/listing-details`
+  return `/${props.citySlug}/contractors/${props.contractorSlug}`
 })
 
 // Border width classes
@@ -158,11 +167,17 @@ const starRating = computed(() => {
           {{ companyName }}
         </h3>
 
-        <!-- Location -->
-        <p class="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
-          <Icon name="heroicons:map-pin" class="h-4 w-4" />
-          {{ location }}
-        </p>
+        <!-- Location and Distance -->
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600 dark:text-neutral-400">
+          <span class="flex items-center gap-1.5">
+            <Icon name="heroicons:map-pin" class="h-4 w-4" />
+            {{ location }}
+          </span>
+          <span v-if="distanceMiles !== null && distanceMiles !== undefined" class="flex items-center gap-1">
+            <Icon name="heroicons:arrow-right-circle" class="h-4 w-4" />
+            {{ distanceMiles.toFixed(1) }} mi
+          </span>
+        </div>
 
         <!-- Description Slot -->
         <div class="text-sm text-neutral-600 dark:text-neutral-300">
