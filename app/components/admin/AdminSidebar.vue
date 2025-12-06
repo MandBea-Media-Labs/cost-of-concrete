@@ -39,29 +39,49 @@ const navigationItems = [
   {
     name: 'Dashboard',
     href: '/admin',
-    icon: 'heroicons:home'
+    icon: 'heroicons:home',
   },
   {
     name: 'Contractors',
-    href: '/admin/contractors/import',
-    icon: 'heroicons:building-office-2'
+    href: '/admin/contractors',
+    icon: 'heroicons:building-office-2',
+    children: [
+      { name: 'All Contractors', href: '/admin/contractors' },
+      { name: 'Import', href: '/admin/contractors/import' },
+    ],
   },
   {
     name: 'Menus',
     href: '/admin/menus',
-    icon: 'heroicons:bars-3'
+    icon: 'heroicons:bars-3',
   },
   {
     name: 'Pages',
     href: '/admin/pages',
-    icon: 'heroicons:document-text'
+    icon: 'heroicons:document-text',
   },
   {
     name: 'Settings',
     href: '/admin/settings',
-    icon: 'heroicons:cog-6-tooth'
-  }
+    icon: 'heroicons:cog-6-tooth',
+  },
 ]
+
+// Track expanded navigation items
+const expandedItems = ref<string[]>(['Contractors'])
+
+// Check if item should be expanded
+const isExpanded = (itemName: string) => expandedItems.value.includes(itemName)
+
+// Toggle expanded state
+const toggleExpanded = (itemName: string) => {
+  const index = expandedItems.value.indexOf(itemName)
+  if (index === -1) {
+    expandedItems.value.push(itemName)
+  } else {
+    expandedItems.value.splice(index, 1)
+  }
+}
 
 // Set mounted flag
 onMounted(() => {
@@ -115,7 +135,38 @@ onMounted(() => {
     <nav class="flex-1 overflow-y-auto py-4">
       <ul class="space-y-1 px-3">
         <li v-for="item in navigationItems" :key="item.name">
+          <!-- Item with children -->
+          <template v-if="item.children && item.children.length > 0">
+            <button
+              type="button"
+              class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              :title="!open ? item.name : undefined"
+              @click="toggleExpanded(item.name)"
+            >
+              <Icon :name="item.icon" class="h-5 w-5 flex-shrink-0" />
+              <span v-if="open" class="flex-1 whitespace-nowrap text-left">{{ item.name }}</span>
+              <Icon
+                v-if="open"
+                :name="isExpanded(item.name) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+                class="h-4 w-4 flex-shrink-0"
+              />
+            </button>
+            <!-- Children -->
+            <ul v-if="open && isExpanded(item.name)" class="ml-8 mt-1 space-y-1">
+              <li v-for="child in item.children" :key="child.href">
+                <NuxtLink
+                  :to="child.href"
+                  class="block rounded-lg px-3 py-1.5 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
+                >
+                  {{ child.name }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </template>
+
+          <!-- Item without children -->
           <NuxtLink
+            v-else
             :to="item.href"
             class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
             :title="!open ? item.name : undefined"
@@ -161,9 +212,40 @@ onMounted(() => {
     <nav class="flex-1 overflow-y-auto py-4">
       <ul class="space-y-1 px-3">
         <li v-for="item in navigationItems" :key="item.name">
+          <!-- Item with children -->
+          <template v-if="item.children && item.children.length > 0">
+            <button
+              type="button"
+              class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              @click="toggleExpanded(item.name)"
+            >
+              <Icon :name="item.icon" class="h-5 w-5 flex-shrink-0" />
+              <span class="flex-1 text-left">{{ item.name }}</span>
+              <Icon
+                :name="isExpanded(item.name) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+                class="h-4 w-4 flex-shrink-0"
+              />
+            </button>
+            <!-- Children -->
+            <ul v-if="isExpanded(item.name)" class="ml-8 mt-1 space-y-1">
+              <li v-for="child in item.children" :key="child.href">
+                <NuxtLink
+                  :to="child.href"
+                  class="block rounded-lg px-3 py-1.5 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
+                  @click="emit('closeMobile')"
+                >
+                  {{ child.name }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </template>
+
+          <!-- Item without children -->
           <NuxtLink
+            v-else
             :to="item.href"
             class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+            @click="emit('closeMobile')"
           >
             <Icon :name="item.icon" class="h-5 w-5 flex-shrink-0" />
             <span>{{ item.name }}</span>
