@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getStateBySlug } from '~/utils/usStates'
+
 /**
  * City Landing Page
  * Route: /[state]/[citySlug]/
@@ -7,7 +9,12 @@
  */
 
 definePageMeta({
-  layout: 'default'
+  layout: 'default',
+  validate: async (route) => {
+    const stateSlug = route.params.state as string
+    const state = getStateBySlug(stateSlug)
+    return !!state
+  }
 })
 
 const route = useRoute()

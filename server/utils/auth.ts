@@ -208,3 +208,72 @@ export async function requireAdmin(event: H3Event): Promise<string> {
 
   return userId
 }
+
+/**
+ * Require ownership of a specific contractor for an API endpoint
+ *
+ * Verifies that the authenticated user is the owner of the specified contractor
+ * by checking the contractors.claimed_by field.
+ *
+ * @param event - H3 event object
+ * @param contractorId - UUID of the contractor to check ownership for
+ * @throws {Error} - 401 Unauthorized if not authenticated, 403 Forbidden if not owner
+ * @returns {Promise<string>} - User ID of the owner
+ *
+ * @example
+ * ```typescript
+ * export default defineEventHandler(async (event) => {
+ *   const contractorId = getRouterParam(event, 'id')
+ *   const userId = await requireOwner(event, contractorId)
+ *   // User is the owner, proceed with logic
+ * })
+ * ```
+ */
+export async function requireOwner(event: H3Event, contractorId: string): Promise<string> {
+  // First ensure user is authenticated
+  const userId = await requireAuth(event)
+
+  // Check if user owns the contractor
+  const client = await serverSupabaseClient(event)
+  const { data: contractor, error } = await client
+    .from('contractors')
+    .select('id, claimed_by, is_claimed')
+    .eq('id', contractorId)
+    .maybeSingle()
+
+  if (error) {
+    if (import.meta.dev) {
+      consola.error('requireOwner: database error', error.message)
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal Server Error',
+      message: 'Failed to verify ownership'
+    })
+  }
+
+  if (!contractor) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'Contractor not found'
+    })
+  }
+
+  if (!contractor.is_claimed || contractor.claimed_by !== userId) {
+    if (import.meta.dev) {
+      consola.warn('requireOwner: user is not the owner', { userId, contractorId, claimedBy: contractor.claimed_by })
+    }
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: 'You do not have permission to modify this contractor profile'
+    })
+  }
+
+  if (import.meta.dev) {
+    consola.success('requireOwner: ownership verified', { userId, contractorId })
+  }
+
+  return userId
+}

@@ -80,6 +80,13 @@ export function getStateBySlug(slug: string): USState | undefined {
 }
 
 /**
+ * Get a state by its abbreviation/code (e.g., 'NC', 'CA')
+ */
+export function getStateByCode(code: string): USState | undefined {
+  return US_STATES.find(state => state.abbreviation.toUpperCase() === code.toUpperCase())
+}
+
+/**
  * Check if a slug is a valid US state
  */
 export function isValidStateSlug(slug: string): boolean {

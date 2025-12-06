@@ -10,6 +10,16 @@ import {
   sortByOptions
 } from '~/mock-data'
 
+// Validate that the state param is a valid US state slug
+// This prevents the route from matching non-state paths like /owner, /admin, etc.
+definePageMeta({
+  validate: async (route) => {
+    const stateSlug = route.params.state as string
+    const state = getStateBySlug(stateSlug)
+    return !!state
+  }
+})
+
 // Get the state slug from route params
 const route = useRoute()
 const stateSlug = computed(() => route.params.state as string)
