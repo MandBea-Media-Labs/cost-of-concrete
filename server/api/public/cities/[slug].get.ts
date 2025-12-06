@@ -6,6 +6,7 @@
  */
 
 import { consola } from 'consola'
+import { serverSupabaseClient } from '#supabase/server'
 import { LookupRepository } from '../../../repositories/LookupRepository'
 
 export default defineEventHandler(async (event) => {

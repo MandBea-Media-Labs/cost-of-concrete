@@ -1,18 +1,19 @@
 /**
  * GET /api/public/contractors/[citySlug]/[contractorSlug]
- * 
+ *
  * Public endpoint to get a single contractor by city and contractor slug
  * Used for contractor profile pages
  */
 
 import { consola } from 'consola'
+import { serverSupabaseClient } from '#supabase/server'
 import { ContractorRepository } from '../../../../repositories/ContractorRepository'
 import type { ContractorMetadata } from '../../../../repositories/ContractorRepository'
 
 export default defineEventHandler(async (event) => {
   const citySlug = getRouterParam(event, 'citySlug')
   const contractorSlug = getRouterParam(event, 'contractorSlug')
-  
+
   if (!citySlug || !contractorSlug) {
     throw createError({
       statusCode: 400,
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const contractor = await contractorRepo.findBySlugPublic(citySlug, contractorSlug)
-    
+
     if (!contractor) {
       throw createError({
         statusCode: 404,
@@ -63,7 +64,7 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
-    
+
     consola.error('Error fetching contractor:', error)
     throw createError({
       statusCode: 500,

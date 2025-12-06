@@ -1,11 +1,12 @@
 /**
  * GET /api/public/categories
- * 
+ *
  * Public endpoint to list all enabled service type categories
  * Used for category navigation on listing pages
  */
 
 import { consola } from 'consola'
+import { serverSupabaseClient } from '#supabase/server'
 import { LookupRepository } from '../../../repositories/LookupRepository'
 
 export default defineEventHandler(async (event) => {

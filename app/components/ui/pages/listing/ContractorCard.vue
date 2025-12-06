@@ -46,6 +46,11 @@ interface Props {
   citySlug: string
 
   /**
+   * The state code for building profile URL (lowercase, e.g., 'nc')
+   */
+  stateCode?: string
+
+  /**
    * Distance from search location in miles (optional)
    */
   distanceMiles?: number | null
@@ -86,6 +91,9 @@ const useStandardImg = computed(() => {
 
 // Build contractor profile URL
 const contractorUrl = computed(() => {
+  if (props.stateCode) {
+    return `/${props.stateCode}/${props.citySlug}/contractors/${props.contractorSlug}`
+  }
   return `/${props.citySlug}/contractors/${props.contractorSlug}`
 })
 

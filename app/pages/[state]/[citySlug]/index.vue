@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * City Landing Page
- * Route: /[citySlug]/
+ * Route: /[state]/[citySlug]/
  *
  * Displays all concrete contractors in a city with category filters
  */
@@ -11,6 +11,8 @@ definePageMeta({
 })
 
 const route = useRoute()
+const stateSlug = computed(() => route.params.state as string)
+const stateCode = computed(() => stateSlug.value.toUpperCase())
 const citySlug = computed(() => route.params.citySlug as string)
 
 // Pagination and filters
@@ -26,7 +28,7 @@ const { data: city, error: cityError } = await useFetch(() => `/api/public/citie
 const { data: categoriesData } = await useFetch('/api/public/categories')
 
 // Fetch contractors
-const { data: contractorsData, pending, refresh } = await useFetch('/api/public/contractors', {
+const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
   query: computed(() => ({
     citySlug: citySlug.value,
     category: selectedCategory.value,
@@ -58,6 +60,11 @@ function onCategoryChange(slug: string | undefined) {
 // Pagination helpers
 const totalPages = computed(() => Math.ceil((contractorsData.value?.total || 0) / limit))
 const hasMore = computed(() => contractorsData.value?.hasMore || false)
+
+// Build contractor URL with state prefix
+function getContractorUrl(contractor: { citySlug: string; slug: string }) {
+  return `/${stateCode.value.toLowerCase()}/${contractor.citySlug}/contractors/${contractor.slug}`
+}
 </script>
 
 <template>
@@ -75,7 +82,6 @@ const hasMore = computed(() => contractorsData.value?.hasMore || false)
 
       <!-- Filters Bar -->
       <div class="mb-6 flex flex-wrap items-center gap-4">
-        <!-- Category Filter -->
         <div class="flex flex-wrap gap-2">
           <Button
             :variant="!selectedCategory ? 'primary' : 'secondary-outline'"
@@ -92,8 +98,6 @@ const hasMore = computed(() => contractorsData.value?.hasMore || false)
             @click="onCategoryChange(cat.slug)"
           />
         </div>
-
-        <!-- Sort Dropdown -->
         <div class="ml-auto flex items-center gap-2">
           <span class="text-sm text-neutral-600 dark:text-neutral-400">Sort by:</span>
           <select
@@ -136,16 +140,14 @@ const hasMore = computed(() => contractorsData.value?.hasMore || false)
           :contractor-id="contractor.id"
           :contractor-slug="contractor.slug"
           :city-slug="contractor.citySlug"
+          :state-code="stateSlug"
           :distance-miles="contractor.distanceMiles"
           :image="contractor.metadata?.images?.[0]?.url"
         />
       </div>
 
       <!-- Empty State -->
-      <div
-        v-if="!pending && contractorsData?.contractors?.length === 0"
-        class="py-12 text-center"
-      >
+      <div v-if="!pending && contractorsData?.contractors?.length === 0" class="py-12 text-center">
         <Icon name="heroicons:building-office-2" class="mx-auto h-12 w-12 text-neutral-400" />
         <h2 class="mt-4 text-xl font-semibold text-neutral-900 dark:text-white">No Contractors Found</h2>
         <p class="mt-2 text-neutral-600 dark:text-neutral-400">
@@ -154,28 +156,10 @@ const hasMore = computed(() => contractorsData.value?.hasMore || false)
       </div>
 
       <!-- Pagination -->
-      <nav
-        v-if="totalPages > 1"
-        class="mt-8 flex items-center justify-center gap-2"
-        aria-label="Pagination"
-      >
-        <Button
-          variant="secondary-outline"
-          size="sm"
-          text="Previous"
-          :disabled="page <= 1"
-          @click="page--"
-        />
-        <span class="px-4 text-sm text-neutral-600 dark:text-neutral-400">
-          Page {{ page }} of {{ totalPages }}
-        </span>
-        <Button
-          variant="secondary-outline"
-          size="sm"
-          text="Next"
-          :disabled="!hasMore"
-          @click="page++"
-        />
+      <nav v-if="totalPages > 1" class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+        <Button variant="secondary-outline" size="sm" text="Previous" :disabled="page <= 1" @click="page--" />
+        <span class="px-4 text-sm text-neutral-600 dark:text-neutral-400">Page {{ page }} of {{ totalPages }}</span>
+        <Button variant="secondary-outline" size="sm" text="Next" :disabled="!hasMore" @click="page++" />
       </nav>
     </div>
   </div>

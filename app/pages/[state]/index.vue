@@ -134,6 +134,8 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
           :review-count="contractor.reviewCount"
           :contractor-id="contractor.id"
           :contractor-slug="contractor.slug"
+          :city-slug="contractor.citySlug || 'unknown'"
+          :state-code="stateSlug"
         >
           {{ contractor.description }}
         </ContractorCard>
@@ -142,12 +144,8 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
       <!-- No Results -->
       <div v-else class="py-16 text-center">
         <Icon name="heroicons:magnifying-glass" class="mx-auto mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-700" />
-        <h3 class="mb-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          No contractors found
-        </h3>
-        <p class="mb-6 text-neutral-600 dark:text-neutral-400">
-          Try adjusting your filters to see more results
-        </p>
+        <h3 class="mb-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">No contractors found</h3>
+        <p class="mb-6 text-neutral-600 dark:text-neutral-400">Try adjusting your filters to see more results</p>
         <Button text="Reset All Filters" variant="primary" size="md" @click="resetFilters" />
       </div>
 
@@ -158,12 +156,7 @@ const handleHeroSearch = (_value: { location: string, service: ServiceOption | n
     </div>
 
     <!-- Browse by City Section -->
-    <BrowseByCity
-      v-if="stateData"
-      :state-name="stateData.name"
-      :state-slug="stateData.slug"
-      :cities="stateData.cities"
-    />
+    <BrowseByCity v-if="stateData" :state-name="stateData.name" :state-slug="stateData.slug" :cities="stateData.cities" />
 
     <!-- Popular Services Section -->
     <PopularServices />

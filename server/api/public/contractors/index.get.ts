@@ -1,9 +1,9 @@
 /**
  * GET /api/public/contractors
- * 
+ *
  * Public endpoint to search contractors with filters
  * Supports radius-based search using PostGIS
- * 
+ *
  * Query params:
  * - citySlug (required): City slug to search from
  * - category (optional): Category slug to filter by
@@ -15,12 +15,13 @@
  */
 
 import { consola } from 'consola'
+import { serverSupabaseClient } from '#supabase/server'
 import { ContractorRepository } from '../../../repositories/ContractorRepository'
 import type { PublicContractorSearchOptions } from '../../../repositories/ContractorRepository'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  
+
   const citySlug = query.citySlug as string
   if (!citySlug) {
     throw createError({
@@ -34,8 +35,8 @@ export default defineEventHandler(async (event) => {
   const radiusMiles = Math.min(Math.max(Number(query.radius) || 25, 1), 100)
   const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 50)
   const offset = Math.max(Number(query.offset) || 0, 0)
-  const orderBy = (['rating', 'review_count', 'distance'].includes(query.orderBy as string) 
-    ? query.orderBy 
+  const orderBy = (['rating', 'review_count', 'distance'].includes(query.orderBy as string)
+    ? query.orderBy
     : 'rating') as 'rating' | 'review_count' | 'distance'
   const orderDirection = (['asc', 'desc'].includes(query.orderDirection as string)
     ? query.orderDirection
