@@ -14,6 +14,16 @@ import {
 const route = useRoute()
 const stateSlug = computed(() => route.params.state as string)
 
+// Supabase client for building storage URLs
+const supabase = useSupabaseClient()
+
+// Build image URL from storage path
+function buildImageUrl(storagePath: string | undefined): string | undefined {
+  if (!storagePath) return undefined
+  const { data } = supabase.storage.from('contractors').getPublicUrl(storagePath)
+  return data.publicUrl
+}
+
 // Validate state slug and get state data
 const stateData = computed(() => getStateBySlug(stateSlug.value))
 
@@ -162,7 +172,7 @@ watch(() => filters.serviceType, (newValue) => {
         <ContractorCard
           v-for="contractor in contractors"
           :key="contractor.id"
-          :image="contractor.metadata?.images?.[0]?.url"
+          :image="buildImageUrl(contractor.metadata?.primary_image || contractor.metadata?.images?.[0])"
           :company-name="contractor.companyName"
           :location="`${contractor.cityName}, ${contractor.stateCode}`"
           :rating="contractor.rating || 0"
@@ -172,7 +182,7 @@ watch(() => filters.serviceType, (newValue) => {
           :city-slug="contractor.citySlug || 'unknown'"
           :state-code="stateSlug"
         >
-          {{ contractor.description }}
+          {{ contractor.description || contractor.metadata?.categories?.join(', ') || '' }}
         </ContractorCard>
       </div>
 
