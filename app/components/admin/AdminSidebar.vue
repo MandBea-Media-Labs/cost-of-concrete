@@ -51,6 +51,11 @@ const navigationItems = [
     ],
   },
   {
+    name: 'Claims',
+    href: '/admin/claims',
+    icon: 'heroicons:clipboard-document-check',
+  },
+  {
     name: 'Menus',
     href: '/admin/menus',
     icon: 'heroicons:bars-3',
