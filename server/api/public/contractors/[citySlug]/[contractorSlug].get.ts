@@ -54,6 +54,8 @@ export default defineEventHandler(async (event) => {
       stateCode: contractor.state_code,
       lat: contractor.lat,
       lng: contractor.lng,
+      // Claim status (public - only show if claimed, not who claimed)
+      isClaimed: contractor.is_claimed || false,
       // Metadata fields
       images: metadata.images || [],
       categories: metadata.categories || [],

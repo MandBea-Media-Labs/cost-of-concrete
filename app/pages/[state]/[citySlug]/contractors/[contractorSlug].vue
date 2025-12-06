@@ -193,6 +193,67 @@ const overallRating = computed(() => {
   return (sum / allReviews.value.length).toFixed(1)
 })
 
+// =====================================================
+// CLAIM BUSINESS
+// =====================================================
+const toast = useToast()
+const showClaimDialog = ref(false)
+const isSubmittingClaim = ref(false)
+const claimSubmitted = ref(false)
+
+// Claim form state
+const claimName = ref('')
+const claimEmail = ref('')
+const claimPhone = ref('')
+const claimError = ref<string | null>(null)
+
+const openClaimDialog = () => {
+  showClaimDialog.value = true
+  claimError.value = null
+}
+
+const closeClaimDialog = () => {
+  showClaimDialog.value = false
+  claimName.value = ''
+  claimEmail.value = ''
+  claimPhone.value = ''
+  claimError.value = null
+}
+
+const submitClaim = async () => {
+  if (!contractor.value?.id) return
+
+  // Basic validation
+  if (!claimName.value.trim() || !claimEmail.value.trim()) {
+    claimError.value = 'Name and email are required'
+    return
+  }
+
+  isSubmittingClaim.value = true
+  claimError.value = null
+
+  try {
+    await $fetch('/api/public/claims', {
+      method: 'POST',
+      body: {
+        contractorId: contractor.value.id,
+        claimantName: claimName.value.trim(),
+        claimantEmail: claimEmail.value.trim(),
+        claimantPhone: claimPhone.value.trim() || undefined,
+      },
+    })
+
+    claimSubmitted.value = true
+    toast.success('Your claim has been submitted for review')
+    closeClaimDialog()
+  } catch (err: unknown) {
+    const error = err as { data?: { message?: string } }
+    claimError.value = error.data?.message || 'Failed to submit claim. Please try again.'
+  } finally {
+    isSubmittingClaim.value = false
+  }
+}
+
 const ratingDistribution = computed(() => {
   const total = allReviews.value.length
   if (total === 0) return []
@@ -252,6 +313,21 @@ const ratingDistribution = computed(() => {
             variant="primary"
             class="whitespace-nowrap"
           />
+          <!-- Claim Business Button - only show if not claimed and not already submitted -->
+          <Button
+            v-if="!contractor?.isClaimed && !claimSubmitted"
+            text="Claim this Business"
+            variant="ghost"
+            class="whitespace-nowrap text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+            @click="openClaimDialog"
+          />
+          <!-- Show claimed/pending status -->
+          <span
+            v-else-if="claimSubmitted"
+            class="text-center text-sm text-green-600 dark:text-green-400"
+          >
+            ✓ Claim submitted
+          </span>
         </div>
       </div>
     </section>
@@ -604,6 +680,69 @@ const ratingDistribution = computed(() => {
 
     <!-- Bottom CTA -->
     <ListingBottomCta />
+
+    <!-- Claim Business Dialog -->
+    <Dialog
+      v-model:open="showClaimDialog"
+      title="Claim this Business"
+      description="Submit a claim to manage this business profile. We'll verify your ownership and contact you via email."
+      size="md"
+      :close-on-overlay-click="false"
+      @close="closeClaimDialog"
+    >
+      <form class="mt-4 space-y-4" @submit.prevent="submitClaim">
+        <!-- Error Message -->
+        <div
+          v-if="claimError"
+          class="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+        >
+          {{ claimError }}
+        </div>
+
+        <TextInput
+          v-model="claimName"
+          type="text"
+          placeholder="Your Full Name *"
+          size="md"
+          :disabled="isSubmittingClaim"
+        />
+
+        <TextInput
+          v-model="claimEmail"
+          type="email"
+          placeholder="Your Email Address *"
+          size="md"
+          :disabled="isSubmittingClaim"
+        />
+
+        <TextInput
+          v-model="claimPhone"
+          type="tel"
+          placeholder="Phone Number (optional)"
+          size="md"
+          :disabled="isSubmittingClaim"
+        />
+
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">
+          * If your email matches the business email on file, your claim may be approved faster.
+        </p>
+      </form>
+
+      <template #actions>
+        <Button
+          text="Cancel"
+          variant="ghost"
+          :disabled="isSubmittingClaim"
+          @click="closeClaimDialog"
+        />
+        <Button
+          text="Submit Claim"
+          variant="primary"
+          :disabled="isSubmittingClaim || !claimName.trim() || !claimEmail.trim()"
+          @click="submitClaim"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
