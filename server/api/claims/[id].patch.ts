@@ -23,6 +23,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { requireAdmin } from '../../utils/auth'
 import type { Database } from '../../../app/types/supabase'
 import { z } from 'zod'
+import { EmailService } from '../../services/EmailService'
 
 // Request body schema
 const updateClaimSchema = z.object({
@@ -130,6 +131,37 @@ export default defineEventHandler(async (event) => {
 
     if (import.meta.dev) {
       consola.success(`PATCH /api/claims/${id} - Claim ${validatedData.status}`)
+    }
+
+    // Send notification email to claimant (non-blocking)
+    const config = useRuntimeConfig()
+    if (config.resendApiKey && existingClaim.claimant_email) {
+      const emailService = new EmailService({
+        apiKey: config.resendApiKey,
+        fromEmail: 'claims@mail.costofconcrete.com',
+        siteName: config.public.siteName || 'Cost of Concrete',
+        siteUrl: config.public.siteUrl || 'https://costofconcrete.com',
+      })
+
+      const emailData = {
+        claimantEmail: existingClaim.claimant_email,
+        claimantName: existingClaim.claimant_name,
+        businessName: (existingClaim.contractor as { company_name: string })?.company_name || 'your business',
+      }
+
+      // Fire and forget - don't block the response
+      if (validatedData.status === 'approved') {
+        emailService.sendClaimApprovedEmail(emailData).catch((err) => {
+          consola.error('Failed to send claim approved email:', err)
+        })
+      } else {
+        emailService.sendClaimRejectedEmail({
+          ...emailData,
+          adminNotes: validatedData.adminNotes,
+        }).catch((err) => {
+          consola.error('Failed to send claim rejected email:', err)
+        })
+      }
     }
 
     return {

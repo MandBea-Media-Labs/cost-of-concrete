@@ -8,6 +8,7 @@
 import { z } from 'zod'
 import { consola } from 'consola'
 import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { EmailService } from '../../../services/EmailService'
 
 const claimRequestSchema = z.object({
   contractorId: z.string().uuid('Invalid contractor ID'),
@@ -107,6 +108,26 @@ export default defineEventHandler(async (event) => {
   }
 
   consola.success(`Claim submitted for ${contractor.company_name} by ${claimantEmail}`)
+
+  // Send confirmation email to claimant (non-blocking)
+  const config = useRuntimeConfig()
+  if (config.resendApiKey) {
+    const emailService = new EmailService({
+      apiKey: config.resendApiKey,
+      fromEmail: 'claims@mail.costofconcrete.com',
+      siteName: config.public.siteName || 'Cost of Concrete',
+      siteUrl: config.public.siteUrl || 'https://costofconcrete.com',
+    })
+
+    // Fire and forget - don't block the response
+    emailService.sendClaimSubmittedEmail({
+      claimantEmail,
+      claimantName,
+      businessName: contractor.company_name,
+    }).catch((err) => {
+      consola.error('Failed to send claim submitted email:', err)
+    })
+  }
 
   return {
     success: true,

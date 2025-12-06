@@ -36,6 +36,7 @@ interface ImportSummary {
   imported: number
   updated: number
   skipped: number
+  skippedClaimed: number
   pendingImageCount: number
   errors: ImportError[]
 }
@@ -297,7 +298,7 @@ const enrichImages = async () => {
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <div class="rounded-lg bg-neutral-50 p-3 text-center dark:bg-neutral-900">
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">
               {{ importResult.summary.imported }}
@@ -320,6 +321,14 @@ const enrichImages = async () => {
             </p>
             <p class="text-xs text-neutral-500 dark:text-neutral-400">
               Skipped
+            </p>
+          </div>
+          <div class="rounded-lg bg-neutral-50 p-3 text-center dark:bg-neutral-900">
+            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {{ importResult.summary.skippedClaimed }}
+            </p>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">
+              Claimed (Protected)
             </p>
           </div>
           <div class="rounded-lg bg-neutral-50 p-3 text-center dark:bg-neutral-900">

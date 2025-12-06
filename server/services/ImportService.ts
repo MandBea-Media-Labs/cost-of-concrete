@@ -56,6 +56,7 @@ export class ImportService {
       imported: 0,
       updated: 0,
       skipped: 0,
+      skippedClaimed: 0,
       pendingImageCount: 0,
       errors: [],
     }
@@ -123,7 +124,7 @@ export class ImportService {
       }
     }
 
-    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.errors.length} errors`)
+    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected), ${summary.errors.length} errors`)
     return summary
   }
 
@@ -147,6 +148,15 @@ export class ImportService {
     // Check if contractor already exists
     const existing = await this.contractorRepo.findByGooglePlaceId(row.placeId)
     const isNew = !existing
+
+    // Skip claimed contractors to protect owner edits
+    if (existing?.is_claimed) {
+      summary.skippedClaimed++
+      if (import.meta.dev) {
+        consola.info(`Row ${rowNumber}: Skipped "${row.title}" (claimed by owner)`)
+      }
+      return { isNew: false, isUpdated: false, pendingImageCount: 0 }
+    }
 
     // Resolve city
     const cityId = await this.resolveCity(row)

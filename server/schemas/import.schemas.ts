@@ -107,6 +107,7 @@ export interface ImportSummary {
   imported: number
   updated: number
   skipped: number
+  skippedClaimed: number
   pendingImageCount: number
   errors: ImportError[]
 }
