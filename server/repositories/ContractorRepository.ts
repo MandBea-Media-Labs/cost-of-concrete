@@ -26,6 +26,24 @@ export interface ContractorListOptions {
   orderDirection?: 'asc' | 'desc'
 }
 
+export interface PublicContractorSearchOptions {
+  citySlug: string
+  stateCode?: string
+  category?: string
+  radiusMiles?: number
+  limit?: number
+  offset?: number
+  orderBy?: 'rating' | 'review_count' | 'distance'
+  orderDirection?: 'asc' | 'desc'
+}
+
+export interface ContractorWithDistance extends Contractor {
+  distance_miles?: number
+  city_name?: string
+  city_slug?: string
+  state_code?: string
+}
+
 export interface ContractorMetadata {
   images?: string[]
   pending_images?: string[]
@@ -275,6 +293,173 @@ export class ContractorRepository {
       images_processed: true,
       metadata: updatedMetadata as unknown as Database['public']['Tables']['contractors']['Update']['metadata'],
     })
+  }
+
+  /**
+   * Find contractor by city slug and contractor slug (for public profile page)
+   */
+  async findBySlugPublic(citySlug: string, contractorSlug: string): Promise<ContractorWithDistance | null> {
+    const { data, error } = await this.client
+      .from('contractors')
+      .select(`
+        *,
+        cities!inner (
+          id,
+          name,
+          slug,
+          state_code
+        )
+      `)
+      .eq('slug', contractorSlug)
+      .eq('cities.slug', citySlug)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    // Flatten city data
+    const city = data.cities as unknown as { id: string; name: string; slug: string; state_code: string }
+    return {
+      ...data,
+      city_name: city.name,
+      city_slug: city.slug,
+      state_code: city.state_code,
+    } as ContractorWithDistance
+  }
+
+  /**
+   * Search contractors within radius of a city (for public listing pages)
+   * Uses PostGIS for efficient spatial queries
+   */
+  async searchPublic(options: PublicContractorSearchOptions): Promise<{ contractors: ContractorWithDistance[], total: number }> {
+    const {
+      citySlug,
+      stateCode,
+      category,
+      radiusMiles = 25,
+      limit = 20,
+      offset = 0,
+      orderBy = 'rating',
+      orderDirection = 'desc'
+    } = options
+
+    // Use raw SQL for PostGIS radius search
+    const radiusMeters = radiusMiles * 1609.34
+
+    // Build the query parts
+    let categoryFilter = ''
+    if (category) {
+      categoryFilter = `AND c.metadata->'categories' ? '${category}'`
+    }
+
+    let stateFilter = ''
+    if (stateCode) {
+      stateFilter = `AND city.state_code = '${stateCode}'`
+    }
+
+    // Determine order clause
+    let orderClause = 'c.rating DESC NULLS LAST'
+    if (orderBy === 'review_count') {
+      orderClause = `c.review_count ${orderDirection.toUpperCase()} NULLS LAST`
+    } else if (orderBy === 'distance') {
+      orderClause = `distance_miles ${orderDirection.toUpperCase()}`
+    } else if (orderBy === 'rating') {
+      orderClause = `c.rating ${orderDirection.toUpperCase()} NULLS LAST`
+    }
+
+    // Query for data with PostGIS radius search
+    const { data, error } = await this.client.rpc('search_contractors_by_radius', {
+      p_city_slug: citySlug,
+      p_radius_meters: radiusMeters,
+      p_category: category || null,
+      p_state_code: stateCode || null,
+      p_limit: limit,
+      p_offset: offset,
+      p_order_by: orderBy,
+      p_order_direction: orderDirection
+    })
+
+    if (error) {
+      // If RPC doesn't exist, fall back to simple city-based query
+      consola.warn('PostGIS RPC not available, falling back to city-based query:', error.message)
+      return this.searchPublicFallback(options)
+    }
+
+    // Count total results
+    const { data: countData, error: countError } = await this.client.rpc('count_contractors_by_radius', {
+      p_city_slug: citySlug,
+      p_radius_meters: radiusMeters,
+      p_category: category || null,
+      p_state_code: stateCode || null
+    })
+
+    const total = countError ? (data?.length || 0) : (countData || 0)
+
+    return {
+      contractors: (data || []) as ContractorWithDistance[],
+      total
+    }
+  }
+
+  /**
+   * Fallback search when PostGIS RPC is not available
+   * Uses simple city matching without radius
+   */
+  private async searchPublicFallback(options: PublicContractorSearchOptions): Promise<{ contractors: ContractorWithDistance[], total: number }> {
+    const {
+      citySlug,
+      category,
+      limit = 20,
+      offset = 0,
+      orderBy = 'rating',
+      orderDirection = 'desc'
+    } = options
+
+    // First get the city ID
+    const { data: city, error: cityError } = await this.client
+      .from('cities')
+      .select('id, name, slug, state_code')
+      .eq('slug', citySlug)
+      .maybeSingle()
+
+    if (cityError || !city) {
+      return { contractors: [], total: 0 }
+    }
+
+    // Build query
+    let query = this.client
+      .from('contractors')
+      .select('*', { count: 'exact' })
+      .eq('city_id', city.id)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+
+    // Filter by category using JSONB containment
+    if (category) {
+      query = query.contains('metadata', { categories: [category] })
+    }
+
+    // Apply ordering
+    const order = orderBy === 'distance' ? 'rating' : orderBy
+    query = query.order(order, { ascending: orderDirection === 'asc', nullsFirst: false })
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    // Add city info to results
+    const contractors = (data || []).map(c => ({
+      ...c,
+      city_name: city.name,
+      city_slug: city.slug,
+      state_code: city.state_code,
+      distance_miles: 0
+    })) as ContractorWithDistance[]
+
+    return { contractors, total: count || 0 }
   }
 }
 

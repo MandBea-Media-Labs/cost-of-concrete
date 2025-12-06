@@ -86,6 +86,7 @@ export type Database = {
       }
       cities: {
         Row: {
+          coordinates: unknown
           created_at: string | null
           deleted_at: string | null
           id: string
@@ -98,6 +99,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          coordinates?: unknown
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -110,6 +112,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          coordinates?: unknown
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -127,6 +130,7 @@ export type Database = {
         Row: {
           city_id: string | null
           company_name: string
+          coordinates: unknown
           created_at: string | null
           deleted_at: string | null
           description: string | null
@@ -151,6 +155,7 @@ export type Database = {
         Insert: {
           city_id?: string | null
           company_name: string
+          coordinates?: unknown
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
@@ -175,6 +180,7 @@ export type Database = {
         Update: {
           city_id?: string | null
           company_name?: string
+          coordinates?: unknown
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
