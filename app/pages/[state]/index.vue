@@ -46,13 +46,65 @@ if (!stateData.value) {
   })
 }
 
-// SEO Meta - state-specific
-useHead({
-  title: `Concrete Contractors in ${stateData.value.name} | Cost of Concrete`,
-  meta: [
+// Runtime config for site URL
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
+const siteName = config.public.siteName || 'Cost of Concrete'
+
+// Build SEO data
+const pageTitle = `Concrete Contractors in ${stateData.value.name} | ${siteName}`
+const pageDescription = `Find top-rated concrete contractors in ${stateData.value.name}. Compare ratings, services, and get quotes from verified professionals for driveways, patios, foundations, and more.`
+const canonicalUrl = `${siteUrl}/${stateData.value.slug}/`
+
+// Schema.org BreadcrumbList
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
     {
-      name: 'description',
-      content: `Find top-rated concrete contractors in ${stateData.value.name}. Compare ratings, services, and get quotes from verified professionals for driveways, patios, foundations, and more.`
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: siteUrl
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: stateData.value.name,
+      item: canonicalUrl
+    }
+  ]
+}
+
+// SEO Meta - state-specific with full optimization
+useSeoMeta({
+  title: pageTitle,
+  description: pageDescription,
+
+  // Open Graph
+  ogTitle: `Concrete Contractors in ${stateData.value.name}`,
+  ogDescription: pageDescription,
+  ogType: 'website',
+  ogUrl: canonicalUrl,
+  ogSiteName: siteName,
+  ogLocale: 'en_US',
+
+  // Twitter Card
+  twitterCard: 'summary',
+  twitterTitle: `Concrete Contractors in ${stateData.value.name}`,
+  twitterDescription: pageDescription
+})
+
+// Add canonical URL and structured data
+useHead({
+  title: pageTitle,
+  link: [
+    { rel: 'canonical', href: canonicalUrl }
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(breadcrumbSchema)
     }
   ]
 })

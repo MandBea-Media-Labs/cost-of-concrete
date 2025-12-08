@@ -100,3 +100,19 @@ export function getAllStateSlugs(): string[] {
   return US_STATES.map(state => state.slug)
 }
 
+/**
+ * Get state name from abbreviation/code (e.g., 'NC' -> 'North Carolina')
+ */
+export function getStateName(code: string): string {
+  const state = getStateByCode(code)
+  return state?.name || code
+}
+
+/**
+ * Get state slug from abbreviation/code (e.g., 'NC' -> 'north-carolina')
+ */
+export function getStateSlugFromCode(code: string): string {
+  const state = getStateByCode(code)
+  return state?.slug || code.toLowerCase()
+}
+

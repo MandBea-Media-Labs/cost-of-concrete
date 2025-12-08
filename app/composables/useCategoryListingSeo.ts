@@ -1,14 +1,16 @@
 /**
  * Composable for generating SEO meta tags for category listing pages
- * e.g., /raleigh/concrete-contractors/
+ * e.g., /texas/houston/concrete-contractors/
  *
  * Features:
- * - Schema.org ItemList JSON-LD for contractor listings
+ * - Schema.org WebPage JSON-LD
+ * - Schema.org BreadcrumbList JSON-LD
  * - Open Graph tags
  * - Twitter Card tags
  * - Canonical URL
  * - SSR-compatible
  */
+import { getStateName } from '~/utils/usStates'
 
 export interface CategoryListingSeoData {
   cityName: string
@@ -63,7 +65,10 @@ export function useCategoryListingSeo(data: CategoryListingSeoData) {
     twitterDescription: pageDescription.slice(0, 200)
   })
 
-  // Build Schema.org LocalBusiness search action
+  // Get full state name for breadcrumbs
+  const stateName = getStateName(data.stateCode)
+
+  // Build Schema.org WebPage schema
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -84,10 +89,36 @@ export function useCategoryListingSeo(data: CategoryListingSeoData) {
         name: data.cityName,
         containedInPlace: {
           '@type': 'State',
-          name: data.stateCode
+          name: stateName
         }
       }
     }
+  }
+
+  // Build Schema.org BreadcrumbList
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: stateName,
+        item: `${siteUrl}/${stateSlug}/`
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${data.cityName} Concrete Contractors`,
+        item: fullUrl
+      }
+    ]
   }
 
   // Add to head
@@ -100,6 +131,10 @@ export function useCategoryListingSeo(data: CategoryListingSeoData) {
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify(webPageSchema)
+      },
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(breadcrumbSchema)
       }
     ]
   })

@@ -3,11 +3,13 @@
  *
  * Features:
  * - Schema.org LocalBusiness JSON-LD
+ * - Schema.org BreadcrumbList JSON-LD
  * - Open Graph tags
  * - Twitter Card tags
  * - Canonical URL
  * - SSR-compatible
  */
+import { getStateName } from '~/utils/usStates'
 
 export interface ContractorSeoData {
   companyName: string
@@ -130,6 +132,41 @@ export function useContractorSeo(contractor: ContractorSeoData) {
     localBusinessSchema.image = contractor.images.map(img => img.url)
   }
 
+  // Get full state name for breadcrumbs
+  const stateName = getStateName(contractor.stateCode || '')
+
+  // Build Schema.org BreadcrumbList
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: stateName,
+        item: `${siteUrl}/${stateSlug}/`
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${contractor.cityName} Concrete Contractors`,
+        item: `${siteUrl}/${stateSlug}/${contractor.citySlug}/concrete-contractors/`
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: contractor.companyName,
+        item: fullUrl
+      }
+    ]
+  }
+
   // Add to head
   useHead({
     title: pageTitle,
@@ -140,6 +177,10 @@ export function useContractorSeo(contractor: ContractorSeoData) {
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify(localBusinessSchema)
+      },
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(breadcrumbSchema)
       }
     ]
   })
@@ -148,7 +189,8 @@ export function useContractorSeo(contractor: ContractorSeoData) {
     pageTitle,
     pageDescription,
     canonicalUrl: fullUrl,
-    localBusinessSchema
+    localBusinessSchema,
+    breadcrumbSchema
   }
 }
 
