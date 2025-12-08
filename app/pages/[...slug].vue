@@ -1,18 +1,33 @@
 <script setup lang="ts">
 // Catch-All Route for Dynamic Page Rendering
 // Handles all page paths and renders appropriate template based on database data
+// IMPORTANT: This route must NOT catch state/city routes - those are handled by [state] routes
 
 import { consola } from 'consola'
 import { getTemplateComponent } from '~/utils/pageTemplateRegistry'
+import { isValidStateSlug } from '~/utils/usStates'
 
 // Get route params
 const route = useRoute()
 
 // Build full path from slug params
+const slugArray = route.params.slug as string[] | undefined
 const path = computed(() => {
-  const slugArray = route.params.slug as string[]
   return '/' + (slugArray?.join('/') || '')
 })
+
+// STATE COLLISION PREVENTION
+// If the first segment is a valid US state slug, this should be handled by [state] routes
+// Throw 404 here to let Nuxt fall through to the correct route
+const firstSegment = slugArray?.[0]
+if (firstSegment && isValidStateSlug(firstSegment)) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Page Not Found',
+    message: `The page "${path.value}" could not be found.`,
+    fatal: true
+  })
+}
 
 // Fetch page data from database
 // We'll fetch children for all pages and let the template decide whether to use them
