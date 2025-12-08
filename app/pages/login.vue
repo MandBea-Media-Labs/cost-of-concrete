@@ -6,7 +6,7 @@ import consola from 'consola'
 // =====================================================
 
 useHead({
-  title: 'Admin Login'
+  title: 'Login'
 })
 
 // =====================================================
@@ -14,38 +14,43 @@ useHead({
 // =====================================================
 
 const router = useRouter()
-const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+
+// Redirect path stored via useState (set by auth middlewares)
+const redirectAfterLogin = useState<string | null>('auth:redirectAfterLogin', () => null)
 
 const email = ref<string | null>('')
 const password = ref<string | null>('')
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 
-// If already logged in, redirect to admin pages
-watchEffect(() => {
-  if (user.value) {
-    const redirectParam = route.query.redirect
-    const redirectTo = typeof redirectParam === 'string' && redirectParam.startsWith('/')
-      ? redirectParam
-      : '/admin/pages'
-
-    if (import.meta.dev) {
-      consola.info('Login page: user already authenticated, redirecting to:', redirectTo)
-    }
-
-    router.replace(redirectTo)
-  }
-})
+// Default redirect destination
+const defaultRedirect = '/admin/pages'
 
 // Determine redirect destination after successful login
 const redirectTo = computed(() => {
-  const redirectParam = route.query.redirect
-  if (typeof redirectParam === 'string' && redirectParam.startsWith('/')) {
-    return redirectParam
+  const storedRedirect = redirectAfterLogin.value
+  if (storedRedirect && storedRedirect.startsWith('/')) {
+    return storedRedirect
   }
-  return '/admin/pages'
+  return defaultRedirect
+})
+
+// If already logged in, redirect to destination
+watchEffect(() => {
+  if (user.value) {
+    const destination = redirectTo.value
+
+    if (import.meta.dev) {
+      consola.info('Login page: user already authenticated, redirecting to:', destination)
+    }
+
+    // Clear the stored redirect path
+    redirectAfterLogin.value = null
+
+    router.replace(destination)
+  }
 })
 
 // =====================================================
@@ -66,7 +71,7 @@ async function handleSubmit() {
     }
 
     if (import.meta.dev) {
-      consola.info('Attempting admin login with email:', emailValue)
+      consola.info('Attempting login with email:', emailValue)
     }
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -83,11 +88,16 @@ async function handleSubmit() {
       return
     }
 
+    const destination = redirectTo.value
+
     if (import.meta.dev) {
-      consola.success('Login successful, redirecting to:', redirectTo.value)
+      consola.success('Login successful, redirecting to:', destination)
     }
 
-    await router.replace(redirectTo.value)
+    // Clear the stored redirect path before navigating
+    redirectAfterLogin.value = null
+
+    await router.replace(destination)
   } catch (err: any) {
     if (import.meta.dev) {
       consola.error('Unexpected login error:', err)

@@ -67,7 +67,7 @@ const logoSrc = computed(() => {
 
 // Computed: Auth button text and location based on user state
 const authButtonText = computed(() => user.value ? 'Dashboard' : 'Login')
-const authButtonLocation = computed(() => user.value ? '/admin' : '/admin/login')
+const authButtonLocation = computed(() => user.value ? '/admin' : '/login')
 const secondaryButtonText = computed(() => user.value ? 'Logout' : 'Sign Up')
 
 // Open mobile menu

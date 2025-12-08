@@ -3,9 +3,9 @@ import { parseCookies } from 'h3'
 
 /**
  * Global middleware to protect all /owner/* routes
- * - Unauthenticated users are redirected to /admin/login with a redirect back
+ * - Unauthenticated users are redirected to /login with a redirect back
  * - Runs on both server and client so SSR and hydration stay in sync
- * 
+ *
  * Note: Unlike admin routes, we only check authentication here.
  * Ownership verification happens at the API level for specific contractors.
  */
@@ -18,7 +18,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const redirectToLogin = () => {
     const redirectTarget = to.fullPath || '/owner'
-    const query = `?redirect=${encodeURIComponent(redirectTarget)}`
+
+    // Store redirect path in state instead of query param
+    const redirectAfterLogin = useState<string | null>('auth:redirectAfterLogin', () => null)
+    redirectAfterLogin.value = redirectTarget
 
     if (import.meta.dev) {
       consola.info('Owner route guard: redirecting to login', {
@@ -27,7 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       })
     }
 
-    return navigateTo(`/admin/login${query}`)
+    return navigateTo('/login')
   }
 
   // ----- SERVER-SIDE GUARD -----

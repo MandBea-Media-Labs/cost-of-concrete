@@ -28,7 +28,7 @@ const userEmail = computed(() => {
 const handleLogout = async () => {
   try {
     await supabase.auth.signOut()
-    await router.replace('/admin/login')
+    await router.replace('/login')
   }
   catch (error) {
     if (import.meta.dev) {

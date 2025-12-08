@@ -2,7 +2,7 @@ import consola from 'consola'
 import { parseCookies } from 'h3'
 
 // Global middleware to protect all /admin/* routes
-// - Unauthenticated users are redirected to /admin/login with a redirect back
+// - Unauthenticated users are redirected to /login with a redirect back
 // - Authenticated non-admin users receive a 403 handled by app/error.vue
 // - Runs on both server and client so SSR and hydration stay in sync
 
@@ -12,14 +12,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // Keep the login route itself public
-  if (to.path === '/admin/login') {
-    return
-  }
-
   const redirectToLogin = () => {
     const redirectTarget = to.fullPath || '/admin/pages'
-    const query = `?redirect=${encodeURIComponent(redirectTarget)}`
+
+    // Store redirect path in state instead of query param
+    const redirectAfterLogin = useState<string | null>('auth:redirectAfterLogin', () => null)
+    redirectAfterLogin.value = redirectTarget
 
     if (import.meta.dev) {
       consola.info('Admin route guard: redirecting to login', {
@@ -28,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       })
     }
 
-    return navigateTo(`/admin/login${query}`)
+    return navigateTo('/login')
   }
 
   // ----- SERVER-SIDE GUARD -----
