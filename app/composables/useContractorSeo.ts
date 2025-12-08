@@ -23,9 +23,10 @@ export interface ContractorSeoData {
   cityName?: string
   citySlug?: string
   stateCode?: string
+  stateSlug?: string // SEO-optimized state slug (e.g., 'texas' instead of 'TX')
   lat?: number | null
   lng?: number | null
-  images?: { url: string; alt?: string }[]
+  images?: { url: string; alt?: string }[] | string[]
   categories?: string[]
   openingHours?: Record<string, string>
 }
@@ -35,8 +36,12 @@ export function useContractorSeo(contractor: ContractorSeoData) {
   const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
   const siteName = config.public.siteName || 'Cost of Concrete'
 
-  // Build canonical URL
-  const canonicalPath = `/${contractor.citySlug}/contractors/${contractor.slug}`
+  // Build canonical URL with SEO-optimized structure
+  // Format: /[state]/[city]/concrete-contractors/[slug]
+  const stateSlug = contractor.stateSlug || contractor.stateCode?.toLowerCase()
+  const canonicalPath = stateSlug
+    ? `/${stateSlug}/${contractor.citySlug}/concrete-contractors/${contractor.slug}`
+    : `/${contractor.citySlug}/concrete-contractors/${contractor.slug}`
   const fullUrl = `${siteUrl}${canonicalPath}`
 
   // Build location string

@@ -14,6 +14,7 @@ export interface CategoryListingSeoData {
   cityName: string
   citySlug: string
   stateCode: string
+  stateSlug?: string // SEO-optimized state slug (e.g., 'texas' instead of 'TX')
   categoryName?: string
   categorySlug?: string
   totalContractors: number
@@ -24,10 +25,12 @@ export function useCategoryListingSeo(data: CategoryListingSeoData) {
   const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
   const siteName = config.public.siteName || 'Cost of Concrete'
 
-  // Build canonical URL
-  const canonicalPath = data.categorySlug 
-    ? `/${data.citySlug}/${data.categorySlug}/`
-    : `/${data.citySlug}/`
+  // Build canonical URL with SEO-optimized structure
+  // Format: /[state]/[city]/concrete-contractors/
+  const stateSlug = data.stateSlug || data.stateCode?.toLowerCase()
+  const canonicalPath = stateSlug
+    ? `/${stateSlug}/${data.citySlug}/concrete-contractors/`
+    : `/${data.citySlug}/concrete-contractors/`
   const fullUrl = `${siteUrl}${canonicalPath}`
 
   // Build location string

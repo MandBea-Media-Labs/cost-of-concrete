@@ -2,10 +2,10 @@
 import { getStateBySlug } from '~/utils/usStates'
 
 /**
- * City Landing Page
- * Route: /[state]/[citySlug]/
+ * Contractor Listing Page
+ * Route: /[state]/[city]/concrete-contractors/
  *
- * Displays all concrete contractors in a city with category filters
+ * SEO-optimized URL structure for concrete contractor directory
  */
 
 definePageMeta({
@@ -19,8 +19,10 @@ definePageMeta({
 
 const route = useRoute()
 const stateSlug = computed(() => route.params.state as string)
-const stateCode = computed(() => stateSlug.value.toUpperCase())
-const citySlug = computed(() => route.params.citySlug as string)
+const citySlug = computed(() => route.params.city as string)
+
+// Get state data for display
+const stateData = computed(() => getStateBySlug(stateSlug.value))
 
 // Supabase client for building storage URLs
 const supabase = useSupabaseClient()
@@ -41,6 +43,15 @@ const sortBy = ref<'rating' | 'review_count' | 'distance'>('rating')
 // Fetch city info
 const { data: city, error: cityError } = await useFetch(() => `/api/public/cities/${citySlug.value}`)
 
+// 404 if city not found
+if (cityError.value || !city.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'City Not Found',
+    message: `The city "${citySlug.value}" was not found in ${stateData.value?.name || stateSlug.value}.`
+  })
+}
+
 // Fetch categories
 const { data: categoriesData } = await useFetch('/api/public/categories')
 
@@ -56,12 +67,13 @@ const { data: contractorsData, pending } = await useFetch('/api/public/contracto
   watch: [page, selectedCategory, sortBy]
 })
 
-// Apply SEO
+// Apply SEO with state slug for proper canonical URL
 if (city.value) {
   useCategoryListingSeo({
     cityName: city.value.name,
     citySlug: city.value.slug,
     stateCode: city.value.stateCode,
+    stateSlug: stateSlug.value,
     categoryName: undefined,
     categorySlug: undefined,
     totalContractors: contractorsData.value?.total || 0
@@ -77,16 +89,24 @@ function onCategoryChange(slug: string | undefined) {
 // Pagination helpers
 const totalPages = computed(() => Math.ceil((contractorsData.value?.total || 0) / limit))
 const hasMore = computed(() => contractorsData.value?.hasMore || false)
-
-// Build contractor URL with state prefix
-function getContractorUrl(contractor: { citySlug: string; slug: string }) {
-  return `/${stateCode.value.toLowerCase()}/${contractor.citySlug}/contractors/${contractor.slug}`
-}
 </script>
 
 <template>
   <div class="min-h-screen bg-white dark:bg-neutral-900">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Breadcrumbs -->
+      <nav class="mb-6 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <NuxtLink to="/" class="hover:text-blue-600 dark:hover:text-blue-400">Home</NuxtLink>
+        <Icon name="heroicons:chevron-right" class="h-4 w-4" />
+        <NuxtLink :to="`/${stateSlug}`" class="hover:text-blue-600 dark:hover:text-blue-400">
+          {{ stateData?.name }}
+        </NuxtLink>
+        <Icon name="heroicons:chevron-right" class="h-4 w-4" />
+        <span class="font-medium text-neutral-900 dark:text-neutral-100">
+          {{ city?.name }} Concrete Contractors
+        </span>
+      </nav>
+
       <!-- Page Header -->
       <header class="mb-8">
         <h1 class="font-heading text-3xl font-bold text-neutral-900 dark:text-white md:text-4xl">
@@ -131,18 +151,6 @@ function getContractorUrl(contractor: { citySlug: string; slug: string }) {
       <!-- Loading State -->
       <div v-if="pending" class="flex items-center justify-center py-12">
         <Icon name="heroicons:arrow-path" class="h-8 w-8 animate-spin text-blue-500" />
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="cityError" class="py-12 text-center">
-        <Icon name="heroicons:exclamation-circle" class="mx-auto h-12 w-12 text-red-500" />
-        <h2 class="mt-4 text-xl font-semibold text-neutral-900 dark:text-white">City Not Found</h2>
-        <p class="mt-2 text-neutral-600 dark:text-neutral-400">
-          We couldn't find a city matching "{{ citySlug }}".
-        </p>
-        <NuxtLink to="/" class="mt-4 inline-block text-blue-600 hover:underline">
-          Return to Home
-        </NuxtLink>
       </div>
 
       <!-- Contractor Grid -->

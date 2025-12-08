@@ -43,14 +43,14 @@ const { data, pending, error, refresh } = await useFetch<ContractorsResponse>('/
 
 const contractors = computed(() => data.value?.contractors || [])
 
-// Build the public profile URL
+// Build the public profile URL with SEO-optimized structure
 function getProfileUrl(contractor: Contractor): string {
   if (!contractor.city?.stateCode || !contractor.city?.slug) {
     return '#'
   }
   const state = getStateByCode(contractor.city.stateCode)
   if (!state) return '#'
-  return `/${state.slug}/${contractor.city.slug}/contractors/${contractor.slug}`
+  return `/${state.slug}/${contractor.city.slug}/concrete-contractors/${contractor.slug}`
 }
 </script>
 

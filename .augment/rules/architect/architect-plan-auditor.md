@@ -48,6 +48,8 @@ Do not rewrite the plan yet. Output a critique in this format:
 *   (List areas where the logic is too thick or over-engineered)
 
 **✅ APPROVAL STATUS:**
+You are to PICK ONE from your analysis:
+
 *   [ ] **REJECT:** The plan needs significant rework.
 *   [ ] **REVISE:** Good direction, but simplify X and Y first.
 *   [ ] **APPROVE:** The plan is solid, lean, and ready for code.

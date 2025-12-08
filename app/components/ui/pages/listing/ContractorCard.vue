@@ -89,12 +89,12 @@ const useStandardImg = computed(() => {
   return lowerImage.endsWith('.webp') || lowerImage.endsWith('.png')
 })
 
-// Build contractor profile URL
+// Build contractor profile URL with SEO-optimized structure
 const contractorUrl = computed(() => {
   if (props.stateCode) {
-    return `/${props.stateCode}/${props.citySlug}/contractors/${props.contractorSlug}`
+    return `/${props.stateCode}/${props.citySlug}/concrete-contractors/${props.contractorSlug}`
   }
-  return `/${props.citySlug}/contractors/${props.contractorSlug}`
+  return `/${props.citySlug}/concrete-contractors/${props.contractorSlug}`
 })
 
 // Border width classes

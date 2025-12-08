@@ -25,11 +25,11 @@ interface Props {
 const props = defineProps<Props>()
 
 /**
- * Generate the URL for a specific city
- * Note: City pages will be implemented in a future phase
+ * Generate the URL for a specific city's contractor listing
+ * Uses SEO-optimized URL structure: /[state]/[city]/concrete-contractors/
  */
 const getCityUrl = (citySlug: string): string => {
-  return `/${props.stateSlug}/${citySlug}`
+  return `/${props.stateSlug}/${citySlug}/concrete-contractors`
 }
 </script>
 
