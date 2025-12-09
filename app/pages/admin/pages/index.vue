@@ -5,7 +5,7 @@ import type { AdminPagesFilters } from '~/composables/useAdminPages'
 
 // Page metadata - use new admin layout
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 // Use admin pages composable

@@ -7,7 +7,7 @@ type Menu = Database['public']['Tables']['menus']['Row']
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 // Use composables

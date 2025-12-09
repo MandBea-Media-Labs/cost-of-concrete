@@ -9,7 +9,7 @@ import type { MenuFormData } from '~/schemas/admin/menu-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 useHead({
@@ -173,16 +173,6 @@ function handleCancelConflict() {
 <template>
   <div class="p-6">
     <div class="mx-auto max-w-4xl">
-      <!-- Breadcrumbs -->
-      <AdminBreadcrumbs
-        :items="[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Menus', href: '/admin/menus' },
-          { label: 'New Menu', href: '/admin/menus/new' }
-        ]"
-        class="mb-6"
-      />
-
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-foreground">

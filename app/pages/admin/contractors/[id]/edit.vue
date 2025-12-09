@@ -7,7 +7,7 @@ import type { ContractorWithCity } from '~/composables/useAdminContractors'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 useHead({
@@ -258,16 +258,6 @@ async function handleDeleteImage(path: string) {
     </div>
 
     <template v-else-if="contractor">
-      <!-- Breadcrumbs -->
-      <AdminBreadcrumbs
-        :items="[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Contractors', href: '/admin/contractors' },
-          { label: contractor.company_name, href: `/admin/contractors/${contractor.id}/edit` },
-        ]"
-        class="mb-6"
-      />
-
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-foreground">Edit Contractor</h1>

@@ -16,7 +16,7 @@ import { valueUpdater } from '~/components/admin-ui/table/utils'
  * Tests: Table with TanStack (sorting, filtering), Pagination, Spinner, Empty, Skeleton, ScrollArea
  */
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 // Define data type

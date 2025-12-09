@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+
 /**
  * Owner Contractor Edit Page
  *
@@ -11,7 +13,6 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const contractorId = computed(() => route.params.id as string)
 
 interface ContractorData {
@@ -89,14 +90,14 @@ async function handleSubmit() {
     })
 
     toast.success('Profile Updated', {
-      message: 'Your business profile has been saved successfully.'
+      description: 'Your business profile has been saved successfully.'
     })
 
     await router.push('/owner')
   } catch (err: any) {
     submitError.value = err.data?.message || err.message || 'Failed to save changes'
     toast.error('Update Failed', {
-      message: submitError.value
+      description: submitError.value
     })
   } finally {
     isSubmitting.value = false

@@ -6,7 +6,7 @@ import { toast } from 'vue-sonner'
  * This page is temporary and should be deleted after testing
  */
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 function showToast() {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
 import { getStateBySlug } from '~/utils/usStates'
 
 /**
@@ -148,7 +149,6 @@ const overallRating = computed(() => {
 })
 
 // Claim business state
-const toast = useToast()
 const showClaimDialog = ref(false)
 const isSubmittingClaim = ref(false)
 const claimSubmitted = ref(false)

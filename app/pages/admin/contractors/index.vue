@@ -20,7 +20,7 @@ interface ServiceType {
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 // Use admin contractors composable

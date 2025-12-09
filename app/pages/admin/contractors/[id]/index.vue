@@ -6,7 +6,7 @@ import type { ContractorWithCity } from '~/composables/useAdminContractors'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 useHead({
@@ -100,16 +100,6 @@ function handleBack() {
     </div>
 
     <template v-else-if="contractor">
-      <!-- Breadcrumbs -->
-      <AdminBreadcrumbs
-        :items="[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Contractors', href: '/admin/contractors' },
-          { label: contractor.company_name },
-        ]"
-        class="mb-6"
-      />
-
       <!-- Header -->
       <div class="mb-8 flex items-start justify-between">
         <div>

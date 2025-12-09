@@ -11,7 +11,7 @@
  */
 
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 // Reactive state

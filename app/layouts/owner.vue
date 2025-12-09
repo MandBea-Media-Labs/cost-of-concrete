@@ -66,8 +66,8 @@ const handleLogout = async () => {
       <slot />
     </main>
 
-    <!-- Toast Notifications -->
-    <ToastContainer />
+    <!-- Toast Notifications via Sonner -->
+    <UiSonner />
   </div>
 </template>
 

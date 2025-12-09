@@ -10,7 +10,7 @@ import type { PageFormData } from '~/schemas/admin/page-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 useHead({

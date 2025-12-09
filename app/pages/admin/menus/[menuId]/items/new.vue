@@ -14,7 +14,7 @@ type Page = Database['public']['Tables']['pages']['Row']
 // =====================================================
 
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 useHead({
@@ -197,17 +197,6 @@ function handleCancel() {
 
       <!-- Form -->
       <template v-else-if="menu">
-        <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-          :items="[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Menus', href: '/admin/menus' },
-            { label: menu.name, href: `/admin/menus/${menu.id}/items` },
-            { label: 'New Item', href: `/admin/menus/${menu.id}/items/new` }
-          ]"
-          class="mb-6"
-        />
-
         <!-- Header -->
         <div class="mb-8">
           <h1 class="text-3xl font-bold text-foreground">

@@ -6,7 +6,7 @@ import type { ContractorFormData } from '~/schemas/admin/contractor-form.schema'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 useHead({
@@ -87,16 +87,6 @@ function handleCancel() {
 
 <template>
   <div class="p-6">
-    <!-- Breadcrumbs -->
-    <AdminBreadcrumbs
-      :items="[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Contractors', href: '/admin/contractors' },
-        { label: 'Add Contractor', href: '/admin/contractors/new' },
-      ]"
-      class="mb-6"
-    />
-
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-foreground">Add Contractor</h1>

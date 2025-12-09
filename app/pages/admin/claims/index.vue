@@ -5,7 +5,7 @@ import type { AdminClaimsFilters, ClaimWithContractor } from '~/composables/useA
 
 // Page metadata
 definePageMeta({
-  layout: 'admin-new',
+  layout: 'admin',
 })
 
 // Use admin claims composable

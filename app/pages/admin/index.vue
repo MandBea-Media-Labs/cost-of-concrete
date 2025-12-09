@@ -7,7 +7,7 @@
 
 // Page metadata - use new admin layout
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 // Mock data for dashboard stats

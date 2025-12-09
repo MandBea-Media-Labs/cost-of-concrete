@@ -16,6 +16,9 @@
 
     <!-- Footer -->
     <Footer />
+
+    <!-- Toast Notifications via Sonner -->
+    <UiSonner />
   </div>
 </template>
 

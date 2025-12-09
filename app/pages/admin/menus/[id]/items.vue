@@ -12,7 +12,7 @@ type MenuItem = Database['public']['Tables']['menu_items']['Row']
 // =====================================================
 
 definePageMeta({
-  layout: 'admin-new'
+  layout: 'admin'
 })
 
 useHead({
@@ -180,16 +180,6 @@ const handleToggleEnabled = async (itemId: string, value: boolean) => {
 
     <!-- Content -->
     <template v-else-if="menu">
-      <!-- Breadcrumbs -->
-      <AdminBreadcrumbs
-        :items="[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Menus', href: '/admin/menus' },
-          { label: menu.name, href: `/admin/menus/${menu.id}/items` }
-        ]"
-        class="mb-6"
-      />
-
       <!-- Header -->
       <div class="mb-8 flex items-center justify-between">
         <div>
