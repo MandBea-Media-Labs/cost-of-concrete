@@ -278,17 +278,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex items-center gap-3">
-        <div class="flex size-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-          <Icon name="heroicons:arrow-up-tray" class="size-5 text-blue-600 dark:text-blue-400" />
-        </div>
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-foreground">Contractor Import</h1>
-          <p class="text-sm text-muted-foreground">
-            Upload Apify Google Maps Scraper JSON exports to import contractor profiles
+          <h1 class="text-2xl font-bold">Contractor Import</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Upload Google Maps Scraper JSON exports to import contractor profiles
           </p>
         </div>
       </div>
@@ -333,7 +330,7 @@ onUnmounted(() => {
 
               <!-- No file selected -->
               <div v-if="!selectedFile">
-                <Icon name="heroicons:cloud-arrow-up" class="mx-auto size-12 text-muted-foreground" />
+                <Icon name="heroicons:cloud-arrow-up" class="size-12 mx-auto text-muted-foreground" />
                 <p class="mt-4 text-sm font-medium text-foreground">
                   Drag and drop your JSON file here
                 </p>
@@ -362,7 +359,7 @@ onUnmounted(() => {
             <!-- Start Import Button -->
             <div v-if="canStartImport" class="mt-6">
               <UiButton class="w-full" :disabled="isCreatingJob" @click="createJob">
-                <Icon v-if="isCreatingJob" name="heroicons:arrow-path" class="mr-2 size-4 animate-spin" />
+                <Icon v-if="isCreatingJob" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
                 {{ isCreatingJob ? 'Creating Job...' : 'Start Import' }}
               </UiButton>
             </div>
@@ -410,15 +407,15 @@ onUnmounted(() => {
               <!-- Controls -->
               <div class="flex gap-3">
                 <UiButton v-if="uiState === 'processing'" variant="outline" class="flex-1" @click="pauseProcessing">
-                  <Icon name="heroicons:pause" class="mr-2 size-4" />
+                  <Icon name="heroicons:pause" class="size-4 mr-2" />
                   Pause
                 </UiButton>
                 <UiButton v-else class="flex-1" @click="resumeProcessing">
-                  <Icon name="heroicons:play" class="mr-2 size-4" />
+                  <Icon name="heroicons:play" class="size-4 mr-2" />
                   Resume
                 </UiButton>
                 <UiButton variant="destructive" @click="clearFile">
-                  <Icon name="heroicons:x-mark" class="mr-2 size-4" />
+                  <Icon name="heroicons:x-mark" class="size-4 mr-2" />
                   Cancel
                 </UiButton>
               </div>
@@ -501,12 +498,12 @@ onUnmounted(() => {
               <!-- Actions -->
               <div class="flex gap-3">
                 <UiButton variant="outline" class="flex-1" @click="clearFile">
-                  <Icon name="heroicons:arrow-up-tray" class="mr-2 size-4" />
+                  <Icon name="heroicons:arrow-up-tray" class="size-4 mr-2" />
                   Import Another File
                 </UiButton>
                 <NuxtLink v-if="currentJob.pendingImageCount > 0" to="/admin/maintenance/image-enrichment">
                   <UiButton>
-                    <Icon name="heroicons:photo" class="mr-2 size-4" />
+                    <Icon name="heroicons:photo" class="size-4 mr-2" />
                     Process Images
                   </UiButton>
                 </NuxtLink>
@@ -527,26 +524,26 @@ onUnmounted(() => {
       <UiCard>
         <UiCardHeader>
           <UiCardTitle class="text-base">
-            <Icon name="heroicons:information-circle" class="mr-2 inline size-4 text-muted-foreground" />
+            <Icon name="heroicons:information-circle" class="size-4 mr-2 inline text-muted-foreground" />
             Instructions
           </UiCardTitle>
         </UiCardHeader>
         <UiCardContent class="text-sm text-muted-foreground">
           <ul class="space-y-3">
             <li class="flex gap-2">
-              <Icon name="heroicons:check" class="mt-0.5 size-4 shrink-0 text-green-500" />
-              Export data from Apify Google Maps Scraper as JSON
+              <Icon name="heroicons:check" class="size-4 mt-0.5 shrink-0 text-green-500" />
+              Export data from Google Maps Scraper as JSON
             </li>
             <li class="flex gap-2">
-              <Icon name="heroicons:check" class="mt-0.5 size-4 shrink-0 text-green-500" />
+              <Icon name="heroicons:check" class="size-4 mt-0.5 shrink-0 text-green-500" />
               Large files are processed in batches of 50
             </li>
             <li class="flex gap-2">
-              <Icon name="heroicons:check" class="mt-0.5 size-4 shrink-0 text-green-500" />
+              <Icon name="heroicons:check" class="size-4 mt-0.5 shrink-0 text-green-500" />
               Duplicates updated by Google Place ID
             </li>
             <li class="flex gap-2">
-              <Icon name="heroicons:check" class="mt-0.5 size-4 shrink-0 text-green-500" />
+              <Icon name="heroicons:check" class="size-4 mt-0.5 shrink-0 text-green-500" />
               Claimed businesses are protected
             </li>
           </ul>

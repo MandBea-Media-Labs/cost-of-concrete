@@ -41,10 +41,10 @@ watch(() => route.fullPath, (val) => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+  <header class="sticky top-0 md:top-2 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6 md:rounded-tl-xl md:rounded-tr-xl before:absolute before:-top-2 before:left-0 before:right-0 before:h-2 before:bg-sidebar before:hidden md:before:block">
     <div class="flex w-full items-center gap-4">
       <UiSidebarTrigger />
-      <UiSeparator orientation="vertical" class="h-4" />
+      <UiSeparator orientation="vertical" class="!h-4" />
       <UiBreadcrumb>
         <UiBreadcrumbList>
           <template v-for="(link, index) in links" :key="link.href">

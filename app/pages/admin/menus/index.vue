@@ -112,23 +112,24 @@ const handleToggleEnabled = async (menuId: string, value: boolean) => {
 </script>
 
 <template>
-  <div class="p-6">
-    <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-foreground">
-          Menus
-        </h1>
-        <p class="mt-2 text-sm text-muted-foreground">
-          Manage navigation menus for your site
-        </p>
-      </div>
+  <div>
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">
+            Menus
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Manage navigation menus for your site
+          </p>
+        </div>
 
-      <!-- Create Menu Button -->
-      <UiButton as="a" href="/admin/menus/new">
-        <Icon name="heroicons:plus" class="size-4 mr-2" />
-        Create Menu
-      </UiButton>
+        <UiButton as="a" href="/admin/menus/new">
+          <Icon name="heroicons:plus" class="size-4" />
+          Create Menu
+        </UiButton>
+      </div>
     </div>
 
     <!-- Menu List -->

@@ -179,29 +179,57 @@ const getStatusClasses = (status: string) => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-foreground">Business Claims</h1>
+          <h1 class="text-2xl font-bold">Business Claims</h1>
           <p class="mt-1 text-sm text-muted-foreground">Review and manage business claiming requests</p>
         </div>
       </div>
     </div>
 
     <!-- Filters Section -->
-    <UiCard class="mb-6">
-      <UiCardContent class="pt-6">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <!-- Search Input -->
-          <TextInput v-model="searchQuery" label="Search" placeholder="Search by claimant name or email..." icon="heroicons:magnifying-glass" clearable size="md" />
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+      <!-- Search Input -->
+      <div class="relative w-72">
+        <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <UiInput
+          v-model="searchQuery"
+          placeholder="Search by name or email..."
+          class="pl-9"
+        />
+      </div>
 
-          <!-- Status Filter -->
-          <FilterSelect v-model="selectedStatus" label="Status" :options="statusOptions" placeholder="Filter by status" size="md" />
-        </div>
-      </UiCardContent>
-    </UiCard>
+      <!-- Status Filter Dropdown -->
+      <UiPopover>
+        <UiPopoverTrigger as-child>
+          <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+            <Icon name="heroicons:funnel" class="size-4" />
+            Status
+            <UiBadge v-if="selectedStatus !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+              {{ statusOptions.find(o => o.value === selectedStatus)?.label }}
+            </UiBadge>
+            <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+          </UiButton>
+        </UiPopoverTrigger>
+        <UiPopoverContent class="w-48 p-1" align="start">
+          <div class="flex flex-col">
+            <button
+              v-for="option in statusOptions"
+              :key="option.value"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+              :class="{ 'bg-accent': selectedStatus === option.value }"
+              @click="selectedStatus = option.value"
+            >
+              <Icon v-if="selectedStatus === option.value" name="heroicons:check" class="size-4" />
+              <span :class="{ 'ml-6': selectedStatus !== option.value }">{{ option.label }}</span>
+            </button>
+          </div>
+        </UiPopoverContent>
+      </UiPopover>
+    </div>
 
     <!-- Error State -->
     <div v-if="error" class="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4">

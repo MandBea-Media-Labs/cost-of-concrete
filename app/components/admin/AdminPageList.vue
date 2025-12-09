@@ -43,52 +43,24 @@ const formatDate = (dateString: string | null) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Get status badge variant
+// Get status badge variant (using built-in shadcn variants)
 const getStatusVariant = (status: string) => {
   switch (status) {
     case 'published':
-      return 'primary-outline'
+      return 'success'
     case 'draft':
-      return 'secondary-outline'
+      return 'warning'
     case 'archived':
-      return 'ghost'
+      return 'secondary'
     default:
-      return 'ghost'
+      return 'secondary'
   }
 }
 
-// Get status badge color
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'published':
-      return 'text-green-600 dark:text-green-400 border-green-600 dark:border-green-400'
-    case 'draft':
-      return 'text-yellow-600 dark:text-yellow-400 border-yellow-600 dark:border-yellow-400'
-    case 'archived':
-      return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
-    default:
-      return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
-  }
-}
-
-// Get template badge color
-const getTemplateColor = (template: string) => {
-  switch (template) {
-    case 'hub':
-      return 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
-    case 'spoke':
-      return 'text-purple-600 dark:text-purple-400 border-purple-600 dark:border-purple-400'
-    case 'sub-spoke':
-      return 'text-pink-600 dark:text-pink-400 border-pink-600 dark:border-pink-400'
-    case 'article':
-      return 'text-orange-600 dark:text-orange-400 border-orange-600 dark:border-orange-400'
-    case 'custom':
-      return 'text-teal-600 dark:text-teal-400 border-teal-600 dark:border-teal-400'
-    case 'default':
-      return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
-    default:
-      return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
-  }
+// Get template badge variant (using built-in shadcn variants)
+const getTemplateVariant = (_template: string) => {
+  // Use outline for all templates - keeps it simple
+  return 'outline'
 }
 
 // Calculate indentation based on depth
@@ -205,22 +177,16 @@ const handleDelete = (pageId: string) => {
 
             <!-- Template -->
             <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-              <Badge
-                :text="page.template"
-                variant="ghost"
-                size="sm"
-                :class="getTemplateColor(page.template)"
-              />
+              <UiBadge :variant="getTemplateVariant(page.template)">
+                {{ page.template }}
+              </UiBadge>
             </td>
 
             <!-- Status -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <Badge
-                :text="page.status"
-                variant="ghost"
-                size="sm"
-                :class="getStatusColor(page.status)"
-              />
+              <UiBadge :variant="getStatusVariant(page.status)">
+                {{ page.status }}
+              </UiBadge>
             </td>
 
             <!-- Last Modified -->

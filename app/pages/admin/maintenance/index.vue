@@ -14,7 +14,7 @@ await navigateTo('/admin/maintenance/import', { redirectCode: 302 })
 </script>
 
 <template>
-  <div class="flex h-full items-center justify-center p-6">
+  <div class="flex h-full items-center justify-center">
     <p class="text-muted-foreground">Redirecting...</p>
   </div>
 </template>

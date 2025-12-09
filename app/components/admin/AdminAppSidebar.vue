@@ -15,7 +15,7 @@ function resolveNavItemComponent(item: AdminNavLink | AdminNavGroup | AdminNavSe
 </script>
 
 <template>
-  <UiSidebar collapsible="icon">
+  <UiSidebar collapsible="icon" variant="inset">
     <UiSidebarHeader>
       <AdminSidebarNavHeader />
     </UiSidebarHeader>

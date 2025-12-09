@@ -13,9 +13,9 @@
 </script>
 
 <template>
-  <UiSidebarProvider>
+  <UiSidebarProvider class="bg-sidebar">
     <AdminAppSidebar />
-    <UiSidebarInset>
+    <UiSidebarInset class="md:shadow-sm">
       <AdminHeader />
       <div class="flex flex-1 flex-col">
         <div class="flex-1 p-4 lg:p-6">

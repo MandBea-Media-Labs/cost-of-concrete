@@ -35,17 +35,17 @@ const formatDate = (dateString: string | null) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Get status badge color
-const getStatusColor = (status: string) => {
+// Get status badge variant
+const getStatusVariant = (status: string) => {
   switch (status) {
     case 'active':
-      return 'text-green-600 dark:text-green-400 border-green-600 dark:border-green-400'
+      return 'success'
     case 'pending':
-      return 'text-yellow-600 dark:text-yellow-400 border-yellow-600 dark:border-yellow-400'
+      return 'warning'
     case 'suspended':
-      return 'text-red-600 dark:text-red-400 border-red-600 dark:border-red-400'
+      return 'destructive'
     default:
-      return 'text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400'
+      return 'secondary'
   }
 }
 
@@ -135,7 +135,9 @@ const handleDelete = (id: string) => emit('delete', id)
 
             <!-- Status -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <Badge :text="contractor.status" variant="ghost" size="sm" :class="getStatusColor(contractor.status)" />
+              <UiBadge :variant="getStatusVariant(contractor.status)">
+                {{ contractor.status }}
+              </UiBadge>
             </td>
 
             <!-- Updated -->

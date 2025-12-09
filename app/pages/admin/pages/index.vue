@@ -156,59 +156,73 @@ const handleCreatePage = () => {
     </div>
 
     <!-- Filters Section -->
-    <UiCard class="mb-6">
-      <UiCardContent class="pt-6">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <!-- Search Input -->
-          <div class="space-y-2">
-            <UiLabel for="search">Search</UiLabel>
-            <UiInput
-              id="search"
-              v-model="searchQuery"
-              placeholder="Search pages..."
-            />
-          </div>
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+      <!-- Search Input -->
+      <div class="relative w-64">
+        <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <UiInput
+          v-model="searchQuery"
+          placeholder="Search pages..."
+          class="pl-9"
+        />
+      </div>
 
-          <!-- Status Filter -->
-          <div class="space-y-2">
-            <UiLabel>Status</UiLabel>
-            <UiSelect v-model="selectedStatus">
-              <UiSelectTrigger class="w-full">
-                <UiSelectValue placeholder="Filter by status" />
-              </UiSelectTrigger>
-              <UiSelectContent>
-                <UiSelectItem
-                  v-for="option in statusOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </UiSelectItem>
-              </UiSelectContent>
-            </UiSelect>
+      <!-- Status Filter Dropdown -->
+      <UiPopover>
+        <UiPopoverTrigger as-child>
+          <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+            <Icon name="heroicons:check-circle" class="size-4" />
+            Status
+            <UiBadge v-if="selectedStatus !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+              {{ statusOptions.find(o => o.value === selectedStatus)?.label }}
+            </UiBadge>
+            <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+          </UiButton>
+        </UiPopoverTrigger>
+        <UiPopoverContent class="w-48 p-1" align="start">
+          <div class="flex flex-col">
+            <button
+              v-for="option in statusOptions"
+              :key="option.value"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+              :class="{ 'bg-accent': selectedStatus === option.value }"
+              @click="selectedStatus = option.value"
+            >
+              <Icon v-if="selectedStatus === option.value" name="heroicons:check" class="size-4" />
+              <span :class="{ 'ml-6': selectedStatus !== option.value }">{{ option.label }}</span>
+            </button>
           </div>
+        </UiPopoverContent>
+      </UiPopover>
 
-          <!-- Template Filter -->
-          <div class="space-y-2">
-            <UiLabel>Template</UiLabel>
-            <UiSelect v-model="selectedTemplate">
-              <UiSelectTrigger class="w-full">
-                <UiSelectValue placeholder="Filter by template" />
-              </UiSelectTrigger>
-              <UiSelectContent>
-                <UiSelectItem
-                  v-for="option in templateOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </UiSelectItem>
-              </UiSelectContent>
-            </UiSelect>
+      <!-- Template Filter Dropdown -->
+      <UiPopover>
+        <UiPopoverTrigger as-child>
+          <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+            <Icon name="heroicons:document-text" class="size-4" />
+            Template
+            <UiBadge v-if="selectedTemplate !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+              {{ templateOptions.find(o => o.value === selectedTemplate)?.label }}
+            </UiBadge>
+            <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+          </UiButton>
+        </UiPopoverTrigger>
+        <UiPopoverContent class="w-48 p-1" align="start">
+          <div class="flex flex-col">
+            <button
+              v-for="option in templateOptions"
+              :key="option.value"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+              :class="{ 'bg-accent': selectedTemplate === option.value }"
+              @click="selectedTemplate = option.value"
+            >
+              <Icon v-if="selectedTemplate === option.value" name="heroicons:check" class="size-4" />
+              <span :class="{ 'ml-6': selectedTemplate !== option.value }">{{ option.label }}</span>
+            </button>
           </div>
-        </div>
-      </UiCardContent>
-    </UiCard>
+        </UiPopoverContent>
+      </UiPopover>
+    </div>
 
     <!-- Error State -->
     <UiCard v-if="error" class="mb-6 border-destructive bg-destructive/10">
@@ -231,15 +245,13 @@ const handleCreatePage = () => {
     </UiCard>
 
     <!-- Page List -->
-    <UiCard>
-      <AdminPageList
-        :pages="pages"
-        :loading="pending"
-        @edit="handleEdit"
-        @view="handleView"
-        @delete="handleDelete"
-      />
-    </UiCard>
+    <AdminPageList
+      :pages="pages"
+      :loading="pending"
+      @edit="handleEdit"
+      @view="handleView"
+      @delete="handleDelete"
+    />
 
     <!-- Pagination -->
     <div

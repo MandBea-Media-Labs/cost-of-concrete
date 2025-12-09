@@ -15,17 +15,16 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
-    <div class="mb-6 flex items-center gap-3">
-      <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-        <Icon name="heroicons:sparkles" class="size-5 text-primary" />
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Contractor Enrichment</h1>
-        <p class="text-sm text-muted-foreground">
-          AI-powered contractor data enrichment
-        </p>
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">Contractor Enrichment</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            AI-powered contractor data enrichment
+          </p>
+        </div>
       </div>
     </div>
 

@@ -34,16 +34,13 @@ const handleError = (message: string) => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex items-center gap-3">
-        <div class="flex size-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
-          <Icon name="heroicons:photo" class="size-5 text-amber-600 dark:text-amber-400" />
-        </div>
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-foreground">Image Enrichment</h1>
-          <p class="text-sm text-muted-foreground">
+          <h1 class="text-2xl font-bold">Image Enrichment</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
             Download and process contractor images from external sources
           </p>
         </div>
