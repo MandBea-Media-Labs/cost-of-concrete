@@ -210,6 +210,12 @@ const fetchJobStatus = async (jobId: string) => {
 const processBatch = async () => {
   if (!currentJob.value) return
 
+  // Don't process if already completed
+  if (currentJob.value.status === 'completed' || currentJob.value.status === 'failed' || currentJob.value.status === 'cancelled') {
+    stopProcessing()
+    return
+  }
+
   try {
     const response = await $fetch<{
       success: boolean
@@ -226,6 +232,12 @@ const processBatch = async () => {
     }
   } catch (error: unknown) {
     const fetchError = error as { data?: { message?: string }; message?: string }
+    // Ignore "already completed" errors - just stop processing
+    if (fetchError.data?.message?.includes('completed') || fetchError.data?.message?.includes('cancelled')) {
+      await fetchJobStatus(currentJob.value.id)
+      stopProcessing()
+      return
+    }
     errorMessage.value = fetchError.data?.message || fetchError.message || 'Batch processing failed'
     uiState.value = 'error'
     stopProcessing()
