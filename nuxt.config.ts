@@ -17,7 +17,13 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@nuxtjs/supabase',
     '@nuxt/hints',
+    'shadcn-nuxt',
   ],
+
+  shadcn: {
+    prefix: 'Ui',
+    componentDir: './app/components/admin-ui',
+  },
 
   supabase: {
     // Redirect configuration (set to false if you want to handle auth redirects manually)
@@ -68,6 +74,10 @@ export default defineNuxtConfig({
 
   components: [
     {
+      path: '~/components/admin-ui',
+      prefix: 'AdminUi',
+    },
+    {
       path: '~/components/ui',
       pathPrefix: false,
     },
@@ -76,6 +86,10 @@ export default defineNuxtConfig({
       pathPrefix: false,
     },
   ],
+
+  imports: {
+    dirs: ['./app/lib'],
+  },
 
   site: {
     url: process.env.NUXT_SITE_URL,

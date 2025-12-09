@@ -19,6 +19,7 @@ logs
 .idea
 _ignore
 .trees
+shadcn-nuxt-template
 
 # Local env files
 .env
