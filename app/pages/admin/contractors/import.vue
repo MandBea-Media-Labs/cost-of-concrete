@@ -282,6 +282,20 @@ const resumeProcessing = () => {
 // IMAGE ENRICHMENT
 // =====================================================
 
+const pendingImageCount = ref(0)
+
+const checkPendingImages = async () => {
+  try {
+    const response = await $fetch<{ success: boolean; pendingCount: number }>(
+      '/api/contractors/pending-images'
+    )
+    pendingImageCount.value = response.pendingCount
+  } catch {
+    // Silently fail - not critical
+    pendingImageCount.value = 0
+  }
+}
+
 const enrichImages = async () => {
   isEnriching.value = true
   enrichResult.value = null
@@ -291,6 +305,11 @@ const enrichImages = async () => {
       method: 'POST',
     })
     enrichResult.value = response
+
+    // Update pending count after enrichment
+    if (response.summary) {
+      pendingImageCount.value = response.summary.contractorsRemaining
+    }
   } catch (error: unknown) {
     const fetchError = error as { data?: { message?: string }; message?: string }
     errorMessage.value = fetchError.data?.message || fetchError.message || 'Image enrichment failed'
@@ -302,6 +321,11 @@ const enrichImages = async () => {
 // =====================================================
 // LIFECYCLE
 // =====================================================
+
+onMounted(() => {
+  // Check for pending images on page load
+  checkPendingImages()
+})
 
 onUnmounted(() => {
   stopProcessing()
@@ -406,6 +430,38 @@ onUnmounted(() => {
               <Icon v-if="isCreatingJob" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
               {{ isCreatingJob ? 'Creating Job...' : 'Start Import' }}
             </UiButton>
+          </div>
+
+          <!-- Pending Images Section (shown on upload/ready state) -->
+          <div v-if="pendingImageCount > 0" class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+            <div class="flex items-start gap-3">
+              <Icon name="heroicons:photo" class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+              <div class="flex-1">
+                <p class="font-medium text-amber-800 dark:text-amber-300">
+                  {{ pendingImageCount }} Contractors with Pending Images
+                </p>
+                <p class="mt-1 text-sm text-amber-700 dark:text-amber-400">
+                  Images are queued for download from previous imports.
+                </p>
+                <UiButton class="mt-3" :disabled="isEnriching" @click="enrichImages">
+                  <Icon :name="isEnriching ? 'heroicons:arrow-path' : 'heroicons:cloud-arrow-down'" class="size-4 mr-2" :class="{ 'animate-spin': isEnriching }" />
+                  {{ isEnriching ? 'Processing...' : 'Enrich Images Now' }}
+                </UiButton>
+
+                <!-- Enrichment Results -->
+                <div v-if="enrichResult" class="mt-3 rounded border border-amber-300 bg-card p-3 dark:border-amber-600">
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><span class="text-muted-foreground">Contractors:</span> <span class="ml-1 font-medium">{{ enrichResult.summary.processedContractors }}</span></div>
+                    <div><span class="text-muted-foreground">Downloaded:</span> <span class="ml-1 font-medium text-green-600 dark:text-green-400">{{ enrichResult.summary.totalImages }}</span></div>
+                    <div><span class="text-muted-foreground">Failed:</span> <span class="ml-1 font-medium" :class="enrichResult.summary.failedImages > 0 ? 'text-destructive' : 'text-muted-foreground'">{{ enrichResult.summary.failedImages }}</span></div>
+                    <div><span class="text-muted-foreground">Remaining:</span> <span class="ml-1 font-medium" :class="enrichResult.summary.contractorsRemaining > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'">{{ enrichResult.summary.contractorsRemaining }}</span></div>
+                  </div>
+                  <p v-if="enrichResult.summary.contractorsRemaining > 0" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    Click "Enrich Images Now" again to process more contractors.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </template>
 
