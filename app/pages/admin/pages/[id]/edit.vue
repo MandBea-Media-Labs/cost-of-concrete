@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import consola from 'consola'
+import { toast } from 'vue-sonner'
 import type { PageFormData } from '~/schemas/admin/page-form.schema'
 
 // =====================================================
@@ -9,7 +10,7 @@ import type { PageFormData } from '~/schemas/admin/page-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 useHead({
@@ -22,7 +23,6 @@ useHead({
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
 const pageId = computed(() => route.params.id as string)
 
 const isLoading = ref(true)
@@ -269,22 +269,22 @@ async function handleSubmit(formData: PageFormData) {
         // Validation errors
         const validationMsg = 'Please check the form for errors'
         errorMessage.value = validationMsg
-        toast.error('Validation errors', { message: validationMsg })
+        toast.error('Validation errors', { description: validationMsg })
       } else if (statusCode === 409) {
         // Conflict (slug already exists)
         const conflictMsg = error.value.message || 'A page with this slug already exists'
         errorMessage.value = conflictMsg
-        toast.error('Page already exists', { message: conflictMsg })
+        toast.error('Page already exists', { description: conflictMsg })
       } else if (statusCode === 401 || statusCode === 403) {
         // Auth errors
         const authMsg = 'You do not have permission to update this page'
         errorMessage.value = authMsg
-        toast.error('Permission denied', { message: authMsg })
+        toast.error('Permission denied', { description: authMsg })
       } else {
         // Generic error
         const genericMsg = error.value.message || 'Failed to update page. Please try again.'
         errorMessage.value = genericMsg
-        toast.error('Failed to update page', { message: genericMsg })
+        toast.error('Failed to update page', { description: genericMsg })
       }
 
       return
@@ -293,7 +293,7 @@ async function handleSubmit(formData: PageFormData) {
     if (!data.value?.success) {
       const failMsg = 'Failed to update page. Please try again.'
       errorMessage.value = failMsg
-      toast.error('Update failed', { message: failMsg })
+      toast.error('Update failed', { description: failMsg })
       return
     }
 
@@ -370,7 +370,7 @@ async function handleArchive() {
       }
       const archiveErrorMsg = error.value.message || 'Failed to archive page'
       errorMessage.value = archiveErrorMsg
-      toast.error('Archive failed', { message: archiveErrorMsg })
+      toast.error('Archive failed', { description: archiveErrorMsg })
       showArchiveDialog.value = false
       return
     }
@@ -378,7 +378,7 @@ async function handleArchive() {
     if (!data.value?.success) {
       const archiveFailMsg = 'Failed to archive page. Please try again.'
       errorMessage.value = archiveFailMsg
-      toast.error('Archive failed', { message: archiveFailMsg })
+      toast.error('Archive failed', { description: archiveFailMsg })
       showArchiveDialog.value = false
       return
     }
@@ -391,7 +391,7 @@ async function handleArchive() {
     const archiveMsg = childrenCount.value > 0
       ? `Page archived successfully! ${childrenCount.value} child page(s) also archived.`
       : 'Page archived successfully!'
-    toast.success('Page archived', { message: archiveMsg })
+    toast.success('Page archived', { description: archiveMsg })
     router.push('/admin/pages')
   } catch (err) {
     if (import.meta.dev) {
@@ -427,7 +427,7 @@ async function handleDelete() {
       }
       const deleteErrorMsg = error.value.message || 'Failed to delete page'
       errorMessage.value = deleteErrorMsg
-      toast.error('Delete failed', { message: deleteErrorMsg })
+      toast.error('Delete failed', { description: deleteErrorMsg })
       showDeleteDialog.value = false
       return
     }
@@ -435,7 +435,7 @@ async function handleDelete() {
     if (!data.value?.success) {
       const deleteFailMsg = 'Failed to delete page. Please try again.'
       errorMessage.value = deleteFailMsg
-      toast.error('Delete failed', { message: deleteFailMsg })
+      toast.error('Delete failed', { description: deleteFailMsg })
       showDeleteDialog.value = false
       return
     }
@@ -482,7 +482,7 @@ async function handleUnarchive() {
       }
       const unarchiveErrorMsg = error.value.message || 'Failed to restore page'
       errorMessage.value = unarchiveErrorMsg
-      toast.error('Restore failed', { message: unarchiveErrorMsg })
+      toast.error('Restore failed', { description: unarchiveErrorMsg })
       showUnarchiveDialog.value = false
       return
     }
@@ -490,7 +490,7 @@ async function handleUnarchive() {
     if (!data.value?.success) {
       const unarchiveFailMsg = 'Failed to restore page. Please try again.'
       errorMessage.value = unarchiveFailMsg
-      toast.error('Restore failed', { message: unarchiveFailMsg })
+      toast.error('Restore failed', { description: unarchiveFailMsg })
       showUnarchiveDialog.value = false
       return
     }
@@ -517,196 +517,168 @@ async function handleUnarchive() {
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="isLoading" class="mx-6 mt-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-        <p class="text-gray-600 dark:text-gray-400">Loading page data...</p>
-      </div>
-    </div>
+    <UiCard v-if="isLoading">
+      <UiCardContent class="py-8 text-center">
+        <p class="text-muted-foreground">Loading page data...</p>
+      </UiCardContent>
+    </UiCard>
 
-    <!-- Error State -->
-    <div v-else-if="errorMessage" class="mx-6 mt-6">
-      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">Error Loading Page</h2>
-        <p class="text-red-700 dark:text-red-300">{{ errorMessage }}</p>
-        <Button @click="router.push('/admin/pages')" class="mt-4">
+    <!-- Error State (when loading fails) -->
+    <UiCard v-else-if="errorMessage && !initialFormData" class="border-destructive bg-destructive/10">
+      <UiCardContent class="pt-6">
+        <h2 class="text-lg font-semibold text-destructive mb-2">Error Loading Page</h2>
+        <p class="text-destructive/80">{{ errorMessage }}</p>
+        <UiButton @click="router.push('/admin/pages')" class="mt-4">
           Back to Pages
-        </Button>
-      </div>
-    </div>
+        </UiButton>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Edit Form -->
     <div v-else-if="initialFormData">
-      <div class="mb-6 px-6 pt-6">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Page</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">Update page content, SEO settings, and metadata</p>
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold">Edit Page</h1>
+        <p class="text-muted-foreground mt-2">Update page content, SEO settings, and metadata</p>
       </div>
 
-      <!-- Error Message -->
-      <div
-        v-if="errorMessage"
-        class="mb-6 mx-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start justify-between"
-      >
-        <div class="flex items-start gap-3">
-          <svg class="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-          <p class="text-sm text-red-800 dark:text-red-200">{{ errorMessage }}</p>
-        </div>
-        <button
-          @click="errorMessage = null"
-          class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
+      <!-- Error Message (form errors) -->
+      <UiCard v-if="errorMessage" class="mb-6 border-destructive bg-destructive/10">
+        <UiCardContent class="pt-6">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <Icon name="heroicons:exclamation-circle" class="size-5 text-destructive mt-0.5" />
+              <p class="text-sm text-destructive">{{ errorMessage }}</p>
+            </div>
+            <UiButton
+              variant="ghost"
+              size="icon-sm"
+              @click="errorMessage = null"
+            >
+              <Icon name="heroicons:x-mark" class="size-5 text-destructive" />
+            </UiButton>
+          </div>
+        </UiCardContent>
+      </UiCard>
 
-      <div class="mx-6">
-        <PageForm
-          :initial-data="initialFormData"
-          :is-edit-mode="true"
-          :is-submitting="isSubmitting"
-          :current-page-id="pageId"
-          @submit="handleSubmit"
-          @cancel="handleCancel"
-        />
-      </div>
+      <UiCard>
+        <UiCardContent class="pt-6">
+          <PageForm
+            :initial-data="initialFormData"
+            :is-edit-mode="true"
+            :is-submitting="isSubmitting"
+            :current-page-id="pageId"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+          />
+        </UiCardContent>
+      </UiCard>
 
       <!-- Archive / Delete / Unarchive Section -->
-      <div class="mt-8 pt-8 mx-6 mb-6 border-t border-gray-200 dark:border-gray-700">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Danger Zone</h2>
-        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
+      <UiCard class="mt-8 border-destructive/50">
+        <UiCardHeader>
+          <UiCardTitle class="text-destructive">Danger Zone</UiCardTitle>
+        </UiCardHeader>
+        <UiCardContent>
           <!-- Archive Button (for pages with children) -->
           <div v-if="showArchiveButton" class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Archive this page</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <h3 class="text-lg font-semibold">Archive this page</h3>
+              <p class="text-sm text-muted-foreground mt-1">
                 This page has {{ childrenCount }} child page(s). Archiving will also archive all descendants.
               </p>
             </div>
-            <Button
-              text="Archive Page"
-              variant="danger"
-              @click="openArchiveDialog"
-            />
+            <UiButton variant="destructive" @click="openArchiveDialog">
+              Archive Page
+            </UiButton>
           </div>
 
           <!-- Delete Button (for pages without children) -->
           <div v-if="showDeleteButton" class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete this page</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <h3 class="text-lg font-semibold">Delete this page</h3>
+              <p class="text-sm text-muted-foreground mt-1">
                 Permanently delete this page. This action cannot be undone.
               </p>
             </div>
-            <Button
-              text="Delete Page"
-              variant="danger"
-              @click="openDeleteDialog"
-            />
+            <UiButton variant="destructive" @click="openDeleteDialog">
+              Delete Page
+            </UiButton>
           </div>
 
           <!-- Unarchive Button (for archived pages) -->
           <div v-if="showUnarchiveButton" class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Unarchive this page</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <h3 class="text-lg font-semibold">Unarchive this page</h3>
+              <p class="text-sm text-muted-foreground mt-1">
                 Restore this page from the archive and set it back to draft status.
               </p>
             </div>
-            <Button
-              text="Unarchive Page"
-              variant="primary"
-              @click="openUnarchiveDialog"
-            />
+            <UiButton @click="openUnarchiveDialog">
+              Unarchive Page
+            </UiButton>
           </div>
-        </div>
-      </div>
+        </UiCardContent>
+      </UiCard>
 
       <!-- Archive Confirmation Dialog -->
-      <div
-        v-if="showArchiveDialog"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @click.self="showArchiveDialog = false"
-      >
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Archive Page?</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Are you sure you want to archive this page? This will also archive {{ childrenCount }} child page(s).
-          </p>
-          <div class="flex justify-end gap-3">
-            <Button
-              text="Cancel"
-              variant="secondary"
-              @click="showArchiveDialog = false"
-              :disabled="isArchiving"
-            />
-            <Button
-              text="Archive"
-              variant="danger"
-              @click="handleArchive"
-              :disabled="isArchiving"
-            />
-          </div>
-        </div>
-      </div>
+      <UiAlertDialog :open="showArchiveDialog" @update:open="showArchiveDialog = $event">
+        <UiAlertDialogContent>
+          <UiAlertDialogHeader>
+            <UiAlertDialogTitle>Archive Page?</UiAlertDialogTitle>
+            <UiAlertDialogDescription>
+              Are you sure you want to archive this page? This will also archive {{ childrenCount }} child page(s).
+            </UiAlertDialogDescription>
+          </UiAlertDialogHeader>
+          <UiAlertDialogFooter>
+            <UiAlertDialogCancel :disabled="isArchiving" @click="showArchiveDialog = false">
+              Cancel
+            </UiAlertDialogCancel>
+            <UiAlertDialogAction :disabled="isArchiving" @click="handleArchive">
+              Archive
+            </UiAlertDialogAction>
+          </UiAlertDialogFooter>
+        </UiAlertDialogContent>
+      </UiAlertDialog>
 
       <!-- Delete Confirmation Dialog -->
-      <div
-        v-if="showDeleteDialog"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @click.self="showDeleteDialog = false"
-      >
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Page?</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Are you sure you want to delete this page? This action cannot be undone.
-          </p>
-          <div class="flex justify-end gap-3">
-            <Button
-              text="Cancel"
-              variant="secondary"
-              @click="showDeleteDialog = false"
-              :disabled="isDeleting"
-            />
-            <Button
-              text="Delete"
-              variant="danger"
-              @click="handleDelete"
-              :disabled="isDeleting"
-            />
-          </div>
-        </div>
-      </div>
+      <UiAlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = $event">
+        <UiAlertDialogContent>
+          <UiAlertDialogHeader>
+            <UiAlertDialogTitle>Delete Page?</UiAlertDialogTitle>
+            <UiAlertDialogDescription>
+              Are you sure you want to delete this page? This action cannot be undone.
+            </UiAlertDialogDescription>
+          </UiAlertDialogHeader>
+          <UiAlertDialogFooter>
+            <UiAlertDialogCancel :disabled="isDeleting" @click="showDeleteDialog = false">
+              Cancel
+            </UiAlertDialogCancel>
+            <UiAlertDialogAction :disabled="isDeleting" @click="handleDelete">
+              Delete
+            </UiAlertDialogAction>
+          </UiAlertDialogFooter>
+        </UiAlertDialogContent>
+      </UiAlertDialog>
 
       <!-- Unarchive Confirmation Dialog -->
-      <div
-        v-if="showUnarchiveDialog"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @click.self="showUnarchiveDialog = false"
-      >
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Unarchive Page?</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Are you sure you want to unarchive this page? It will be restored to draft status.
-          </p>
-          <div class="flex justify-end gap-3">
-            <Button
-              text="Cancel"
-              variant="secondary"
-              @click="showUnarchiveDialog = false"
-              :disabled="isArchiving"
-            />
-            <Button
-              text="Unarchive"
-              variant="primary"
-              @click="handleUnarchive"
-              :disabled="isArchiving"
-            />
-          </div>
-        </div>
-      </div>
+      <UiAlertDialog :open="showUnarchiveDialog" @update:open="showUnarchiveDialog = $event">
+        <UiAlertDialogContent>
+          <UiAlertDialogHeader>
+            <UiAlertDialogTitle>Unarchive Page?</UiAlertDialogTitle>
+            <UiAlertDialogDescription>
+              Are you sure you want to unarchive this page? It will be restored to draft status.
+            </UiAlertDialogDescription>
+          </UiAlertDialogHeader>
+          <UiAlertDialogFooter>
+            <UiAlertDialogCancel :disabled="isArchiving" @click="showUnarchiveDialog = false">
+              Cancel
+            </UiAlertDialogCancel>
+            <UiAlertDialogAction :disabled="isArchiving" @click="handleUnarchive">
+              Unarchive
+            </UiAlertDialogAction>
+          </UiAlertDialogFooter>
+        </UiAlertDialogContent>
+      </UiAlertDialog>
     </div>
   </div>
 </template>

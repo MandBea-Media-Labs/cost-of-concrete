@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { MenuItemFormData } from '~/schemas/admin/menu-item-form.schema'
 import type { Database } from '~/types/supabase'
 
@@ -13,7 +14,7 @@ type Page = Database['public']['Tables']['pages']['Row']
 // =====================================================
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 useHead({
@@ -26,7 +27,6 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const { listMenus } = useMenus()
 const { updateMenuItem } = useMenuItems()
 const { pages: pagesData, fetchPages } = useAdminPages()
@@ -195,16 +195,13 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="p-6">
+    <div class="mx-auto max-w-4xl">
       <!-- Loading State -->
-      <div
-        v-if="loading"
-        class="flex items-center justify-center py-12"
-      >
+      <div v-if="loading" class="flex items-center justify-center py-12">
         <div class="flex flex-col items-center gap-3">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading...</p>
+          <UiSpinner class="size-8" />
+          <p class="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
 
@@ -223,28 +220,30 @@ function handleCancel() {
 
         <!-- Header -->
         <div class="mb-8">
-          <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+          <h1 class="text-3xl font-bold text-foreground">
             Edit Menu Item
           </h1>
-          <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p class="mt-2 text-sm text-muted-foreground">
             Update {{ menuItem.label }} in {{ menu.name }}
           </p>
         </div>
 
         <!-- Form Card -->
-        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <MenuItemForm
-            :menu-id="menuId"
-            :menu="menu"
-            :initial-data="initialFormData"
-            :parent-items="menuItems"
-            :pages="pages"
-            :is-edit-mode="true"
-            :is-submitting="isSubmitting"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </div>
+        <UiCard>
+          <UiCardContent class="pt-6">
+            <MenuItemForm
+              :menu-id="menuId"
+              :menu="menu"
+              :initial-data="initialFormData"
+              :parent-items="menuItems"
+              :pages="pages"
+              :is-edit-mode="true"
+              :is-submitting="isSubmitting"
+              @submit="handleSubmit"
+              @cancel="handleCancel"
+            />
+          </UiCardContent>
+        </UiCard>
       </template>
     </div>
   </div>

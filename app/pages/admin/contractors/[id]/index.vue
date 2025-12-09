@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { ContractorWithCity } from '~/composables/useAdminContractors'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin',
+  layout: 'admin-new',
 })
 
 useHead({
@@ -15,7 +16,6 @@ useHead({
 // State
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const supabase = useSupabaseClient()
 
 const contractorId = computed(() => route.params.id as string)
@@ -90,107 +90,123 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Loading State -->
-      <div v-if="loading" class="flex items-center justify-center py-12">
-        <div class="flex flex-col items-center gap-3">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading contractor...</p>
+  <div class="p-6">
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-3">
+        <UiSpinner class="size-8" />
+        <p class="text-sm text-muted-foreground">Loading contractor...</p>
+      </div>
+    </div>
+
+    <template v-else-if="contractor">
+      <!-- Breadcrumbs -->
+      <AdminBreadcrumbs
+        :items="[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Contractors', href: '/admin/contractors' },
+          { label: contractor.company_name },
+        ]"
+        class="mb-6"
+      />
+
+      <!-- Header -->
+      <div class="mb-8 flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-foreground">{{ contractor.company_name }}</h1>
+            <UiBadge :variant="contractor.status === 'active' ? 'default' : contractor.status === 'suspended' ? 'destructive' : 'secondary'">
+              <Icon :name="statusConfig.icon" class="size-3.5 mr-1" />
+              {{ statusConfig.label }}
+            </UiBadge>
+          </div>
+          <p class="mt-2 text-sm text-muted-foreground">{{ cityDisplay }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <UiButton variant="ghost" @click="handleBack">
+            <Icon name="heroicons:arrow-left" class="size-4 mr-2" />
+            Back
+          </UiButton>
+          <UiButton @click="handleEdit">
+            <Icon name="heroicons:pencil" class="size-4 mr-2" />
+            Edit
+          </UiButton>
         </div>
       </div>
 
-      <template v-else-if="contractor">
-        <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-          :items="[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Contractors', href: '/admin/contractors' },
-            { label: contractor.company_name },
-          ]"
-          class="mb-6"
-        />
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Main Content (2 cols) -->
+        <div class="space-y-6 lg:col-span-2">
+          <!-- Description Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Description</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
+              <p v-if="contractor.description" class="whitespace-pre-wrap text-foreground">{{ contractor.description }}</p>
+              <p v-else class="italic text-muted-foreground">No description provided</p>
+            </UiCardContent>
+          </UiCard>
 
-        <!-- Header -->
-        <div class="mb-8 flex items-start justify-between">
-          <div>
-            <div class="flex items-center gap-3">
-              <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">{{ contractor.company_name }}</h1>
-              <span :class="['inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium', statusConfig.class]">
-                <Icon :name="statusConfig.icon" class="h-4 w-4" />
-                {{ statusConfig.label }}
-              </span>
-            </div>
-            <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{{ cityDisplay }}</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <Button text="Back" variant="ghost" size="md" icon="heroicons:arrow-left" @click="handleBack" />
-            <Button text="Edit" variant="primary" size="md" icon="heroicons:pencil" @click="handleEdit" />
-          </div>
-        </div>
-
-        <!-- Content Grid -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <!-- Main Content (2 cols) -->
-          <div class="space-y-6 lg:col-span-2">
-            <!-- Description Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Description</h2>
-              <p v-if="contractor.description" class="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300">{{ contractor.description }}</p>
-              <p v-else class="italic text-neutral-500 dark:text-neutral-400">No description provided</p>
-            </div>
-
-            <!-- Contact Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Contact Information</h2>
+          <!-- Contact Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Contact Information</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Phone</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">
-                    <a v-if="contractor.phone" :href="`tel:${contractor.phone}`" class="text-blue-600 hover:underline dark:text-blue-400">{{ contractor.phone }}</a>
-                    <span v-else class="text-neutral-400">—</span>
+                  <dt class="text-sm font-medium text-muted-foreground">Phone</dt>
+                  <dd class="mt-1 text-foreground">
+                    <a v-if="contractor.phone" :href="`tel:${contractor.phone}`" class="text-primary hover:underline">{{ contractor.phone }}</a>
+                    <span v-else class="text-muted-foreground">—</span>
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Email</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">
-                    <a v-if="contractor.email" :href="`mailto:${contractor.email}`" class="text-blue-600 hover:underline dark:text-blue-400">{{ contractor.email }}</a>
-                    <span v-else class="text-neutral-400">—</span>
+                  <dt class="text-sm font-medium text-muted-foreground">Email</dt>
+                  <dd class="mt-1 text-foreground">
+                    <a v-if="contractor.email" :href="`mailto:${contractor.email}`" class="text-primary hover:underline">{{ contractor.email }}</a>
+                    <span v-else class="text-muted-foreground">—</span>
                   </dd>
                 </div>
                 <div class="sm:col-span-2">
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Website</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">
-                    <a v-if="contractor.website" :href="contractor.website" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline dark:text-blue-400">{{ contractor.website }}</a>
-                    <span v-else class="text-neutral-400">—</span>
+                  <dt class="text-sm font-medium text-muted-foreground">Website</dt>
+                  <dd class="mt-1 text-foreground">
+                    <a v-if="contractor.website" :href="contractor.website" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">{{ contractor.website }}</a>
+                    <span v-else class="text-muted-foreground">—</span>
                   </dd>
                 </div>
               </dl>
-            </div>
+            </UiCardContent>
+          </UiCard>
 
-            <!-- Categories Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Categories</h2>
+          <!-- Categories Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Categories</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <div v-if="categories.length" class="flex flex-wrap gap-2">
-                <span
-                  v-for="category in categories"
-                  :key="category"
-                  class="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                >
+                <UiBadge v-for="category in categories" :key="category" variant="secondary">
                   {{ category }}
-                </span>
+                </UiBadge>
               </div>
-              <p v-else class="italic text-neutral-500 dark:text-neutral-400">No categories assigned</p>
-            </div>
+              <p v-else class="italic text-muted-foreground">No categories assigned</p>
+            </UiCardContent>
+          </UiCard>
 
-            <!-- Images Gallery -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Images</h2>
+          <!-- Images Gallery -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Images</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <div v-if="images.length" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                 <div
                   v-for="image in images"
                   :key="image"
-                  class="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700"
+                  class="group relative aspect-square overflow-hidden rounded-lg border"
                 >
                   <img
                     :src="buildImageUrl(image)"
@@ -199,97 +215,113 @@ function handleBack() {
                   />
                   <div v-if="image === primaryImage" class="absolute right-2 top-2">
                     <span class="rounded-full bg-yellow-500 p-1.5 text-white shadow-lg">
-                      <Icon name="heroicons:star-solid" class="h-4 w-4" />
+                      <Icon name="heroicons:star-solid" class="size-4" />
                     </span>
                   </div>
                 </div>
               </div>
-              <p v-else class="italic text-neutral-500 dark:text-neutral-400">No images available</p>
-            </div>
-          </div>
+              <p v-else class="italic text-muted-foreground">No images available</p>
+            </UiCardContent>
+          </UiCard>
+        </div>
 
-          <!-- Sidebar (1 col) -->
-          <div class="space-y-6">
-            <!-- Location Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Location</h2>
+        <!-- Sidebar (1 col) -->
+        <div class="space-y-6">
+          <!-- Location Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Location</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <dl class="space-y-3">
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">City</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">{{ cityDisplay }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">City</dt>
+                  <dd class="mt-1 text-foreground">{{ cityDisplay }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Street Address</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">{{ contractor.street_address || '—' }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Street Address</dt>
+                  <dd class="mt-1 text-foreground">{{ contractor.street_address || '—' }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Postal Code</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">{{ contractor.postal_code || '—' }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Postal Code</dt>
+                  <dd class="mt-1 text-foreground">{{ contractor.postal_code || '—' }}</dd>
                 </div>
               </dl>
-            </div>
+            </UiCardContent>
+          </UiCard>
 
-            <!-- Social Links Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Social Links</h2>
+          <!-- Social Links Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Social Links</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <div v-if="socialLinks.facebook || socialLinks.instagram || socialLinks.youtube || socialLinks.linkedin" class="flex flex-wrap gap-3">
-                <a v-if="socialLinks.facebook" :href="socialLinks.facebook" target="_blank" rel="noopener noreferrer" class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700" title="Facebook">
-                  <Icon name="mdi:facebook" class="h-5 w-5" />
+                <a v-if="socialLinks.facebook" :href="socialLinks.facebook" target="_blank" rel="noopener noreferrer" class="flex size-10 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700" title="Facebook">
+                  <Icon name="mdi:facebook" class="size-5" />
                 </a>
-                <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank" rel="noopener noreferrer" class="flex h-10 w-10 items-center justify-center rounded-full bg-pink-600 text-white transition-colors hover:bg-pink-700" title="Instagram">
-                  <Icon name="mdi:instagram" class="h-5 w-5" />
+                <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank" rel="noopener noreferrer" class="flex size-10 items-center justify-center rounded-full bg-pink-600 text-white transition-colors hover:bg-pink-700" title="Instagram">
+                  <Icon name="mdi:instagram" class="size-5" />
                 </a>
-                <a v-if="socialLinks.youtube" :href="socialLinks.youtube" target="_blank" rel="noopener noreferrer" class="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700" title="YouTube">
-                  <Icon name="mdi:youtube" class="h-5 w-5" />
+                <a v-if="socialLinks.youtube" :href="socialLinks.youtube" target="_blank" rel="noopener noreferrer" class="flex size-10 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700" title="YouTube">
+                  <Icon name="mdi:youtube" class="size-5" />
                 </a>
-                <a v-if="socialLinks.linkedin" :href="socialLinks.linkedin" target="_blank" rel="noopener noreferrer" class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 text-white transition-colors hover:bg-blue-800" title="LinkedIn">
-                  <Icon name="mdi:linkedin" class="h-5 w-5" />
+                <a v-if="socialLinks.linkedin" :href="socialLinks.linkedin" target="_blank" rel="noopener noreferrer" class="flex size-10 items-center justify-center rounded-full bg-blue-700 text-white transition-colors hover:bg-blue-800" title="LinkedIn">
+                  <Icon name="mdi:linkedin" class="size-5" />
                 </a>
               </div>
-              <p v-else class="italic text-neutral-500 dark:text-neutral-400">No social links</p>
-            </div>
+              <p v-else class="italic text-muted-foreground">No social links</p>
+            </UiCardContent>
+          </UiCard>
 
-            <!-- Google Info Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Google Info</h2>
+          <!-- Google Info Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Google Info</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <dl class="space-y-3">
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Place ID</dt>
-                  <dd class="mt-1 break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">{{ contractor.google_place_id || '—' }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Place ID</dt>
+                  <dd class="mt-1 break-all font-mono text-sm text-foreground">{{ contractor.google_place_id || '—' }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">CID</dt>
-                  <dd class="mt-1 break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">{{ contractor.google_cid || '—' }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">CID</dt>
+                  <dd class="mt-1 break-all font-mono text-sm text-foreground">{{ contractor.google_cid || '—' }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Slug</dt>
-                  <dd class="mt-1 break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">{{ contractor.slug }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Slug</dt>
+                  <dd class="mt-1 break-all font-mono text-sm text-foreground">{{ contractor.slug }}</dd>
                 </div>
               </dl>
-            </div>
+            </UiCardContent>
+          </UiCard>
 
-            <!-- Metadata Card -->
-            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-              <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Record Info</h2>
+          <!-- Metadata Card -->
+          <UiCard>
+            <UiCardHeader>
+              <UiCardTitle>Record Info</UiCardTitle>
+            </UiCardHeader>
+            <UiCardContent>
               <dl class="space-y-3">
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">ID</dt>
-                  <dd class="mt-1 break-all font-mono text-xs text-neutral-900 dark:text-neutral-100">{{ contractor.id }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">ID</dt>
+                  <dd class="mt-1 break-all font-mono text-xs text-foreground">{{ contractor.id }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Created</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">{{ new Date(contractor.created_at).toLocaleDateString() }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Created</dt>
+                  <dd class="mt-1 text-foreground">{{ new Date(contractor.created_at).toLocaleDateString() }}</dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Updated</dt>
-                  <dd class="mt-1 text-neutral-900 dark:text-neutral-100">{{ new Date(contractor.updated_at).toLocaleDateString() }}</dd>
+                  <dt class="text-sm font-medium text-muted-foreground">Updated</dt>
+                  <dd class="mt-1 text-foreground">{{ new Date(contractor.updated_at).toLocaleDateString() }}</dd>
                 </div>
               </dl>
-            </div>
-          </div>
+            </UiCardContent>
+          </UiCard>
         </div>
-      </template>
-    </div>
+      </div>
+    </template>
   </div>
 </template>
 

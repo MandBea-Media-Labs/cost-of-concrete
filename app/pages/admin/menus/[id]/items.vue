@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { Database } from '~/types/supabase'
 
 type Menu = Database['public']['Tables']['menus']['Row']
@@ -11,7 +12,7 @@ type MenuItem = Database['public']['Tables']['menu_items']['Row']
 // =====================================================
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 useHead({
@@ -24,7 +25,6 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const { listMenus } = useMenus()
 const { deleteMenuItem, reorderMenuItems } = useMenuItems()
 
@@ -169,94 +169,82 @@ const handleToggleEnabled = async (itemId: string, value: boolean) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Loading State -->
-      <div
-        v-if="loading"
-        class="flex items-center justify-center py-12"
-      >
-        <div class="flex flex-col items-center gap-3">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading menu items...</p>
+  <div class="p-6">
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-3">
+        <UiSpinner class="size-8" />
+        <p class="text-sm text-muted-foreground">Loading menu items...</p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <template v-else-if="menu">
+      <!-- Breadcrumbs -->
+      <AdminBreadcrumbs
+        :items="[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Menus', href: '/admin/menus' },
+          { label: menu.name, href: `/admin/menus/${menu.id}/items` }
+        ]"
+        class="mb-6"
+      />
+
+      <!-- Header -->
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-foreground">
+            {{ menu.name }} - Menu Items
+          </h1>
+          <p class="mt-2 text-sm text-muted-foreground">
+            Manage navigation items for this menu
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3">
+          <!-- Hide "Add Dropdown Menu" button for footer menus -->
+          <UiButton
+            v-if="!menu.show_in_footer"
+            variant="outline"
+            @click="handleAddDropdownMenu"
+          >
+            Add Dropdown Menu
+          </UiButton>
+          <UiButton @click="handleAddTopLevelLink">
+            <Icon name="heroicons:plus" class="size-4 mr-2" />
+            Add Link
+          </UiButton>
         </div>
       </div>
 
-      <!-- Content -->
-      <template v-else-if="menu">
-        <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-          :items="[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Menus', href: '/admin/menus' },
-            { label: menu.name, href: `/admin/menus/${menu.id}/items` }
-          ]"
-          class="mb-6"
-        />
+      <!-- Menu Item List -->
+      <AdminMenuItemList
+        :menu-items="menuItems"
+        :loading="loading"
+        @add-child-link="handleAddChildLink"
+        @edit="handleEditItem"
+        @delete="handleDeleteItem"
+        @reorder="handleReorder"
+        @toggle-enabled="handleToggleEnabled"
+      />
 
-        <!-- Header -->
-        <div class="mb-8 flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-              {{ menu.name }} - Menu Items
-            </h1>
-            <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-              Manage navigation items for this menu
-            </p>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="flex items-center gap-3">
-            <!-- Hide "Add Dropdown Menu" button for footer menus -->
-            <Button
-              v-if="!menu.show_in_footer"
-              text="Add Dropdown Menu"
-              variant="secondary"
-              size="md"
-              @click="handleAddDropdownMenu"
-            />
-            <Button
-              text="Add Link"
-              variant="primary"
-              size="md"
-              @click="handleAddTopLevelLink"
-            />
-          </div>
-        </div>
-
-        <!-- Menu Item List -->
-        <AdminMenuItemList
-          :menu-items="menuItems"
-          :loading="loading"
-          @add-child-link="handleAddChildLink"
-          @edit="handleEditItem"
-          @delete="handleDeleteItem"
-          @reorder="handleReorder"
-          @toggle-enabled="handleToggleEnabled"
-        />
-
-        <!-- Delete Confirmation Dialog -->
-        <Dialog
-          :open="showDeleteDialog"
-          title="Delete Menu Item"
-          description="Are you sure you want to delete this menu item? This action cannot be undone."
-          @close="cancelDelete"
-        >
-          <template #actions>
-            <Button
-              text="Cancel"
-              variant="ghost"
-              @click="cancelDelete"
-            />
-            <Button
-              text="Delete"
-              variant="danger"
-              @click="confirmDelete"
-            />
-          </template>
-        </Dialog>
-      </template>
-    </div>
+      <!-- Delete Confirmation Dialog -->
+      <UiAlertDialog :open="showDeleteDialog" @update:open="(val) => !val && cancelDelete()">
+        <UiAlertDialogContent>
+          <UiAlertDialogHeader>
+            <UiAlertDialogTitle>Delete Menu Item</UiAlertDialogTitle>
+            <UiAlertDialogDescription>
+              Are you sure you want to delete this menu item? This action cannot be undone.
+            </UiAlertDialogDescription>
+          </UiAlertDialogHeader>
+          <UiAlertDialogFooter>
+            <UiAlertDialogCancel @click="cancelDelete">Cancel</UiAlertDialogCancel>
+            <UiAlertDialogAction variant="destructive" @click="confirmDelete">Delete</UiAlertDialogAction>
+          </UiAlertDialogFooter>
+        </UiAlertDialogContent>
+      </UiAlertDialog>
+    </template>
   </div>
 </template>
 

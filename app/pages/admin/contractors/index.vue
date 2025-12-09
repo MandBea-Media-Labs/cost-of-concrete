@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { AdminContractorsFilters } from '~/composables/useAdminContractors'
 
 // City interface for dropdown
@@ -19,14 +20,11 @@ interface ServiceType {
 
 // Page metadata
 definePageMeta({
-  layout: 'admin',
+  layout: 'admin-new',
 })
 
 // Use admin contractors composable
 const { contractors, pagination, pending, error, fetchContractors, deleteContractor } = useAdminContractors()
-
-// Use toast notifications
-const toast = useToast()
 
 // Get route for reading query params
 const route = useRoute()
@@ -215,7 +213,7 @@ const confirmDelete = async () => {
     }
     await fetchContractors(filters.value)
   } else {
-    toast.error('Failed to delete contractor', { message: 'Please try again or contact support' })
+    toast.error('Failed to delete contractor', { description: 'Please try again or contact support' })
     if (import.meta.dev) {
       consola.error('Failed to delete contractor')
     }
@@ -247,52 +245,107 @@ const handleImport = () => {
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Contractors</h1>
-          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Manage contractor profiles</p>
+          <h1 class="text-2xl font-bold text-foreground">Contractors</h1>
+          <p class="mt-1 text-sm text-muted-foreground">Manage contractor profiles</p>
         </div>
 
         <div class="flex items-center gap-3">
-          <Button text="Import" variant="secondary-outline" size="md" icon="heroicons:arrow-up-tray" @click="handleImport" />
-          <Button text="Add Contractor" variant="primary" size="md" icon="heroicons:plus" @click="handleCreateContractor" />
+          <UiButton variant="outline" @click="handleImport">
+            <Icon name="heroicons:arrow-up-tray" class="size-4 mr-2" />
+            Import
+          </UiButton>
+          <UiButton @click="handleCreateContractor">
+            <Icon name="heroicons:plus" class="size-4 mr-2" />
+            Add Contractor
+          </UiButton>
         </div>
       </div>
     </div>
 
     <!-- Filters Section -->
-    <div class="mb-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-      <!-- Search Input (full width) -->
-      <div class="mb-4">
-        <TextInput v-model="searchQuery" label="Search" placeholder="Search by company name..." icon="heroicons:magnifying-glass" clearable size="md" />
-      </div>
+    <UiCard class="mb-6">
+      <UiCardContent class="pt-6">
+        <!-- Search Input (full width) -->
+        <div class="mb-4 space-y-2">
+          <UiLabel for="search">Search</UiLabel>
+          <div class="relative">
+            <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <UiInput
+              id="search"
+              v-model="searchQuery"
+              placeholder="Search by company name..."
+              class="pl-10"
+            />
+          </div>
+        </div>
 
-      <!-- Filter Dropdowns -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <!-- City Filter -->
-        <FilterSelect v-model="selectedCity" label="City" :options="cityOptions" placeholder="Filter by city" size="md" :disabled="loadingCities" />
+        <!-- Filter Dropdowns -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <!-- City Filter -->
+          <div class="space-y-2">
+            <UiLabel for="city">City</UiLabel>
+            <UiSelect v-model="selectedCity" :disabled="loadingCities">
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Filter by city" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem v-for="option in cityOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+          </div>
 
-        <!-- Category Filter -->
-        <FilterSelect v-model="selectedCategory" label="Category" :options="categoryOptions" placeholder="Filter by category" size="md" :disabled="loadingServiceTypes" />
+          <!-- Category Filter -->
+          <div class="space-y-2">
+            <UiLabel for="category">Category</UiLabel>
+            <UiSelect v-model="selectedCategory" :disabled="loadingServiceTypes">
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Filter by category" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem v-for="option in categoryOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+          </div>
 
-        <!-- Status Filter -->
-        <FilterSelect v-model="selectedStatus" label="Status" :options="statusOptions" placeholder="Filter by status" size="md" />
-      </div>
-    </div>
+          <!-- Status Filter -->
+          <div class="space-y-2">
+            <UiLabel for="status">Status</UiLabel>
+            <UiSelect v-model="selectedStatus">
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Filter by status" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem v-for="option in statusOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+          </div>
+        </div>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Error State -->
-    <div v-if="error" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-      <div class="flex items-start gap-3">
-        <Icon name="heroicons:exclamation-triangle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-        <div>
-          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error loading contractors</h3>
-          <p class="mt-1 text-sm text-red-700 dark:text-red-300">{{ error.message }}</p>
+    <UiCard v-if="error" class="mb-6 border-destructive/50 bg-destructive/10">
+      <UiCardContent class="pt-6">
+        <div class="flex items-start gap-3">
+          <Icon name="heroicons:exclamation-triangle" class="mt-0.5 size-5 flex-shrink-0 text-destructive" />
+          <div>
+            <h3 class="text-sm font-medium text-destructive">Error loading contractors</h3>
+            <p class="mt-1 text-sm text-destructive/80">{{ error.message }}</p>
+          </div>
         </div>
-      </div>
-    </div>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Contractor List -->
-    <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
+    <UiCard>
       <AdminContractorList :contractors="contractors" :loading="pending" @edit="handleEdit" @view="handleView" @delete="handleDelete" />
-    </div>
+    </UiCard>
 
     <!-- Pagination -->
     <div v-if="!pending && contractors.length > 0" class="mt-6 flex justify-center">
@@ -307,25 +360,27 @@ const handleImport = () => {
     </div>
 
     <!-- Results Summary -->
-    <div v-if="!pending && contractors.length > 0" class="mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400">
+    <div v-if="!pending && contractors.length > 0" class="mt-4 text-center text-sm text-muted-foreground">
       Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
       {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
       {{ pagination.total }} contractors
     </div>
 
     <!-- Delete Confirmation Dialog -->
-    <Dialog
-      v-model:open="showDeleteDialog"
-      title="Delete Contractor"
-      description="Are you sure you want to delete this contractor? This action cannot be undone."
-    >
-      <template #footer>
-        <div class="flex items-center justify-end gap-3">
-          <Button text="Cancel" variant="ghost" size="md" @click="cancelDelete" />
-          <Button text="Delete" variant="primary" size="md" @click="confirmDelete" />
-        </div>
-      </template>
-    </Dialog>
+    <UiAlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = $event">
+      <UiAlertDialogContent>
+        <UiAlertDialogHeader>
+          <UiAlertDialogTitle>Delete Contractor</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
+            Are you sure you want to delete this contractor? This action cannot be undone.
+          </UiAlertDialogDescription>
+        </UiAlertDialogHeader>
+        <UiAlertDialogFooter>
+          <UiAlertDialogCancel @click="cancelDelete">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction @click="confirmDelete">Delete</UiAlertDialogAction>
+        </UiAlertDialogFooter>
+      </UiAlertDialogContent>
+    </UiAlertDialog>
   </div>
 </template>
 

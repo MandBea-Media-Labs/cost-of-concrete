@@ -11,7 +11,7 @@
  */
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'admin-new',
 })
 
 // Reactive state
@@ -176,104 +176,108 @@ const enrichImages = async () => {
   <div class="p-6">
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+      <h1 class="text-2xl font-bold text-foreground">
         Import Contractors
       </h1>
-      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+      <p class="mt-1 text-sm text-muted-foreground">
         Upload Apify Google Maps Scraper JSON exports to import contractor profiles.
       </p>
     </div>
 
     <!-- Upload Card -->
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-      <!-- Drop Zone -->
-      <div
-        class="relative rounded-lg border-2 border-dashed p-8 text-center transition-colors"
-        :class="[
-          isDragging
-            ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
-            : 'border-neutral-300 hover:border-neutral-400 dark:border-neutral-600 dark:hover:border-neutral-500',
-        ]"
-        @dragenter="handleDragEnter"
-        @dragleave="handleDragLeave"
-        @dragover="handleDragOver"
-        @drop="handleDrop"
-      >
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json"
-          class="hidden"
-          @change="handleFileSelect"
-        />
+    <UiCard class="max-w-2xl">
+      <UiCardContent class="pt-6">
+        <!-- Drop Zone -->
+        <div
+          class="relative rounded-lg border-2 border-dashed p-8 text-center transition-colors"
+          :class="[
+            isDragging
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+          ]"
+          @dragenter="handleDragEnter"
+          @dragleave="handleDragLeave"
+          @dragover="handleDragOver"
+          @drop="handleDrop"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".json"
+            class="hidden"
+            @change="handleFileSelect"
+          />
 
-        <!-- No file selected -->
-        <div v-if="!selectedFile">
-          <Icon
-            name="heroicons:cloud-arrow-up"
-            class="mx-auto h-12 w-12 text-neutral-400 dark:text-neutral-500"
-          />
-          <p class="mt-4 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            Drag and drop your JSON file here
-          </p>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            or
-          </p>
-          <Button
-            text="Browse Files"
-            class="mt-3"
-            variant="secondary"
-            size="sm"
-            @click="triggerFileInput"
-          />
-          <p class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-            Maximum 100 rows per file
-          </p>
-        </div>
-
-        <!-- File selected -->
-        <div v-else class="flex items-center justify-center gap-4">
-          <Icon
-            name="heroicons:document-text"
-            class="h-10 w-10 text-blue-500"
-          />
-          <div class="text-left">
-            <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-              {{ selectedFile.name }}
+          <!-- No file selected -->
+          <div v-if="!selectedFile">
+            <Icon
+              name="heroicons:cloud-arrow-up"
+              class="mx-auto size-12 text-muted-foreground"
+            />
+            <p class="mt-4 text-sm font-medium text-foreground">
+              Drag and drop your JSON file here
             </p>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400">
-              {{ formatFileSize(selectedFile.size) }}
+            <p class="mt-1 text-xs text-muted-foreground">
+              or
+            </p>
+            <UiButton
+              variant="outline"
+              size="sm"
+              class="mt-3"
+              @click="triggerFileInput"
+            >
+              Browse Files
+            </UiButton>
+            <p class="mt-3 text-xs text-muted-foreground">
+              Maximum 100 rows per file
             </p>
           </div>
-          <button
-            type="button"
-            class="ml-2 rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
-            @click.stop="clearFile"
-          >
-            <Icon name="heroicons:x-mark" class="h-5 w-5" />
-          </button>
+
+          <!-- File selected -->
+          <div v-else class="flex items-center justify-center gap-4">
+            <Icon
+              name="heroicons:document-text"
+              class="size-10 text-primary"
+            />
+            <div class="text-left">
+              <p class="text-sm font-medium text-foreground">
+                {{ selectedFile.name }}
+              </p>
+              <p class="text-xs text-muted-foreground">
+                {{ formatFileSize(selectedFile.size) }}
+              </p>
+            </div>
+            <UiButton
+              variant="ghost"
+              size="sm"
+              class="ml-2"
+              @click.stop="clearFile"
+            >
+              <Icon name="heroicons:x-mark" class="size-5" />
+            </UiButton>
+          </div>
         </div>
-      </div>
 
-      <!-- Error Message -->
-      <div
-        v-if="errorMessage"
-        class="mt-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-      >
-        <Icon name="heroicons:exclamation-circle" class="mt-0.5 h-5 w-5 flex-shrink-0" />
-        <span>{{ errorMessage }}</span>
-      </div>
+        <!-- Error Message -->
+        <div
+          v-if="errorMessage"
+          class="mt-4 flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          <Icon name="heroicons:exclamation-circle" class="mt-0.5 size-5 flex-shrink-0" />
+          <span>{{ errorMessage }}</span>
+        </div>
 
-      <!-- Upload Button -->
-      <div v-if="selectedFile && !importResult" class="mt-6">
-        <Button
-          :text="isUploading ? 'Importing...' : 'Import Contractors'"
-          class="w-full"
-          :disabled="isUploading"
-          :icon="isUploading ? 'heroicons:arrow-path' : undefined"
-          @click="uploadFile"
-        />
-      </div>
+        <!-- Upload Button -->
+        <div v-if="selectedFile && !importResult" class="mt-6">
+          <UiButton
+            class="w-full"
+            :disabled="isUploading"
+            @click="uploadFile"
+          >
+            <Icon v-if="isUploading" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
+            {{ isUploading ? 'Importing...' : 'Import Contractors' }}
+          </UiButton>
+        </div>
 
       <!-- Results -->
       <div v-if="importResult" class="mt-6 space-y-4">
@@ -375,34 +379,35 @@ const enrichImages = async () => {
               </p>
 
               <!-- Enrich Button -->
-              <Button
-                :text="isEnriching ? 'Processing Images...' : 'Enrich Images Now'"
+              <UiButton
                 class="mt-3"
                 :disabled="isEnriching"
-                :icon="isEnriching ? 'heroicons:arrow-path' : 'heroicons:cloud-arrow-down'"
                 @click="enrichImages"
-              />
+              >
+                <Icon :name="isEnriching ? 'heroicons:arrow-path' : 'heroicons:cloud-arrow-down'" class="size-4 mr-2" :class="{ 'animate-spin': isEnriching }" />
+                {{ isEnriching ? 'Processing Images...' : 'Enrich Images Now' }}
+              </UiButton>
 
               <!-- Enrichment Results -->
-              <div v-if="enrichResult" class="mt-3 rounded border border-amber-300 bg-white p-3 dark:border-amber-600 dark:bg-neutral-800">
+              <div v-if="enrichResult" class="mt-3 rounded border border-amber-300 bg-card p-3 dark:border-amber-600">
                 <div class="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span class="text-neutral-500 dark:text-neutral-400">Contractors:</span>
-                    <span class="ml-1 font-medium text-neutral-900 dark:text-neutral-100">{{ enrichResult.summary.processedContractors }}</span>
+                    <span class="text-muted-foreground">Contractors:</span>
+                    <span class="ml-1 font-medium text-foreground">{{ enrichResult.summary.processedContractors }}</span>
                   </div>
                   <div>
-                    <span class="text-neutral-500 dark:text-neutral-400">Downloaded:</span>
+                    <span class="text-muted-foreground">Downloaded:</span>
                     <span class="ml-1 font-medium text-green-600 dark:text-green-400">{{ enrichResult.summary.totalImages }}</span>
                   </div>
                   <div>
-                    <span class="text-neutral-500 dark:text-neutral-400">Failed:</span>
-                    <span class="ml-1 font-medium" :class="enrichResult.summary.failedImages > 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-600 dark:text-neutral-400'">
+                    <span class="text-muted-foreground">Failed:</span>
+                    <span class="ml-1 font-medium" :class="enrichResult.summary.failedImages > 0 ? 'text-destructive' : 'text-muted-foreground'">
                       {{ enrichResult.summary.failedImages }}
                     </span>
                   </div>
                   <div>
-                    <span class="text-neutral-500 dark:text-neutral-400">Remaining:</span>
-                    <span class="ml-1 font-medium" :class="enrichResult.summary.contractorsRemaining > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-600 dark:text-neutral-400'">
+                    <span class="text-muted-foreground">Remaining:</span>
+                    <span class="ml-1 font-medium" :class="enrichResult.summary.contractorsRemaining > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'">
                       {{ enrichResult.summary.contractorsRemaining }}
                     </span>
                   </div>
@@ -416,43 +421,47 @@ const enrichImages = async () => {
         </div>
 
         <!-- Import Another Button -->
-        <Button
-          text="Import Another File"
-          variant="secondary"
+        <UiButton
+          variant="outline"
           class="w-full"
           @click="clearFile"
-        />
+        >
+          Import Another File
+        </UiButton>
       </div>
-    </div>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Instructions -->
-    <div class="mt-6 max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-      <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        Instructions
-      </h2>
-      <ul class="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-        <li class="flex gap-2">
-          <Icon name="heroicons:check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-          Export data from Apify Google Maps Scraper as JSON
-        </li>
-        <li class="flex gap-2">
-          <Icon name="heroicons:check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-          Maximum 100 rows per file (split larger exports)
-        </li>
-        <li class="flex gap-2">
-          <Icon name="heroicons:check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-          Duplicate businesses will be updated (matched by Google Place ID)
-        </li>
-        <li class="flex gap-2">
-          <Icon name="heroicons:check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-          Permanently closed businesses are automatically skipped
-        </li>
-        <li class="flex gap-2">
-          <Icon name="heroicons:check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-          Images are queued for processing (run "Enrich Images" after import)
-        </li>
-      </ul>
-    </div>
+    <UiCard class="mt-6 max-w-2xl">
+      <UiCardHeader>
+        <UiCardTitle>Instructions</UiCardTitle>
+      </UiCardHeader>
+      <UiCardContent>
+        <ul class="space-y-2 text-sm text-muted-foreground">
+          <li class="flex gap-2">
+            <Icon name="heroicons:check" class="mt-0.5 size-4 flex-shrink-0 text-green-500" />
+            Export data from Apify Google Maps Scraper as JSON
+          </li>
+          <li class="flex gap-2">
+            <Icon name="heroicons:check" class="mt-0.5 size-4 flex-shrink-0 text-green-500" />
+            Maximum 100 rows per file (split larger exports)
+          </li>
+          <li class="flex gap-2">
+            <Icon name="heroicons:check" class="mt-0.5 size-4 flex-shrink-0 text-green-500" />
+            Duplicate businesses will be updated (matched by Google Place ID)
+          </li>
+          <li class="flex gap-2">
+            <Icon name="heroicons:check" class="mt-0.5 size-4 flex-shrink-0 text-green-500" />
+            Permanently closed businesses are automatically skipped
+          </li>
+          <li class="flex gap-2">
+            <Icon name="heroicons:check" class="mt-0.5 size-4 flex-shrink-0 text-green-500" />
+            Images are queued for processing (run "Enrich Images" after import)
+          </li>
+        </ul>
+      </UiCardContent>
+    </UiCard>
   </div>
 </template>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { MenuFormData } from '~/schemas/admin/menu-form.schema'
 import type { Database } from '~/types/supabase'
 
@@ -11,7 +12,7 @@ type Menu = Database['public']['Tables']['menus']['Row']
 // =====================================================
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 useHead({
@@ -24,7 +25,6 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const { listMenus, updateMenu } = useMenus()
 
 const menuId = computed(() => route.params.id as string)
@@ -224,16 +224,13 @@ function handleCancelConflict() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="p-6">
+    <div class="mx-auto max-w-4xl">
       <!-- Loading State -->
-      <div
-        v-if="loading"
-        class="flex items-center justify-center py-12"
-      >
+      <div v-if="loading" class="flex items-center justify-center py-12">
         <div class="flex flex-col items-center gap-3">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading menu...</p>
+          <UiSpinner class="size-8" />
+          <p class="text-sm text-muted-foreground">Loading menu...</p>
         </div>
       </div>
 
@@ -251,45 +248,42 @@ function handleCancelConflict() {
 
         <!-- Header -->
         <div class="mb-8">
-          <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+          <h1 class="text-3xl font-bold text-foreground">
             Edit Menu
           </h1>
-          <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p class="mt-2 text-sm text-muted-foreground">
             Update menu settings and configuration
           </p>
         </div>
 
         <!-- Form Card -->
-        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <MenuForm
-            :initial-data="initialFormData"
-            :is-edit-mode="true"
-            :is-submitting="isSubmitting"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </div>
+        <UiCard>
+          <UiCardContent class="pt-6">
+            <MenuForm
+              :initial-data="initialFormData"
+              :is-edit-mode="true"
+              :is-submitting="isSubmitting"
+              @submit="handleSubmit"
+              @cancel="handleCancel"
+            />
+          </UiCardContent>
+        </UiCard>
 
         <!-- Location Conflict Dialog -->
-        <Dialog
-          :open="showConflictDialog"
-          title="Location Conflict"
-          :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will disable '${conflictingMenu?.name}'. Continue?`"
-          @close="handleCancelConflict"
-        >
-          <template #actions>
-            <Button
-              text="Cancel"
-              variant="ghost"
-              @click="handleCancelConflict"
-            />
-            <Button
-              text="Continue"
-              variant="primary"
-              @click="handleForceUpdate"
-            />
-          </template>
-        </Dialog>
+        <UiAlertDialog :open="showConflictDialog" @update:open="(val) => !val && handleCancelConflict()">
+          <UiAlertDialogContent>
+            <UiAlertDialogHeader>
+              <UiAlertDialogTitle>Location Conflict</UiAlertDialogTitle>
+              <UiAlertDialogDescription>
+                Menu '{{ conflictingMenu?.name }}' is currently assigned to this location. Assigning this menu will disable '{{ conflictingMenu?.name }}'. Continue?
+              </UiAlertDialogDescription>
+            </UiAlertDialogHeader>
+            <UiAlertDialogFooter>
+              <UiAlertDialogCancel @click="handleCancelConflict">Cancel</UiAlertDialogCancel>
+              <UiAlertDialogAction @click="handleForceUpdate">Continue</UiAlertDialogAction>
+            </UiAlertDialogFooter>
+          </UiAlertDialogContent>
+        </UiAlertDialog>
       </template>
     </div>
   </div>

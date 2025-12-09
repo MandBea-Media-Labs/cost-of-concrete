@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { AdminPagesFilters } from '~/composables/useAdminPages'
 
-// Page metadata
+// Page metadata - use new admin layout
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 // Use admin pages composable
 const { pages, pagination, pending, error, fetchPages, deletePage } = useAdminPages()
-
-// Use toast notifications
-const toast = useToast()
 
 // Filter state
 const filters = ref<AdminPagesFilters>({
@@ -111,7 +109,9 @@ const confirmDelete = async () => {
     await fetchPages(filters.value)
   } else {
     // Show error toast
-    toast.error('Failed to delete page', { message: 'Please try again or contact support' })
+    toast.error('Failed to delete page', {
+      description: 'Please try again or contact support'
+    })
 
     if (import.meta.dev) {
       consola.error('Failed to delete page')
@@ -135,120 +135,131 @@ const handleCreatePage = () => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+          <h1 class="text-2xl font-bold">
             Pages
           </h1>
-          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+          <p class="mt-1 text-sm text-muted-foreground">
             Manage your website pages
           </p>
         </div>
 
-        <Button
-          text="Create Page"
-          variant="primary"
-          size="md"
-          icon="heroicons:plus"
-          @click="handleCreatePage"
-        />
+        <UiButton @click="handleCreatePage">
+          <Icon name="heroicons:plus" class="size-4" />
+          Create Page
+        </UiButton>
       </div>
     </div>
 
-    <!-- Content -->
-      <!-- Filters Section -->
-      <div class="mb-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+    <!-- Filters Section -->
+    <UiCard class="mb-6">
+      <UiCardContent class="pt-6">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <!-- Search Input -->
-          <div class="md:col-span-1">
-            <TextInput
+          <div class="space-y-2">
+            <UiLabel for="search">Search</UiLabel>
+            <UiInput
+              id="search"
               v-model="searchQuery"
-              label="Search"
               placeholder="Search pages..."
-              icon="heroicons:magnifying-glass"
-              clearable
-              size="md"
             />
           </div>
 
           <!-- Status Filter -->
-          <div class="md:col-span-1">
-            <FilterSelect
-              v-model="selectedStatus"
-              label="Status"
-              :options="statusOptions"
-              placeholder="Filter by status"
-              size="md"
-            />
+          <div class="space-y-2">
+            <UiLabel>Status</UiLabel>
+            <UiSelect v-model="selectedStatus">
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Filter by status" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
           </div>
 
           <!-- Template Filter -->
-          <div class="md:col-span-1">
-            <FilterSelect
-              v-model="selectedTemplate"
-              label="Template"
-              :options="templateOptions"
-              placeholder="Filter by template"
-              size="md"
-            />
+          <div class="space-y-2">
+            <UiLabel>Template</UiLabel>
+            <UiSelect v-model="selectedTemplate">
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Filter by template" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in templateOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
           </div>
         </div>
-      </div>
+      </UiCardContent>
+    </UiCard>
 
-      <!-- Error State -->
-      <div
-        v-if="error"
-        class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
-      >
+    <!-- Error State -->
+    <UiCard v-if="error" class="mb-6 border-destructive bg-destructive/10">
+      <UiCardContent class="pt-6">
         <div class="flex items-start gap-3">
           <Icon
             name="heroicons:exclamation-triangle"
-            class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400"
+            class="mt-0.5 size-5 flex-shrink-0 text-destructive"
           />
           <div>
-            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+            <h3 class="text-sm font-medium text-destructive">
               Error loading pages
             </h3>
-            <p class="mt-1 text-sm text-red-700 dark:text-red-300">
+            <p class="mt-1 text-sm text-destructive/80">
               {{ error.message }}
             </p>
           </div>
         </div>
-      </div>
+      </UiCardContent>
+    </UiCard>
 
-      <!-- Page List -->
-      <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
-        <AdminPageList
-          :pages="pages"
-          :loading="pending"
-          @edit="handleEdit"
-          @view="handleView"
-          @delete="handleDelete"
-        />
-      </div>
+    <!-- Page List -->
+    <UiCard>
+      <AdminPageList
+        :pages="pages"
+        :loading="pending"
+        @edit="handleEdit"
+        @view="handleView"
+        @delete="handleDelete"
+      />
+    </UiCard>
 
-      <!-- Pagination -->
-      <div
-        v-if="!pending && pages.length > 0"
-        class="mt-6 flex justify-center"
-      >
-        <Pagination
-          :current-page="pagination.page"
-          :total-pages="pagination.totalPages"
-          :max-visible-pages="5"
-          size="md"
-          :show-page-numbers="true"
-          @page-change="handlePageChange"
-        />
-      </div>
+    <!-- Pagination -->
+    <div
+      v-if="!pending && pages.length > 0"
+      class="mt-6 flex justify-center"
+    >
+      <Pagination
+        :current-page="pagination.page"
+        :total-pages="pagination.totalPages"
+        :max-visible-pages="5"
+        size="md"
+        :show-page-numbers="true"
+        @page-change="handlePageChange"
+      />
+    </div>
 
     <!-- Results Summary -->
     <div
       v-if="!pending && pages.length > 0"
-      class="mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400"
+      class="mt-4 text-center text-sm text-muted-foreground"
     >
       Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
       {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
@@ -256,32 +267,24 @@ const handleCreatePage = () => {
     </div>
 
     <!-- Delete Confirmation Dialog -->
-    <Dialog
-      v-model:open="showDeleteDialog"
-      title="Delete Page"
-      description="Are you sure you want to delete this page? This action cannot be undone."
-    >
-      <template #footer>
-        <div class="flex items-center justify-end gap-3">
-          <Button
-            text="Cancel"
-            variant="ghost"
-            size="md"
-            @click="cancelDelete"
-          />
-          <Button
-            text="Delete"
-            variant="primary"
-            size="md"
-            @click="confirmDelete"
-          />
-        </div>
-      </template>
-    </Dialog>
+    <UiAlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = $event">
+      <UiAlertDialogContent>
+        <UiAlertDialogHeader>
+          <UiAlertDialogTitle>Delete Page</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
+            Are you sure you want to delete this page? This action cannot be undone.
+          </UiAlertDialogDescription>
+        </UiAlertDialogHeader>
+        <UiAlertDialogFooter>
+          <UiAlertDialogCancel @click="cancelDelete">
+            Cancel
+          </UiAlertDialogCancel>
+          <UiAlertDialogAction @click="confirmDelete">
+            Delete
+          </UiAlertDialogAction>
+        </UiAlertDialogFooter>
+      </UiAlertDialogContent>
+    </UiAlertDialog>
   </div>
 </template>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
 

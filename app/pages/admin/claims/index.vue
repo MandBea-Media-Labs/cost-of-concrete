@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { AdminClaimsFilters, ClaimWithContractor } from '~/composables/useAdminClaims'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin',
+  layout: 'admin-new',
 })
 
 // Use admin claims composable
 const { claims, pagination, pending, error, fetchClaims, updateClaimStatus } = useAdminClaims()
-
-// Use toast notifications
-const toast = useToast()
 
 // Get route for reading query params
 const route = useRoute()
@@ -186,145 +184,162 @@ const getStatusClasses = (status: string) => {
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Business Claims</h1>
-          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Review and manage business claiming requests</p>
+          <h1 class="text-2xl font-bold text-foreground">Business Claims</h1>
+          <p class="mt-1 text-sm text-muted-foreground">Review and manage business claiming requests</p>
         </div>
       </div>
     </div>
 
     <!-- Filters Section -->
-    <div class="mb-6 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <!-- Search Input -->
-        <TextInput v-model="searchQuery" label="Search" placeholder="Search by claimant name or email..." icon="heroicons:magnifying-glass" clearable size="md" />
+    <UiCard class="mb-6">
+      <UiCardContent class="pt-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Search Input -->
+          <TextInput v-model="searchQuery" label="Search" placeholder="Search by claimant name or email..." icon="heroicons:magnifying-glass" clearable size="md" />
 
-        <!-- Status Filter -->
-        <FilterSelect v-model="selectedStatus" label="Status" :options="statusOptions" placeholder="Filter by status" size="md" />
-      </div>
-    </div>
+          <!-- Status Filter -->
+          <FilterSelect v-model="selectedStatus" label="Status" :options="statusOptions" placeholder="Filter by status" size="md" />
+        </div>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Error State -->
-    <div v-if="error" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+    <div v-if="error" class="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4">
       <div class="flex items-start gap-3">
-        <Icon name="heroicons:exclamation-triangle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+        <Icon name="heroicons:exclamation-triangle" class="mt-0.5 size-5 flex-shrink-0 text-destructive" />
         <div>
-          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error loading claims</h3>
-          <p class="mt-1 text-sm text-red-700 dark:text-red-300">{{ error.message }}</p>
+          <h3 class="text-sm font-medium text-destructive">Error loading claims</h3>
+          <p class="mt-1 text-sm text-destructive/80">{{ error.message }}</p>
         </div>
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center py-12">
-      <Icon name="heroicons:arrow-path" class="h-8 w-8 animate-spin text-neutral-400" />
+      <UiSpinner class="size-8" />
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="claims.length === 0" class="rounded-lg border border-neutral-200 bg-white p-12 text-center dark:border-neutral-700 dark:bg-neutral-800">
-      <Icon name="heroicons:inbox" class="mx-auto h-12 w-12 text-neutral-400" />
-      <h3 class="mt-4 text-lg font-medium text-neutral-900 dark:text-neutral-100">No claims found</h3>
-      <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    <UiCard v-else-if="claims.length === 0" class="p-12 text-center">
+      <Icon name="heroicons:inbox" class="mx-auto size-12 text-muted-foreground" />
+      <h3 class="mt-4 text-lg font-medium text-foreground">No claims found</h3>
+      <p class="mt-2 text-sm text-muted-foreground">
         {{ selectedStatus === 'pending' ? 'No pending claims to review.' : 'No claims match your filters.' }}
       </p>
-    </div>
+    </UiCard>
 
     <!-- Claims List -->
     <div v-else class="space-y-4">
-      <div
-        v-for="claim in claims"
-        :key="claim.id"
-        class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
-      >
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <!-- Claim Info -->
-          <div class="flex-1">
-            <div class="flex items-center gap-3">
-              <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                {{ claim.contractor?.company_name || 'Unknown Business' }}
-              </h3>
-              <span :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', getStatusClasses(claim.status)]">
-                {{ claim.status }}
-              </span>
+      <UiCard v-for="claim in claims" :key="claim.id">
+        <UiCardContent class="pt-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <!-- Claim Info -->
+            <div class="flex-1">
+              <div class="flex items-center gap-3">
+                <h3 class="text-lg font-semibold text-foreground">
+                  {{ claim.contractor?.company_name || 'Unknown Business' }}
+                </h3>
+                <UiBadge :variant="claim.status === 'approved' ? 'default' : claim.status === 'rejected' ? 'destructive' : 'secondary'">
+                  {{ claim.status }}
+                </UiBadge>
+              </div>
+
+              <div class="mt-3 space-y-1 text-sm text-muted-foreground">
+                <p><span class="font-medium">Claimant:</span> {{ claim.claimant_name || 'Not provided' }}</p>
+                <p><span class="font-medium">Email:</span> {{ claim.claimant_email }}</p>
+                <p v-if="claim.claimant_phone"><span class="font-medium">Phone:</span> {{ claim.claimant_phone }}</p>
+                <p><span class="font-medium">Submitted:</span> {{ formatDate(claim.created_at) }}</p>
+                <p v-if="claim.contractor?.email">
+                  <span class="font-medium">Business Email:</span> {{ claim.contractor.email }}
+                  <UiBadge v-if="claim.claimant_email === claim.contractor.email" variant="default" class="ml-2">
+                    <Icon name="heroicons:check-circle" class="mr-0.5 size-3" /> Match
+                  </UiBadge>
+                </p>
+                <p v-if="claim.admin_notes" class="mt-2 rounded bg-muted p-2">
+                  <span class="font-medium">Admin Notes:</span> {{ claim.admin_notes }}
+                </p>
+              </div>
             </div>
 
-            <div class="mt-3 space-y-1 text-sm text-neutral-600 dark:text-neutral-400">
-              <p><span class="font-medium">Claimant:</span> {{ claim.claimant_name || 'Not provided' }}</p>
-              <p><span class="font-medium">Email:</span> {{ claim.claimant_email }}</p>
-              <p v-if="claim.claimant_phone"><span class="font-medium">Phone:</span> {{ claim.claimant_phone }}</p>
-              <p><span class="font-medium">Submitted:</span> {{ formatDate(claim.created_at) }}</p>
-              <p v-if="claim.contractor?.email">
-                <span class="font-medium">Business Email:</span> {{ claim.contractor.email }}
-                <span v-if="claim.claimant_email === claim.contractor.email" class="ml-2 inline-flex items-center rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                  <Icon name="heroicons:check-circle" class="mr-0.5 h-3 w-3" /> Match
-                </span>
-              </p>
-              <p v-if="claim.admin_notes" class="mt-2 rounded bg-neutral-100 p-2 dark:bg-neutral-700">
-                <span class="font-medium">Admin Notes:</span> {{ claim.admin_notes }}
-              </p>
+            <!-- Actions -->
+            <div v-if="claim.status === 'pending'" class="flex gap-2 sm:flex-col">
+              <UiButton size="sm" @click="handleApprove(claim)">
+                <Icon name="heroicons:check" class="size-4 mr-1" />
+                Approve
+              </UiButton>
+              <UiButton variant="outline" size="sm" @click="handleReject(claim)">
+                <Icon name="heroicons:x-mark" class="size-4 mr-1" />
+                Reject
+              </UiButton>
+            </div>
+            <div v-else class="text-sm text-muted-foreground">
+              <p>Reviewed: {{ formatDate(claim.reviewed_at) }}</p>
             </div>
           </div>
-
-          <!-- Actions -->
-          <div v-if="claim.status === 'pending'" class="flex gap-2 sm:flex-col">
-            <Button text="Approve" variant="primary" size="sm" icon="heroicons:check" @click="handleApprove(claim)" />
-            <Button text="Reject" variant="secondary-outline" size="sm" icon="heroicons:x-mark" @click="handleReject(claim)" />
-          </div>
-          <div v-else class="text-sm text-neutral-500 dark:text-neutral-400">
-            <p>Reviewed: {{ formatDate(claim.reviewed_at) }}</p>
-          </div>
-        </div>
-      </div>
+        </UiCardContent>
+      </UiCard>
     </div>
 
     <!-- Pagination -->
     <div v-if="!pending && claims.length > 0" class="mt-6 flex justify-center">
-      <Pagination
-        :current-page="pagination.page"
-        :total-pages="pagination.totalPages"
-        :max-visible-pages="5"
-        size="md"
-        :show-page-numbers="true"
-        @page-change="handlePageChange"
+      <UiPagination
+        :page="pagination.page"
+        :total="pagination.total"
+        :items-per-page="pagination.limit"
+        :sibling-count="1"
+        show-edges
+        @update:page="handlePageChange"
       />
     </div>
 
     <!-- Results Summary -->
-    <div v-if="!pending && claims.length > 0" class="mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400">
+    <div v-if="!pending && claims.length > 0" class="mt-4 text-center text-sm text-muted-foreground">
       Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
       {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
       {{ pagination.total }} claims
     </div>
 
     <!-- Approve Confirmation Dialog -->
-    <Dialog v-model:open="showApproveDialog" title="Approve Claim" :description="`Approve this claim for ${claimToProcess?.contractor?.company_name || 'this business'}? The business will be marked as claimed.`">
-      <template #footer>
-        <div class="flex items-center justify-end gap-3">
-          <Button text="Cancel" variant="ghost" size="md" :disabled="processing" @click="cancelDialog" />
-          <Button text="Approve" variant="primary" size="md" :disabled="processing" @click="confirmApprove" />
-        </div>
-      </template>
-    </Dialog>
+    <UiAlertDialog :open="showApproveDialog" @update:open="(val) => !val && cancelDialog()">
+      <UiAlertDialogContent>
+        <UiAlertDialogHeader>
+          <UiAlertDialogTitle>Approve Claim</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
+            Approve this claim for {{ claimToProcess?.contractor?.company_name || 'this business' }}? The business will be marked as claimed.
+          </UiAlertDialogDescription>
+        </UiAlertDialogHeader>
+        <UiAlertDialogFooter>
+          <UiAlertDialogCancel :disabled="processing" @click="cancelDialog">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction :disabled="processing" @click="confirmApprove">Approve</UiAlertDialogAction>
+        </UiAlertDialogFooter>
+      </UiAlertDialogContent>
+    </UiAlertDialog>
 
     <!-- Reject Confirmation Dialog -->
-    <Dialog v-model:open="showRejectDialog" title="Reject Claim" :description="`Reject this claim for ${claimToProcess?.contractor?.company_name || 'this business'}?`">
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Rejection Notes (optional)
-        </label>
-        <textarea
-          v-model="rejectNotes"
-          rows="3"
-          class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-100 dark:placeholder-neutral-500"
-          placeholder="Reason for rejection..."
-        />
-      </div>
-      <template #footer>
-        <div class="flex items-center justify-end gap-3">
-          <Button text="Cancel" variant="ghost" size="md" :disabled="processing" @click="cancelDialog" />
-          <Button text="Reject" variant="primary" size="md" :disabled="processing" @click="confirmReject" />
+    <UiAlertDialog :open="showRejectDialog" @update:open="(val) => !val && cancelDialog()">
+      <UiAlertDialogContent>
+        <UiAlertDialogHeader>
+          <UiAlertDialogTitle>Reject Claim</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
+            Reject this claim for {{ claimToProcess?.contractor?.company_name || 'this business' }}?
+          </UiAlertDialogDescription>
+        </UiAlertDialogHeader>
+        <div class="py-4">
+          <label class="block text-sm font-medium text-foreground mb-2">
+            Rejection Notes (optional)
+          </label>
+          <UiTextarea
+            v-model="rejectNotes"
+            :rows="3"
+            placeholder="Reason for rejection..."
+          />
         </div>
-      </template>
-    </Dialog>
+        <UiAlertDialogFooter>
+          <UiAlertDialogCancel :disabled="processing" @click="cancelDialog">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction variant="destructive" :disabled="processing" @click="confirmReject">Reject</UiAlertDialogAction>
+        </UiAlertDialogFooter>
+      </UiAlertDialogContent>
+    </UiAlertDialog>
   </div>
 </template>
 

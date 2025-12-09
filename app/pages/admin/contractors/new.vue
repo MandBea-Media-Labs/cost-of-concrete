@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { ContractorFormData } from '~/schemas/admin/contractor-form.schema'
 
 // Page metadata
 definePageMeta({
-  layout: 'admin',
+  layout: 'admin-new',
 })
 
 useHead({
@@ -14,7 +15,6 @@ useHead({
 
 // State
 const router = useRouter()
-const toast = useToast()
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 
@@ -71,7 +71,7 @@ async function handleSubmit(formData: ContractorFormData) {
 
     const errorMsg = error.data?.message || error.message || 'Failed to create contractor'
     errorMessage.value = errorMsg
-    toast.error('Failed to create contractor', { message: errorMsg })
+    toast.error('Failed to create contractor', { description: errorMsg })
   } finally {
     isSubmitting.value = false
   }
@@ -86,43 +86,45 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Breadcrumbs -->
-      <AdminBreadcrumbs
-        :items="[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Contractors', href: '/admin/contractors' },
-          { label: 'Add Contractor', href: '/admin/contractors/new' },
-        ]"
-        class="mb-6"
-      />
+  <div class="p-6">
+    <!-- Breadcrumbs -->
+    <AdminBreadcrumbs
+      :items="[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Contractors', href: '/admin/contractors' },
+        { label: 'Add Contractor', href: '/admin/contractors/new' },
+      ]"
+      class="mb-6"
+    />
 
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">Add Contractor</h1>
-        <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Create a new contractor profile manually</p>
-      </div>
-
-      <!-- Error Message -->
-      <div v-if="errorMessage" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:exclamation-circle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error Creating Contractor</h3>
-            <p class="mt-1 text-sm text-red-700 dark:text-red-300">{{ errorMessage }}</p>
-          </div>
-          <button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200" @click="errorMessage = null">
-            <Icon name="heroicons:x-mark" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Form Card -->
-      <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-        <ContractorForm :is-submitting="isSubmitting" @submit="handleSubmit" @cancel="handleCancel" />
-      </div>
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-foreground">Add Contractor</h1>
+      <p class="mt-2 text-sm text-muted-foreground">Create a new contractor profile manually</p>
     </div>
+
+    <!-- Error Message -->
+    <UiCard v-if="errorMessage" class="mb-6 border-destructive/50 bg-destructive/10">
+      <UiCardContent class="pt-6">
+        <div class="flex items-start gap-3">
+          <Icon name="heroicons:exclamation-circle" class="mt-0.5 size-5 flex-shrink-0 text-destructive" />
+          <div class="flex-1">
+            <h3 class="text-sm font-medium text-destructive">Error Creating Contractor</h3>
+            <p class="mt-1 text-sm text-destructive/80">{{ errorMessage }}</p>
+          </div>
+          <UiButton variant="ghost" size="sm" class="text-destructive hover:text-destructive" @click="errorMessage = null">
+            <Icon name="heroicons:x-mark" class="size-5" />
+          </UiButton>
+        </div>
+      </UiCardContent>
+    </UiCard>
+
+    <!-- Form Card -->
+    <UiCard>
+      <UiCardContent class="pt-6">
+        <ContractorForm :is-submitting="isSubmitting" @submit="handleSubmit" @cancel="handleCancel" />
+      </UiCardContent>
+    </UiCard>
   </div>
 </template>
 

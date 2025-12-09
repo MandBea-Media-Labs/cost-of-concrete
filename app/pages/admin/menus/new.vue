@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { MenuFormData } from '~/schemas/admin/menu-form.schema'
 
 // =====================================================
@@ -8,7 +9,7 @@ import type { MenuFormData } from '~/schemas/admin/menu-form.schema'
 // =====================================================
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 useHead({
@@ -20,7 +21,6 @@ useHead({
 // =====================================================
 
 const router = useRouter()
-const toast = useToast()
 const { createMenu } = useMenus()
 const isSubmitting = ref(false)
 
@@ -171,8 +171,8 @@ function handleCancelConflict() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="p-6">
+    <div class="mx-auto max-w-4xl">
       <!-- Breadcrumbs -->
       <AdminBreadcrumbs
         :items="[
@@ -185,43 +185,40 @@ function handleCancelConflict() {
 
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+        <h1 class="text-3xl font-bold text-foreground">
           Create New Menu
         </h1>
-        <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <p class="mt-2 text-sm text-muted-foreground">
           Create a new navigation menu for your site
         </p>
       </div>
 
       <!-- Form Card -->
-      <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-        <MenuForm
-          :is-submitting="isSubmitting"
-          @submit="handleSubmit"
-          @cancel="handleCancel"
-        />
-      </div>
+      <UiCard>
+        <UiCardContent class="pt-6">
+          <MenuForm
+            :is-submitting="isSubmitting"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+          />
+        </UiCardContent>
+      </UiCard>
 
       <!-- Location Conflict Dialog -->
-      <Dialog
-        :open="showConflictDialog"
-        title="Location Conflict"
-        :description="`Menu '${conflictingMenu?.name}' is currently assigned to this location. Assigning this menu will disable '${conflictingMenu?.name}'. Continue?`"
-        @close="handleCancelConflict"
-      >
-        <template #actions>
-          <Button
-            text="Cancel"
-            variant="ghost"
-            @click="handleCancelConflict"
-          />
-          <Button
-            text="Continue"
-            variant="primary"
-            @click="handleForceCreate"
-          />
-        </template>
-      </Dialog>
+      <UiAlertDialog :open="showConflictDialog" @update:open="(val) => !val && handleCancelConflict()">
+        <UiAlertDialogContent>
+          <UiAlertDialogHeader>
+            <UiAlertDialogTitle>Location Conflict</UiAlertDialogTitle>
+            <UiAlertDialogDescription>
+              Menu '{{ conflictingMenu?.name }}' is currently assigned to this location. Assigning this menu will disable '{{ conflictingMenu?.name }}'. Continue?
+            </UiAlertDialogDescription>
+          </UiAlertDialogHeader>
+          <UiAlertDialogFooter>
+            <UiAlertDialogCancel @click="handleCancelConflict">Cancel</UiAlertDialogCancel>
+            <UiAlertDialogAction @click="handleForceCreate">Continue</UiAlertDialogAction>
+          </UiAlertDialogFooter>
+        </UiAlertDialogContent>
+      </UiAlertDialog>
     </div>
   </div>
 </template>

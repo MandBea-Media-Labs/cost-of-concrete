@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { consola } from 'consola'
+import { toast } from 'vue-sonner'
 import type { Database } from '~/types/supabase'
 
 type Menu = Database['public']['Tables']['menus']['Row']
 
 // Page metadata
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 // Use composables
 const { listMenus, updateMenu, deleteMenu } = useMenus()
-const toast = useToast()
 
 // State
 const menus = ref<Menu[]>([])
@@ -112,59 +112,50 @@ const handleToggleEnabled = async (menuId: string, value: boolean) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-            Menus
-          </h1>
-          <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Manage navigation menus for your site
-          </p>
-        </div>
-
-        <!-- Create Menu Button -->
-        <Button
-          text="Create Menu"
-          location="/admin/menus/new"
-          variant="primary"
-          size="md"
-        />
+  <div class="p-6">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-foreground">
+          Menus
+        </h1>
+        <p class="mt-2 text-sm text-muted-foreground">
+          Manage navigation menus for your site
+        </p>
       </div>
 
-      <!-- Menu List -->
-      <AdminMenuList
-        :menus="menus"
-        :loading="loading"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @toggle-enabled="handleToggleEnabled"
-        @manage-items="handleManageItems"
-      />
-
-      <!-- Delete Confirmation Dialog -->
-      <Dialog
-        :open="showDeleteDialog"
-        title="Delete Menu"
-        description="Are you sure you want to delete this menu? This action cannot be undone."
-        @close="cancelDelete"
-      >
-        <template #actions>
-          <Button
-            text="Cancel"
-            variant="ghost"
-            @click="cancelDelete"
-          />
-          <Button
-            text="Delete"
-            variant="danger"
-            @click="confirmDelete"
-          />
-        </template>
-      </Dialog>
+      <!-- Create Menu Button -->
+      <UiButton as="a" href="/admin/menus/new">
+        <Icon name="heroicons:plus" class="size-4 mr-2" />
+        Create Menu
+      </UiButton>
     </div>
+
+    <!-- Menu List -->
+    <AdminMenuList
+      :menus="menus"
+      :loading="loading"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @toggle-enabled="handleToggleEnabled"
+      @manage-items="handleManageItems"
+    />
+
+    <!-- Delete Confirmation Dialog -->
+    <UiAlertDialog :open="showDeleteDialog" @update:open="(val) => !val && cancelDelete()">
+      <UiAlertDialogContent>
+        <UiAlertDialogHeader>
+          <UiAlertDialogTitle>Delete Menu</UiAlertDialogTitle>
+          <UiAlertDialogDescription>
+            Are you sure you want to delete this menu? This action cannot be undone.
+          </UiAlertDialogDescription>
+        </UiAlertDialogHeader>
+        <UiAlertDialogFooter>
+          <UiAlertDialogCancel @click="cancelDelete">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction variant="destructive" @click="confirmDelete">Delete</UiAlertDialogAction>
+        </UiAlertDialogFooter>
+      </UiAlertDialogContent>
+    </UiAlertDialog>
   </div>
 </template>
 

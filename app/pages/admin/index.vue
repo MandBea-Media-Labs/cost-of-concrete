@@ -1,7 +1,13 @@
 <script setup lang="ts">
-// Page metadata
+/**
+ * Admin Dashboard
+ *
+ * Main dashboard for the admin panel using shadcn-based components.
+ */
+
+// Page metadata - use new admin layout
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-new'
 })
 
 // Mock data for dashboard stats
@@ -10,28 +16,28 @@ const stats = ref([
     label: 'Total Pages',
     value: '127',
     change: '+12%',
-    trend: 'up',
+    trend: 'up' as const,
     icon: 'heroicons:document-text'
   },
   {
     label: 'Published',
     value: '98',
     change: '+8%',
-    trend: 'up',
+    trend: 'up' as const,
     icon: 'heroicons:check-circle'
   },
   {
     label: 'Drafts',
     value: '24',
     change: '-3%',
-    trend: 'down',
+    trend: 'down' as const,
     icon: 'heroicons:pencil-square'
   },
   {
     label: 'Menus',
     value: '5',
     change: '0%',
-    trend: 'neutral',
+    trend: 'neutral' as const,
     icon: 'heroicons:bars-3'
   }
 ])
@@ -74,140 +80,162 @@ const quickActions = ref([
     label: 'Create Page',
     icon: 'heroicons:plus-circle',
     href: '/admin/pages/new',
-    color: 'blue'
+    variant: 'default' as const
   },
   {
     label: 'Manage Pages',
     icon: 'heroicons:document-text',
     href: '/admin/pages',
-    color: 'neutral'
+    variant: 'outline' as const
   },
   {
     label: 'Manage Menus',
     icon: 'heroicons:bars-3',
     href: '/admin/menus',
-    color: 'neutral'
+    variant: 'outline' as const
   },
   {
     label: 'Settings',
     icon: 'heroicons:cog-6-tooth',
     href: '/admin/settings',
-    color: 'neutral'
+    variant: 'outline' as const
   }
 ])
+
+/**
+ * Get trend icon based on trend direction
+ */
+function getTrendIcon(trend: 'up' | 'down' | 'neutral'): string {
+  switch (trend) {
+    case 'up':
+      return 'heroicons:arrow-trending-up'
+    case 'down':
+      return 'heroicons:arrow-trending-down'
+    default:
+      return 'heroicons:minus'
+  }
+}
+
+/**
+ * Get trend badge variant based on trend direction
+ */
+function getTrendVariant(trend: 'up' | 'down' | 'neutral'): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (trend) {
+    case 'up':
+      return 'default'
+    case 'down':
+      return 'destructive'
+    default:
+      return 'secondary'
+  }
+}
 </script>
 
 <template>
-  <div class="p-6">
+  <div>
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+      <h1 class="text-2xl font-bold">
         Dashboard
       </h1>
-      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+      <p class="mt-1 text-sm text-muted-foreground">
         Welcome back! Here's what's happening with your site.
       </p>
     </div>
 
     <!-- Stats Grid -->
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-              {{ stat.label }}
-            </p>
-            <p class="mt-2 text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-              {{ stat.value }}
-            </p>
+      <UiCard v-for="stat in stats" :key="stat.label">
+        <UiCardContent class="pt-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">
+                {{ stat.label }}
+              </p>
+              <p class="mt-2 text-3xl font-bold">
+                {{ stat.value }}
+              </p>
+            </div>
+            <div class="rounded-full bg-primary/10 p-3">
+              <Icon
+                :name="stat.icon"
+                class="size-6 text-primary"
+              />
+            </div>
           </div>
-          <div class="rounded-full bg-blue-50 p-3 dark:bg-blue-900/20">
-            <Icon
-              :name="stat.icon"
-              class="h-6 w-6 text-blue-600 dark:text-blue-400"
-            />
+          <div class="mt-4 flex items-center gap-2">
+            <UiBadge :variant="getTrendVariant(stat.trend)" class="gap-1">
+              <Icon :name="getTrendIcon(stat.trend)" class="size-3" />
+              {{ stat.change }}
+            </UiBadge>
+            <span class="text-sm text-muted-foreground">
+              from last month
+            </span>
           </div>
-        </div>
-        <div class="mt-4 flex items-center gap-1">
-          <Icon
-            :name="stat.trend === 'up' ? 'heroicons:arrow-trending-up' : stat.trend === 'down' ? 'heroicons:arrow-trending-down' : 'heroicons:minus'"
-            class="h-4 w-4"
-            :class="stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-neutral-400'"
-          />
-          <span
-            class="text-sm font-medium"
-            :class="stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-neutral-400'"
-          >
-            {{ stat.change }}
-          </span>
-          <span class="text-sm text-neutral-500 dark:text-neutral-400">
-            from last month
-          </span>
-        </div>
-      </div>
+        </UiCardContent>
+      </UiCard>
     </div>
 
     <!-- Content Grid -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Quick Actions -->
-      <div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-        <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Quick Actions
-        </h2>
-        <div class="grid grid-cols-2 gap-3">
-          <NuxtLink
-            v-for="action in quickActions"
-            :key="action.label"
-            :to="action.href"
-            class="flex flex-col items-center gap-2 rounded-lg border border-neutral-200 p-4 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-700"
-          >
-            <Icon
-              :name="action.icon"
-              class="h-8 w-8"
-              :class="action.color === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-600 dark:text-neutral-400'"
-            />
-            <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              {{ action.label }}
-            </span>
-          </NuxtLink>
-        </div>
-      </div>
+      <UiCard>
+        <UiCardHeader>
+          <UiCardTitle>Quick Actions</UiCardTitle>
+        </UiCardHeader>
+        <UiCardContent>
+          <div class="grid grid-cols-2 gap-3">
+            <UiButton
+              v-for="action in quickActions"
+              :key="action.label"
+              :variant="action.variant"
+              as-child
+              class="h-auto flex-col gap-2 py-4"
+            >
+              <NuxtLink :to="action.href">
+                <Icon :name="action.icon" class="size-8" />
+                <span class="text-sm font-medium">
+                  {{ action.label }}
+                </span>
+              </NuxtLink>
+            </UiButton>
+          </div>
+        </UiCardContent>
+      </UiCard>
 
       <!-- Recent Activity -->
-      <div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-        <h2 class="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Recent Activity
-        </h2>
-        <div class="space-y-4">
-          <div
-            v-for="activity in recentActivity"
-            :key="activity.id"
-            class="flex items-start gap-3 border-b border-neutral-200 pb-4 last:border-0 last:pb-0 dark:border-neutral-700"
-          >
-            <div class="rounded-full bg-blue-50 p-2 dark:bg-blue-900/20">
-              <Icon
-                name="heroicons:clock"
-                class="h-4 w-4 text-blue-600 dark:text-blue-400"
-              />
-            </div>
-            <div class="flex-1">
-              <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                {{ activity.action }}
-              </p>
-              <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                {{ activity.title }}
-              </p>
-              <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-500">
-                {{ activity.timestamp }}
-              </p>
+      <UiCard>
+        <UiCardHeader>
+          <UiCardTitle>Recent Activity</UiCardTitle>
+        </UiCardHeader>
+        <UiCardContent>
+          <div class="space-y-4">
+            <div
+              v-for="activity in recentActivity"
+              :key="activity.id"
+              class="flex items-start gap-3 border-b pb-4 last:border-0 last:pb-0"
+            >
+              <div class="rounded-full bg-primary/10 p-2">
+                <Icon
+                  name="heroicons:clock"
+                  class="size-4 text-primary"
+                />
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-medium">
+                  {{ activity.action }}
+                </p>
+                <p class="mt-1 text-sm text-muted-foreground">
+                  {{ activity.title }}
+                </p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                  {{ activity.timestamp }}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </UiCardContent>
+      </UiCard>
     </div>
   </div>
 </template>
