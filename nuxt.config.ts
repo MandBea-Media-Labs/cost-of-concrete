@@ -74,10 +74,6 @@ export default defineNuxtConfig({
 
   components: [
     {
-      path: '~/components/admin-ui',
-      prefix: 'AdminUi',
-    },
-    {
       path: '~/components/ui',
       pathPrefix: false,
     },
