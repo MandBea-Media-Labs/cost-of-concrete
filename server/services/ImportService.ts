@@ -24,6 +24,7 @@ import {
   type ApifyRow,
   type ImportSummary,
   type ImportError,
+  type ProcessBatchResult,
 } from '../schemas/import.schemas'
 
 interface ImportServiceConfig {
@@ -48,19 +49,10 @@ export class ImportService {
   }
 
   /**
-   * Process an Apify JSON import file
+   * Process an Apify JSON import file (synchronous, max 100 rows)
+   * Kept for backward compatibility with existing API
    */
   async processImport(jsonData: unknown): Promise<ImportSummary> {
-    const summary: ImportSummary = {
-      total: 0,
-      imported: 0,
-      updated: 0,
-      skipped: 0,
-      skippedClaimed: 0,
-      pendingImageCount: 0,
-      errors: [],
-    }
-
     // Validate JSON structure
     const parseResult = apifyImportFileSchema.safeParse(jsonData)
     if (!parseResult.success) {
@@ -68,7 +60,6 @@ export class ImportService {
     }
 
     const rows = parseResult.data
-    summary.total = rows.length
 
     // Validate row count
     if (rows.length > MAX_IMPORT_ROWS) {
@@ -77,44 +68,60 @@ export class ImportService {
 
     consola.info(`Starting import of ${rows.length} rows...`)
 
-    // Process each row independently
+    // Use processRows for actual processing
+    const result = await this.processRows(rows, 0)
+
+    const summary: ImportSummary = {
+      total: rows.length,
+      imported: result.imported,
+      updated: result.updated,
+      skipped: result.skipped,
+      skippedClaimed: result.skippedClaimed,
+      pendingImageCount: result.pendingImageCount,
+      errors: result.errors,
+    }
+
+    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected), ${summary.errors.length} errors`)
+    return summary
+  }
+
+  /**
+   * Process a batch of rows (for async batch processing)
+   * Stateless - can be called with any slice of rows
+   *
+   * @param rows - Array of Apify rows to process
+   * @param startIndex - Starting row index (for error reporting)
+   * @returns Batch processing result with counts and errors
+   */
+  async processRows(rows: ApifyRow[], startIndex: number = 0): Promise<ProcessBatchResult> {
+    const result: ProcessBatchResult = {
+      processed: 0,
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      skippedClaimed: 0,
+      pendingImageCount: 0,
+      errors: [],
+    }
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
-      const rowNumber = i + 1
+      const rowNumber = startIndex + i + 1
 
       try {
         consola.debug(`Processing row ${rowNumber}: ${row.title || 'No title'} (placeId: ${row.placeId || 'none'})`)
-        const result = await this.processRow(row, rowNumber, summary)
-        if (result.isNew) {
-          summary.imported++
-        } else if (result.isUpdated) {
-          summary.updated++
+        const rowResult = await this.processRow(row, rowNumber, result)
+        result.processed++
+        if (rowResult.isNew) {
+          result.imported++
+        } else if (rowResult.isUpdated) {
+          result.updated++
         }
-        summary.pendingImageCount += result.pendingImageCount
+        result.pendingImageCount += rowResult.pendingImageCount
       } catch (error: unknown) {
-        // Extract error message from various error types
-        let message = 'Unknown error'
-        if (error instanceof Error) {
-          message = error.message
-        } else if (typeof error === 'object' && error !== null) {
-          // Handle Supabase/Postgres errors which may have different shapes
-          const errObj = error as Record<string, unknown>
-          if (errObj.message) {
-            message = String(errObj.message)
-          } else if (errObj.details) {
-            message = String(errObj.details)
-          } else if (errObj.hint) {
-            message = String(errObj.hint)
-          } else if (errObj.code) {
-            message = `Database error code: ${errObj.code}`
-          } else {
-            message = JSON.stringify(error)
-          }
-        } else if (typeof error === 'string') {
-          message = error
-        }
-
-        summary.errors.push({
+        result.processed++
+        const message = this.extractErrorMessage(error)
+        result.errors.push({
           row: rowNumber,
           placeId: row.placeId || null,
           message,
@@ -124,21 +131,40 @@ export class ImportService {
       }
     }
 
-    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected), ${summary.errors.length} errors`)
-    return summary
+    return result
+  }
+
+  /**
+   * Extract error message from various error types
+   */
+  private extractErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'object' && error !== null) {
+      const errObj = error as Record<string, unknown>
+      if (errObj.message) return String(errObj.message)
+      if (errObj.details) return String(errObj.details)
+      if (errObj.hint) return String(errObj.hint)
+      if (errObj.code) return `Database error code: ${errObj.code}`
+      return JSON.stringify(error)
+    }
+    if (typeof error === 'string') return error
+    return 'Unknown error'
   }
 
   /**
    * Process a single row from the import file
+   * Uses a counter object to track skipped counts
    */
   private async processRow(
     row: ApifyRow,
     rowNumber: number,
-    summary: ImportSummary
+    counters: { skipped: number; skippedClaimed: number }
   ): Promise<{ isNew: boolean; isUpdated: boolean; pendingImageCount: number }> {
     // Skip permanently closed businesses
     if (row.permanentlyClosed) {
-      summary.skipped++
+      counters.skipped++
       if (import.meta.dev) {
         consola.info(`Row ${rowNumber}: Skipped (permanently closed)`)
       }
@@ -151,7 +177,7 @@ export class ImportService {
 
     // Skip claimed contractors to protect owner edits
     if (existing?.is_claimed) {
-      summary.skippedClaimed++
+      counters.skippedClaimed++
       if (import.meta.dev) {
         consola.info(`Row ${rowNumber}: Skipped "${row.title}" (claimed by owner)`)
       }

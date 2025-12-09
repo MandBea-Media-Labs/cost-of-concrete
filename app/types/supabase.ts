@@ -278,6 +278,66 @@ export type Database = {
           },
         ]
       }
+      import_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_count: number
+          errors: Json
+          filename: string | null
+          id: string
+          imported_count: number
+          pending_image_count: number
+          processed_rows: number
+          raw_data: Json
+          skipped_claimed_count: number
+          skipped_count: number
+          started_at: string | null
+          status: string
+          total_rows: number
+          updated_at: string
+          updated_count: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number
+          errors?: Json
+          filename?: string | null
+          id?: string
+          imported_count?: number
+          pending_image_count?: number
+          processed_rows?: number
+          raw_data?: Json
+          skipped_claimed_count?: number
+          skipped_count?: number
+          started_at?: string | null
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          updated_count?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number
+          errors?: Json
+          filename?: string | null
+          id?: string
+          imported_count?: number
+          pending_image_count?: number
+          processed_rows?: number
+          raw_data?: Json
+          skipped_claimed_count?: number
+          skipped_count?: number
+          started_at?: string | null
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          updated_count?: number
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           created_at: string | null

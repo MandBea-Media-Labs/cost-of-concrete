@@ -134,6 +134,95 @@ export interface EnrichmentResponse {
 }
 
 // =====================================================
+// IMPORT JOB TYPES (Batch Processing)
+// =====================================================
+
+import type { Database } from '../../app/types/supabase'
+
+/**
+ * Database row type for import_jobs table
+ */
+export type ImportJobRow = Database['public']['Tables']['import_jobs']['Row']
+export type ImportJobInsert = Database['public']['Tables']['import_jobs']['Insert']
+export type ImportJobUpdate = Database['public']['Tables']['import_jobs']['Update']
+
+/**
+ * Import job status enum
+ */
+export type ImportJobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+
+/**
+ * Schema for creating a new import job
+ */
+export const createImportJobSchema = z.object({
+  filename: z.string().optional(),
+  raw_data: z.array(apifyRowSchema),
+})
+
+export type CreateImportJobInput = z.infer<typeof createImportJobSchema>
+
+/**
+ * Response from processing a batch of rows
+ */
+export interface ProcessBatchResult {
+  processed: number
+  imported: number
+  updated: number
+  skipped: number
+  skippedClaimed: number
+  pendingImageCount: number
+  errors: ImportError[]
+}
+
+/**
+ * API response for batch processing endpoint
+ */
+export interface ProcessBatchResponse {
+  success: boolean
+  jobId: string
+  batch: ProcessBatchResult
+  job: {
+    status: ImportJobStatus
+    totalRows: number
+    processedRows: number
+    isComplete: boolean
+  }
+}
+
+/**
+ * API response for creating an import job
+ */
+export interface CreateImportJobResponse {
+  success: boolean
+  jobId: string
+  totalRows: number
+}
+
+/**
+ * API response for getting job status
+ */
+export interface ImportJobStatusResponse {
+  success: boolean
+  job: {
+    id: string
+    status: ImportJobStatus
+    filename: string | null
+    totalRows: number
+    processedRows: number
+    importedCount: number
+    updatedCount: number
+    skippedCount: number
+    skippedClaimedCount: number
+    errorCount: number
+    pendingImageCount: number
+    errors: ImportError[]
+    createdAt: string
+    startedAt: string | null
+    completedAt: string | null
+  }
+}
+
+// =====================================================
 // CONSTANTS
 // =====================================================
 
@@ -141,4 +230,7 @@ export const MAX_IMPORT_ROWS = 100
 export const MAX_IMAGES_PER_CONTRACTOR = 5
 export const IMAGE_DOWNLOAD_TIMEOUT_MS = 10000
 export const GEOCODING_DELAY_MS = 100
+
+/** Default batch size for processing import jobs */
+export const IMPORT_BATCH_SIZE = 50
 
