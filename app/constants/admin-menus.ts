@@ -39,6 +39,16 @@ export const adminNavMenu: AdminNavMenu[] = [
         icon: 'i-lucide-shield-check',
         link: '/admin/claims',
       },
+      {
+        title: 'Maintenance',
+        icon: 'i-lucide-wrench',
+        children: [
+          { title: 'Contractor Import', link: '/admin/maintenance/import' },
+          { title: 'Contractor Enrichment', link: '/admin/maintenance/contractor-enrichment' },
+          { title: 'Image Enrichment', link: '/admin/maintenance/image-enrichment' },
+          { title: 'Review Enrichment', link: '/admin/maintenance/review-enrichment' },
+        ],
+      },
     ],
   },
 ]
