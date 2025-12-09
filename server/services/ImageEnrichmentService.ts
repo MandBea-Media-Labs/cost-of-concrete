@@ -46,21 +46,26 @@ export class ImageEnrichmentService {
       contractorsRemaining: 0,
     }
 
-    // Fetch contractors with pending images (get batchSize + 1 to check if more remain)
-    const contractors = await this.contractorRepo.findPendingImageProcessing(batchSize + 1)
+    // Get total count of pending contractors first
+    const { count: totalPending } = await this.client
+      .from('contractors')
+      .select('*', { count: 'exact', head: true })
+      .eq('images_processed', false)
+
+    // Fetch contractors with pending images
+    const contractors = await this.contractorRepo.findPendingImageProcessing(batchSize)
 
     if (contractors.length === 0) {
       consola.info('ImageEnrichmentService: No contractors with pending images')
       return summary
     }
 
-    // Check if more contractors remain after this batch
-    const contractorsToProcess = contractors.slice(0, batchSize)
-    summary.contractorsRemaining = Math.max(0, contractors.length - batchSize)
+    // Calculate remaining after this batch
+    summary.contractorsRemaining = Math.max(0, (totalPending || 0) - contractors.length)
 
-    consola.info(`ImageEnrichmentService: Processing ${contractorsToProcess.length} contractors, ${summary.contractorsRemaining} remaining`)
+    consola.info(`ImageEnrichmentService: Processing ${contractors.length} contractors, ${summary.contractorsRemaining} remaining`)
 
-    for (const contractor of contractorsToProcess) {
+    for (const contractor of contractors) {
       try {
         const result = await this.processContractorImages(contractor)
         summary.processedContractors++
