@@ -8,6 +8,7 @@
  * - Sets images_processed = true
  *
  * Called asynchronously via POST /api/contractors/enrich-images
+ * Or via SSE stream at GET /api/contractors/enrich-images/stream
  */
 
 import { consola } from 'consola'
@@ -25,6 +26,60 @@ interface ProcessedImage {
   uploaded_at: string
 }
 
+// =====================================================
+// SSE EVENT TYPES
+// =====================================================
+
+export type EnrichmentEventType =
+  | 'enrichment:start'
+  | 'contractor:start'
+  | 'image:progress'
+  | 'contractor:complete'
+  | 'enrichment:complete'
+
+export interface EnrichmentStartEvent {
+  type: 'enrichment:start'
+  totalContractors: number
+  totalImages: number
+}
+
+export interface ContractorStartEvent {
+  type: 'contractor:start'
+  index: number
+  total: number
+  contractorId: string
+  companyName: string
+  imageCount: number
+}
+
+export interface ImageProgressEvent {
+  type: 'image:progress'
+  imageIndex: number
+  imageCount: number
+  status: 'downloading' | 'uploading' | 'done' | 'failed'
+}
+
+export interface ContractorCompleteEvent {
+  type: 'contractor:complete'
+  index: number
+  imagesSuccess: number
+  imagesFailed: number
+}
+
+export interface EnrichmentCompleteEvent {
+  type: 'enrichment:complete'
+  summary: EnrichmentSummary
+}
+
+export type EnrichmentEvent =
+  | EnrichmentStartEvent
+  | ContractorStartEvent
+  | ImageProgressEvent
+  | ContractorCompleteEvent
+  | EnrichmentCompleteEvent
+
+export type EnrichmentEventCallback = (event: EnrichmentEvent) => void | Promise<void>
+
 export class ImageEnrichmentService {
   private client: SupabaseClient<Database>
   private contractorRepo: ContractorRepository
@@ -37,8 +92,13 @@ export class ImageEnrichmentService {
 
   /**
    * Process all contractors with pending images
+   * @param batchSize Number of contractors to process in this batch
+   * @param onEvent Optional callback for SSE streaming events
    */
-  async processAllPendingImages(batchSize = 10): Promise<EnrichmentSummary> {
+  async processAllPendingImages(
+    batchSize = 10,
+    onEvent?: EnrichmentEventCallback
+  ): Promise<EnrichmentSummary> {
     const summary: EnrichmentSummary = {
       processedContractors: 0,
       totalImages: 0,
@@ -63,21 +123,81 @@ export class ImageEnrichmentService {
     // Calculate remaining after this batch
     summary.contractorsRemaining = Math.max(0, (totalPending || 0) - contractors.length)
 
-    consola.info(`ImageEnrichmentService: Processing ${contractors.length} contractors, ${summary.contractorsRemaining} remaining`)
+    // Calculate total images in this batch
+    const totalImages = contractors.reduce((sum, c) => {
+      const meta = (c.metadata || {}) as ContractorMetadata
+      return sum + (meta.pending_images?.length || 0)
+    }, 0)
 
-    for (const contractor of contractors) {
+    consola.info(`ImageEnrichmentService: Processing ${contractors.length} contractors, ${totalImages} images, ${summary.contractorsRemaining} remaining`)
+
+    // Emit start event
+    if (onEvent) {
+      await onEvent({
+        type: 'enrichment:start',
+        totalContractors: contractors.length,
+        totalImages,
+      })
+    }
+
+    for (let i = 0; i < contractors.length; i++) {
+      const contractor = contractors[i]
+      const meta = (contractor.metadata || {}) as ContractorMetadata
+      const imageCount = meta.pending_images?.length || 0
+
+      // Emit contractor start event
+      if (onEvent) {
+        await onEvent({
+          type: 'contractor:start',
+          index: i + 1,
+          total: contractors.length,
+          contractorId: contractor.id,
+          companyName: contractor.company_name,
+          imageCount,
+        })
+      }
+
       try {
-        const result = await this.processContractorImages(contractor)
+        const result = await this.processContractorImages(contractor, onEvent)
         summary.processedContractors++
         summary.totalImages += result.successCount
         summary.failedImages += result.failedCount
+
+        // Emit contractor complete event
+        if (onEvent) {
+          await onEvent({
+            type: 'contractor:complete',
+            index: i + 1,
+            imagesSuccess: result.successCount,
+            imagesFailed: result.failedCount,
+          })
+        }
       } catch (error) {
         consola.error(`ImageEnrichmentService: Failed to process contractor ${contractor.id}`, error)
         summary.failedImages++
+
+        // Emit contractor complete with failure
+        if (onEvent) {
+          await onEvent({
+            type: 'contractor:complete',
+            index: i + 1,
+            imagesSuccess: 0,
+            imagesFailed: imageCount,
+          })
+        }
       }
     }
 
     consola.success(`ImageEnrichmentService: Processed ${summary.processedContractors} contractors, ${summary.totalImages} images, ${summary.failedImages} failed`)
+
+    // Emit complete event
+    if (onEvent) {
+      await onEvent({
+        type: 'enrichment:complete',
+        summary,
+      })
+    }
+
     return summary
   }
 
@@ -85,7 +205,8 @@ export class ImageEnrichmentService {
    * Process images for a single contractor
    */
   private async processContractorImages(
-    contractor: Database['public']['Tables']['contractors']['Row']
+    contractor: Database['public']['Tables']['contractors']['Row'],
+    onEvent?: EnrichmentEventCallback
   ): Promise<{ successCount: number; failedCount: number }> {
     const metadata = (contractor.metadata || {}) as ContractorMetadata
     const pendingImages = metadata.pending_images || []
@@ -98,14 +219,34 @@ export class ImageEnrichmentService {
 
     const processedImages: ProcessedImage[] = []
     let failedCount = 0
+    const imageCount = pendingImages.length
 
     for (let i = 0; i < pendingImages.length; i++) {
       const imageUrl = pendingImages[i]
 
+      // Emit downloading event
+      if (onEvent) {
+        await onEvent({
+          type: 'image:progress',
+          imageIndex: i + 1,
+          imageCount,
+          status: 'downloading',
+        })
+      }
+
       try {
         const storagePath = await this.downloadAndUploadImage(
           imageUrl,
-          contractor.google_place_id || contractor.id
+          contractor.google_place_id || contractor.id,
+          onEvent ? async () => {
+            // Emit uploading event
+            await onEvent({
+              type: 'image:progress',
+              imageIndex: i + 1,
+              imageCount,
+              status: 'uploading',
+            })
+          } : undefined
         )
 
         if (storagePath) {
@@ -116,12 +257,38 @@ export class ImageEnrichmentService {
             is_primary: i === 0,
             uploaded_at: new Date().toISOString(),
           })
+
+          // Emit done event
+          if (onEvent) {
+            await onEvent({
+              type: 'image:progress',
+              imageIndex: i + 1,
+              imageCount,
+              status: 'done',
+            })
+          }
         } else {
           failedCount++
+          if (onEvent) {
+            await onEvent({
+              type: 'image:progress',
+              imageIndex: i + 1,
+              imageCount,
+              status: 'failed',
+            })
+          }
         }
       } catch (error) {
         consola.warn(`ImageEnrichmentService: Failed to process image ${imageUrl}`, error)
         failedCount++
+        if (onEvent) {
+          await onEvent({
+            type: 'image:progress',
+            imageIndex: i + 1,
+            imageCount,
+            status: 'failed',
+          })
+        }
       }
     }
 
@@ -133,10 +300,12 @@ export class ImageEnrichmentService {
 
   /**
    * Download image from URL and upload to Supabase Storage
+   * @param onUploadStart Optional callback called just before uploading
    */
   private async downloadAndUploadImage(
     imageUrl: string,
-    placeId: string
+    placeId: string,
+    onUploadStart?: () => Promise<void>
   ): Promise<string | null> {
     try {
       // Download with timeout
@@ -160,6 +329,11 @@ export class ImageEnrichmentService {
       // Generate hash for filename
       const hash = createHash('md5').update(Buffer.from(buffer)).digest('hex').slice(0, 12)
       const storagePath = `${placeId}/${hash}.${extension}`
+
+      // Notify we're about to upload
+      if (onUploadStart) {
+        await onUploadStart()
+      }
 
       // Upload to Supabase Storage
       const { error } = await this.client.storage
