@@ -5,6 +5,7 @@
  * List and manage background jobs with filtering, progress tracking,
  * and actions for cancel/retry.
  */
+import { toast } from 'vue-sonner'
 
 definePageMeta({
   layout: 'admin',
@@ -47,17 +48,20 @@ interface ApiResponse {
 // STATE
 // =====================================================
 
+const route = useRoute()
+const router = useRouter()
+
 const isLoading = ref(true)
 const jobs = ref<Job[]>([])
-const pagination = ref({ total: 0, page: 1, limit: 20, totalPages: 1 })
+const pagination = ref({ total: 0, page: 1, limit: 25, totalPages: 1 })
 const errorMessage = ref<string | null>(null)
 
-// Filters
-const statusFilter = ref<string>('all')
-const jobTypeFilter = ref<string>('all')
+// Rows per page options
+const rowsPerPageOptions = [10, 25, 50, 100]
+const rowsPerPage = ref<string>('25')
 
 // =====================================================
-// COMPUTED
+// FILTER OPTIONS
 // =====================================================
 
 const statusOptions = [
@@ -74,6 +78,44 @@ const jobTypeOptions = [
   { label: 'Image Enrichment', value: 'image_enrichment' },
 ]
 
+// Quick filter options
+const quickFilterOptions = [
+  { value: 'pending', label: 'Pending', icon: 'heroicons:clock' },
+  { value: 'processing', label: 'Processing', icon: 'heroicons:arrow-path' },
+  { value: 'failed', label: 'Failed', icon: 'heroicons:x-circle' },
+]
+
+// =====================================================
+// URL-SYNCED FILTERS
+// =====================================================
+
+const getInitialStatus = (): string => {
+  const urlStatus = route.query.status as string | undefined
+  if (urlStatus && ['pending', 'processing', 'completed', 'failed', 'cancelled'].includes(urlStatus)) {
+    return urlStatus
+  }
+  return 'all'
+}
+
+const getInitialType = (): string => {
+  const urlType = route.query.type as string | undefined
+  if (urlType && ['image_enrichment'].includes(urlType)) {
+    return urlType
+  }
+  return 'all'
+}
+
+const selectedStatus = ref<string>(getInitialStatus())
+const selectedType = ref<string>(getInitialType())
+
+// =====================================================
+// COMPUTED
+// =====================================================
+
+const hasActiveFilters = computed(() => {
+  return selectedStatus.value !== 'all' || selectedType.value !== 'all'
+})
+
 // =====================================================
 // METHODS
 // =====================================================
@@ -87,8 +129,8 @@ const fetchJobs = async () => {
       limit: pagination.value.limit,
       offset: (pagination.value.page - 1) * pagination.value.limit,
     }
-    if (statusFilter.value && statusFilter.value !== 'all') query.status = statusFilter.value
-    if (jobTypeFilter.value && jobTypeFilter.value !== 'all') query.jobType = jobTypeFilter.value
+    if (selectedStatus.value !== 'all') query.status = selectedStatus.value
+    if (selectedType.value !== 'all') query.jobType = selectedType.value
 
     const response = await $fetch<ApiResponse>('/api/jobs', { query })
     jobs.value = response.data
@@ -103,8 +145,10 @@ const fetchJobs = async () => {
 const handleCancel = async (jobId: string) => {
   try {
     await $fetch(`/api/jobs/${jobId}/cancel`, { method: 'POST' })
+    toast.success('Job cancelled')
     await fetchJobs()
   } catch (error) {
+    toast.error('Failed to cancel job')
     errorMessage.value = error instanceof Error ? error.message : 'Failed to cancel job'
   }
 }
@@ -112,8 +156,10 @@ const handleCancel = async (jobId: string) => {
 const handleRetry = async (jobId: string) => {
   try {
     await $fetch(`/api/jobs/${jobId}/retry`, { method: 'POST' })
+    toast.success('Job queued for retry')
     await fetchJobs()
   } catch (error) {
+    toast.error('Failed to retry job')
     errorMessage.value = error instanceof Error ? error.message : 'Failed to retry job'
   }
 }
@@ -143,15 +189,66 @@ const getProgressPercent = (job: Job) => {
   return Math.round((job.processedItems / job.totalItems) * 100)
 }
 
-const handlePageChange = (page: number) => {
-  pagination.value.page = page
-  fetchJobs()
+const navigateToJob = (jobId: string) => {
+  router.push(`/admin/maintenance/jobs/${jobId}`)
 }
 
-// Watch filters
-watch([statusFilter, jobTypeFilter], () => {
+const getJobActions = (job: Job) => {
+  const actions = [
+    {
+      label: 'View',
+      icon: 'heroicons:eye',
+      onClick: () => navigateToJob(job.id),
+    },
+  ]
+
+  if (job.status === 'pending') {
+    actions.push({
+      label: 'Cancel',
+      icon: 'heroicons:x-mark',
+      onClick: () => handleCancel(job.id),
+    })
+  }
+
+  if (job.status === 'failed') {
+    actions.push({
+      label: 'Retry',
+      icon: 'heroicons:arrow-path',
+      onClick: () => handleRetry(job.id),
+    })
+  }
+
+  return actions
+}
+
+const handlePageChange = async (page: number) => {
+  pagination.value.page = page
+  await fetchJobs()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleRowsPerPageChange = async (value: string) => {
+  pagination.value.limit = Number.parseInt(value, 10)
   pagination.value.page = 1
-  fetchJobs()
+  await fetchJobs()
+}
+
+const clearFilters = () => {
+  selectedStatus.value = 'all'
+  selectedType.value = 'all'
+}
+
+// Watch filters and sync to URL
+watch([selectedStatus, selectedType], async () => {
+  pagination.value.page = 1
+
+  // Update URL query params
+  const query: Record<string, string> = {}
+  if (selectedStatus.value !== 'all') query.status = selectedStatus.value
+  if (selectedType.value !== 'all') query.type = selectedType.value
+  router.replace({ query })
+
+  await fetchJobs()
 })
 
 // Initial fetch
@@ -171,8 +268,96 @@ onMounted(() => {
             Monitor and manage background processing jobs
           </p>
         </div>
-        <UiButton variant="ghost" size="sm" :disabled="isLoading" @click="fetchJobs">
+        <UiButton variant="outline" size="sm" :disabled="isLoading" @click="fetchJobs">
           <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
+          Refresh
+        </UiButton>
+      </div>
+
+      <!-- Quick Filters -->
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <span class="text-sm text-muted-foreground">Quick Filters:</span>
+        <UiButton
+          v-for="option in quickFilterOptions"
+          :key="option.value"
+          :variant="selectedStatus === option.value ? 'default' : 'outline'"
+          size="sm"
+          class="h-7 rounded-full px-3"
+          @click="selectedStatus = option.value"
+        >
+          <Icon v-if="option.icon" :name="option.icon" class="size-3.5" />
+          {{ option.label }}
+        </UiButton>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <!-- Status Filter -->
+        <UiPopover>
+          <UiPopoverTrigger as-child>
+            <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+              <Icon name="heroicons:check-circle" class="size-4" />
+              Status
+              <UiBadge v-if="selectedStatus !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+                {{ statusOptions.find(o => o.value === selectedStatus)?.label }}
+              </UiBadge>
+              <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+            </UiButton>
+          </UiPopoverTrigger>
+          <UiPopoverContent class="w-48 p-1" align="start">
+            <div class="flex flex-col">
+              <button
+                v-for="option in statusOptions"
+                :key="option.value"
+                class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                :class="{ 'bg-accent': selectedStatus === option.value }"
+                @click="selectedStatus = option.value"
+              >
+                {{ option.label }}
+                <Icon v-if="selectedStatus === option.value" name="heroicons:check" class="size-4" />
+              </button>
+            </div>
+          </UiPopoverContent>
+        </UiPopover>
+
+        <!-- Job Type Filter -->
+        <UiPopover>
+          <UiPopoverTrigger as-child>
+            <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+              <Icon name="heroicons:cog-6-tooth" class="size-4" />
+              Type
+              <UiBadge v-if="selectedType !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+                {{ jobTypeOptions.find(o => o.value === selectedType)?.label }}
+              </UiBadge>
+              <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+            </UiButton>
+          </UiPopoverTrigger>
+          <UiPopoverContent class="w-48 p-1" align="start">
+            <div class="flex flex-col">
+              <button
+                v-for="option in jobTypeOptions"
+                :key="option.value"
+                class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                :class="{ 'bg-accent': selectedType === option.value }"
+                @click="selectedType = option.value"
+              >
+                {{ option.label }}
+                <Icon v-if="selectedType === option.value" name="heroicons:check" class="size-4" />
+              </button>
+            </div>
+          </UiPopoverContent>
+        </UiPopover>
+
+        <!-- Clear Filters -->
+        <UiButton
+          v-if="hasActiveFilters"
+          variant="ghost"
+          size="sm"
+          class="h-9 text-muted-foreground"
+          @click="clearFilters"
+        >
+          <Icon name="heroicons:x-mark" class="size-4" />
+          Clear filters
         </UiButton>
       </div>
     </div>
@@ -184,132 +369,154 @@ onMounted(() => {
       <UiAlertDescription>{{ errorMessage }}</UiAlertDescription>
     </UiAlert>
 
-    <!-- Filters -->
-    <UiCard class="mb-6">
-      <UiCardContent class="flex flex-wrap gap-4 pt-6">
-        <div class="w-48">
-          <UiSelect v-model="statusFilter">
-            <UiSelectTrigger>
-              <UiSelectValue placeholder="Filter by status" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
-        </div>
-        <div class="w-48">
-          <UiSelect v-model="jobTypeFilter">
-            <UiSelectTrigger>
-              <UiSelectValue placeholder="Filter by type" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem v-for="opt in jobTypeOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
-        </div>
-      </UiCardContent>
-    </UiCard>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center py-12">
+      <div class="flex flex-col items-center gap-3">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
+        <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading jobs...</p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center py-12 px-4">
+      <Icon name="heroicons:queue-list" class="h-16 w-16 text-neutral-300 dark:text-neutral-600 mb-4" />
+      <h3 class="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-2">No jobs found</h3>
+      <p class="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-md">
+        No jobs match your current filters. Try adjusting your search or filters, or queue a new job from the maintenance pages.
+      </p>
+    </div>
 
     <!-- Jobs Table -->
-    <UiCard>
-      <UiTable>
-        <UiTableHeader>
-          <UiTableRow>
-            <UiTableHead>Type</UiTableHead>
-            <UiTableHead>Status</UiTableHead>
-            <UiTableHead>Progress</UiTableHead>
-            <UiTableHead>Created</UiTableHead>
-            <UiTableHead class="text-right">Actions</UiTableHead>
-          </UiTableRow>
-        </UiTableHeader>
-        <UiTableBody>
-          <!-- Loading State -->
-          <UiTableRow v-if="isLoading">
-            <UiTableCell colspan="5" class="text-center py-8">
-              <Icon name="heroicons:arrow-path" class="size-5 animate-spin text-muted-foreground" />
-            </UiTableCell>
-          </UiTableRow>
+    <div v-else class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
+      <table class="w-full">
+        <!-- Table Header -->
+        <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Type</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden md:table-cell">Progress</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden lg:table-cell">Created</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
 
-          <!-- Empty State -->
-          <UiTableRow v-else-if="jobs.length === 0">
-            <UiTableCell colspan="5" class="text-center py-8 text-muted-foreground">
-              No jobs found
-            </UiTableCell>
-          </UiTableRow>
-
-          <!-- Job Rows -->
-          <UiTableRow v-for="job in jobs" v-else :key="job.id">
-            <UiTableCell>
-              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="font-medium hover:underline">
+        <!-- Table Body -->
+        <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
+          <tr v-for="job in jobs" :key="job.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors group">
+            <!-- Type -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="text-sm font-medium text-neutral-900 dark:text-neutral-100 hover:underline">
                 {{ formatJobType(job.jobType) }}
               </NuxtLink>
-            </UiTableCell>
-            <UiTableCell>
+            </td>
+
+            <!-- Status -->
+            <td class="px-6 py-4 whitespace-nowrap">
               <UiBadge :variant="getStatusVariant(job.status)">
                 <Icon v-if="job.status === 'processing'" name="heroicons:arrow-path" class="mr-1 size-3 animate-spin" />
                 {{ job.status }}
               </UiBadge>
-            </UiTableCell>
-            <UiTableCell>
+            </td>
+
+            <!-- Progress -->
+            <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
               <div v-if="job.status === 'processing' && job.totalItems" class="w-32">
-                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
                   <span>{{ job.processedItems }}/{{ job.totalItems }}</span>
-                  <span v-if="job.failedItems > 0" class="text-destructive">({{ job.failedItems }} failed)</span>
+                  <span v-if="job.failedItems > 0" class="text-red-500">({{ job.failedItems }} failed)</span>
                 </div>
                 <UiProgress :model-value="getProgressPercent(job)" class="mt-1 h-1.5" />
               </div>
-              <span v-else-if="job.status === 'completed'" class="text-sm text-muted-foreground">
+              <span v-else-if="job.status === 'completed'" class="text-sm text-neutral-600 dark:text-neutral-400">
                 {{ job.processedItems }} items
               </span>
-              <span v-else class="text-sm text-muted-foreground">-</span>
-            </UiTableCell>
-            <UiTableCell class="text-sm text-muted-foreground">
-              {{ formatDate(job.createdAt) }}
-            </UiTableCell>
-            <UiTableCell class="text-right">
-              <div class="flex justify-end gap-2">
-                <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`">
-                  <UiButton variant="ghost" size="sm">
-                    <Icon name="heroicons:eye" class="size-4" />
-                  </UiButton>
-                </NuxtLink>
-                <UiButton
-                  v-if="job.status === 'pending'"
-                  variant="ghost"
-                  size="sm"
-                  @click="handleCancel(job.id)"
-                >
-                  <Icon name="heroicons:x-mark" class="size-4" />
-                </UiButton>
-                <UiButton
-                  v-if="job.status === 'failed'"
-                  variant="ghost"
-                  size="sm"
-                  @click="handleRetry(job.id)"
-                >
-                  <Icon name="heroicons:arrow-path" class="size-4" />
-                </UiButton>
-              </div>
-            </UiTableCell>
-          </UiTableRow>
-        </UiTableBody>
-      </UiTable>
-    </UiCard>
+              <span v-else class="text-sm text-neutral-500 dark:text-neutral-500">-</span>
+            </td>
 
-    <!-- Pagination -->
-    <div v-if="pagination.totalPages > 1" class="mt-4 flex justify-center">
-      <UiPagination
-        :page="pagination.page"
-        :total="pagination.total"
-        :items-per-page="pagination.limit"
-        :sibling-count="1"
-        show-edges
-        @update:page="handlePageChange"
-      />
+            <!-- Created -->
+            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+              <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ formatDate(job.createdAt) }}</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4">
+              <TableActionsMenu
+                :actions="getJobActions(job)"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div v-if="!isLoading && jobs.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-4">
+      <!-- Results Summary -->
+      <div class="text-sm text-muted-foreground">
+        Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
+        {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
+        {{ pagination.total }} jobs
+      </div>
+
+      <!-- Rows per page + Pagination -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">Rows per page</span>
+          <UiSelect v-model="rowsPerPage" @update:model-value="handleRowsPerPageChange">
+            <UiSelectTrigger class="h-8 w-16">
+              <UiSelectValue />
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem v-for="opt in rowsPerPageOptions" :key="opt" :value="opt.toString()">
+                {{ opt }}
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
+        </div>
+
+        <div class="flex items-center gap-1 text-sm text-muted-foreground">
+          Page {{ pagination.page }} of {{ pagination.totalPages }}
+        </div>
+
+        <div class="flex items-center gap-1">
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page <= 1"
+            @click="handlePageChange(1)"
+          >
+            <Icon name="heroicons:chevron-double-left" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page <= 1"
+            @click="handlePageChange(pagination.page - 1)"
+          >
+            <Icon name="heroicons:chevron-left" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page >= pagination.totalPages"
+            @click="handlePageChange(pagination.page + 1)"
+          >
+            <Icon name="heroicons:chevron-right" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page >= pagination.totalPages"
+            @click="handlePageChange(pagination.totalPages)"
+          >
+            <Icon name="heroicons:chevron-double-right" class="size-4" />
+          </UiButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>
