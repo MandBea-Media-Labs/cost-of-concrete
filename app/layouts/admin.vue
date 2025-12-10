@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Admin Layout (New)
+ * Admin Layout
  *
  * shadcn-based admin layout with SidebarProvider pattern.
  * Features:
@@ -9,6 +9,9 @@
  * - Dark mode support via CSS custom properties
  * - Breadcrumbs
  * - Toast notifications via Sonner
+ *
+ * NOTE: SSR is disabled for all /admin/** routes via nuxt.config.ts routeRules.
+ * This eliminates hydration issues since the page is rendered client-side only.
  */
 </script>
 

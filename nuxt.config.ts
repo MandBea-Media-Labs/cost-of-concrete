@@ -16,7 +16,7 @@ export default defineNuxtConfig({
     'reka-ui/nuxt',
     '@nuxtjs/color-mode',
     '@nuxtjs/supabase',
-    '@nuxt/hints',
+    // '@nuxt/hints', // Disabled: causes false positive hydration warnings with ssr:false routes
     'shadcn-nuxt',
   ],
 
@@ -108,6 +108,11 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true,
     },
+  },
+
+  // Route rules - disable SSR for admin routes (no SEO needed, prevents hydration issues)
+  routeRules: {
+    '/admin/**': { ssr: false },
   },
 
   robots: {
