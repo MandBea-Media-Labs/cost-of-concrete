@@ -20,9 +20,12 @@ import { requireAdmin } from '../../utils/auth'
 import type { Database } from '../../../app/types/supabase'
 import { z } from 'zod'
 
+// Valid claim statuses matching database constraint
+const CLAIM_STATUSES = ['unverified', 'pending', 'approved', 'rejected', 'completed'] as const
+
 // Query schema
 const listClaimsQuerySchema = z.object({
-  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  status: z.enum([...CLAIM_STATUSES, 'all']).optional().default('pending'),
   search: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
   offset: z.coerce.number().int().min(0).optional().default(0),
@@ -64,8 +67,8 @@ export default defineEventHandler(async (event) => {
         )
       `, { count: 'exact' })
 
-    // Apply status filter
-    if (validatedQuery.status) {
+    // Apply status filter (default is 'pending', 'all' shows everything)
+    if (validatedQuery.status && validatedQuery.status !== 'all') {
       dbQuery = dbQuery.eq('status', validatedQuery.status)
     }
 

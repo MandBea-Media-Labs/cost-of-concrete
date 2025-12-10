@@ -2,6 +2,7 @@
 import { consola } from 'consola'
 import { toast } from 'vue-sonner'
 import type { AdminClaimsFilters, ClaimWithContractor } from '~/composables/useAdminClaims'
+import type { ClaimStatus } from '~/types/claims'
 
 // Page metadata
 definePageMeta({
@@ -9,27 +10,32 @@ definePageMeta({
 })
 
 // Use admin claims composable
-const { claims, pagination, pending, error, fetchClaims, updateClaimStatus } = useAdminClaims()
+const { claims, pagination, pending, error, fetchClaims, updateClaimStatus, resendActivationEmail } = useAdminClaims()
 
 // Get route for reading query params
 const route = useRoute()
 const router = useRouter()
 
-// Status filter options
+// Valid claim statuses
+const VALID_STATUSES: ClaimStatus[] = ['unverified', 'pending', 'approved', 'rejected', 'completed']
+
+// Status filter options - all 5 statuses plus 'all'
 const statusOptions = [
   { value: 'all', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'unverified', label: 'Unverified' },
+  { value: 'pending', label: 'Pending Review' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'completed', label: 'Completed' },
 ]
 
 // Initialize from URL query params
 const getInitialStatus = (): string => {
   const urlStatus = route.query.status as string | undefined
-  if (urlStatus && ['pending', 'approved', 'rejected'].includes(urlStatus)) {
+  if (urlStatus && VALID_STATUSES.includes(urlStatus as ClaimStatus)) {
     return urlStatus
   }
-  return 'pending' // Default to pending for claims
+  return 'pending' // Default to pending (verified claims awaiting review)
 }
 
 const getInitialSearch = (): string => {
@@ -43,7 +49,7 @@ const searchQuery = ref<string>(getInitialSearch())
 // Filter state - initialized from URL
 const initialSearch = searchQuery.value ?? ''
 const filters = ref<AdminClaimsFilters>({
-  status: selectedStatus.value === 'all' ? null : selectedStatus.value as 'pending' | 'approved' | 'rejected',
+  status: selectedStatus.value === 'all' ? 'all' : selectedStatus.value as ClaimStatus,
   search: initialSearch.trim().length > 0 ? initialSearch : null,
   page: 1,
   limit: 20,
@@ -59,13 +65,13 @@ onMounted(async () => {
 // Watch for filter changes and sync URL
 watch([selectedStatus, searchQuery], async () => {
   const searchValue = searchQuery.value ?? ''
-  filters.value.status = selectedStatus.value === 'all' ? null : selectedStatus.value as 'pending' | 'approved' | 'rejected'
+  filters.value.status = selectedStatus.value === 'all' ? 'all' : selectedStatus.value as ClaimStatus
   filters.value.search = searchValue.trim().length > 0 ? searchValue : null
   filters.value.page = 1
 
   // Update URL query params
   const query: Record<string, string> = {}
-  if (selectedStatus.value !== 'all') {
+  if (selectedStatus.value !== 'pending') {
     query.status = selectedStatus.value
   }
   if (searchValue.trim()) {
@@ -151,6 +157,30 @@ const cancelDialog = () => {
   rejectNotes.value = ''
 }
 
+// Resend activation email handler
+const resendingActivation = ref<string | null>(null)
+
+const handleResendActivation = async (claim: ClaimWithContractor) => {
+  resendingActivation.value = claim.id
+  const success = await resendActivationEmail(claim.id)
+
+  if (success) {
+    toast.success('Activation email resent successfully')
+    if (import.meta.dev) {
+      consola.success('Activation email resent for claim:', claim.id)
+    }
+  } else {
+    toast.error('Failed to resend activation email')
+  }
+
+  resendingActivation.value = null
+}
+
+// Check if claim can have activation resent (approved but not activated)
+const canResendActivation = (claim: ClaimWithContractor): boolean => {
+  return claim.status === 'approved' && !claim.account_activated_at
+}
+
 // Format date helper
 const formatDate = (date: string | null) => {
   if (!date) return '-'
@@ -163,17 +193,39 @@ const formatDate = (date: string | null) => {
   })
 }
 
-// Status badge styling
+// Status badge styling with all 5 statuses
 const getStatusClasses = (status: string) => {
   switch (status) {
+    case 'unverified':
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
     case 'pending':
       return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
     case 'approved':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
     case 'rejected':
       return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    case 'completed':
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
     default:
       return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300'
+  }
+}
+
+// Get human-readable status label
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'unverified':
+      return 'Awaiting Verification'
+    case 'pending':
+      return 'Pending Review'
+    case 'approved':
+      return 'Approved'
+    case 'rejected':
+      return 'Rejected'
+    case 'completed':
+      return 'Completed'
+    default:
+      return status
   }
 }
 </script>
@@ -263,12 +315,27 @@ const getStatusClasses = (status: string) => {
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <!-- Claim Info -->
             <div class="flex-1">
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-2">
                 <h3 class="text-lg font-semibold text-foreground">
                   {{ claim.contractor?.company_name || 'Unknown Business' }}
                 </h3>
-                <UiBadge :variant="claim.status === 'approved' ? 'default' : claim.status === 'rejected' ? 'destructive' : 'secondary'">
-                  {{ claim.status }}
+                <!-- Status Badge -->
+                <span :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', getStatusClasses(claim.status)]">
+                  {{ getStatusLabel(claim.status) }}
+                </span>
+                <!-- Email Verified Indicator -->
+                <UiBadge v-if="claim.email_verified_at" variant="outline" class="text-xs">
+                  <Icon name="heroicons:envelope-open" class="mr-1 size-3" />
+                  Email Verified
+                </UiBadge>
+                <!-- Activation Status for approved claims -->
+                <UiBadge v-if="claim.status === 'approved' && !claim.account_activated_at" variant="secondary" class="text-xs">
+                  <Icon name="heroicons:clock" class="mr-1 size-3" />
+                  Awaiting Activation
+                </UiBadge>
+                <UiBadge v-else-if="claim.status === 'completed' || claim.account_activated_at" variant="default" class="text-xs">
+                  <Icon name="heroicons:check-badge" class="mr-1 size-3" />
+                  Account Active
                 </UiBadge>
               </div>
 
@@ -283,6 +350,16 @@ const getStatusClasses = (status: string) => {
                     <Icon name="heroicons:check-circle" class="mr-0.5 size-3" /> Match
                   </UiBadge>
                 </p>
+                <!-- Show verification/activation timeline -->
+                <p v-if="claim.email_verified_at">
+                  <span class="font-medium">Verified:</span> {{ formatDate(claim.email_verified_at) }}
+                </p>
+                <p v-if="claim.reviewed_at">
+                  <span class="font-medium">Reviewed:</span> {{ formatDate(claim.reviewed_at) }}
+                </p>
+                <p v-if="claim.account_activated_at">
+                  <span class="font-medium">Activated:</span> {{ formatDate(claim.account_activated_at) }}
+                </p>
                 <p v-if="claim.admin_notes" class="mt-2 rounded bg-muted p-2">
                   <span class="font-medium">Admin Notes:</span> {{ claim.admin_notes }}
                 </p>
@@ -290,18 +367,39 @@ const getStatusClasses = (status: string) => {
             </div>
 
             <!-- Actions -->
-            <div v-if="claim.status === 'pending'" class="flex gap-2 sm:flex-col">
-              <UiButton size="sm" @click="handleApprove(claim)">
-                <Icon name="heroicons:check" class="size-4 mr-1" />
-                Approve
-              </UiButton>
-              <UiButton variant="outline" size="sm" @click="handleReject(claim)">
-                <Icon name="heroicons:x-mark" class="size-4 mr-1" />
-                Reject
-              </UiButton>
-            </div>
-            <div v-else class="text-sm text-muted-foreground">
-              <p>Reviewed: {{ formatDate(claim.reviewed_at) }}</p>
+            <div class="flex gap-2 sm:flex-col">
+              <!-- Pending claims: Approve/Reject -->
+              <template v-if="claim.status === 'pending'">
+                <UiButton size="sm" @click="handleApprove(claim)">
+                  <Icon name="heroicons:check" class="size-4 mr-1" />
+                  Approve
+                </UiButton>
+                <UiButton variant="outline" size="sm" @click="handleReject(claim)">
+                  <Icon name="heroicons:x-mark" class="size-4 mr-1" />
+                  Reject
+                </UiButton>
+              </template>
+              <!-- Approved but not activated: Resend Activation -->
+              <template v-else-if="canResendActivation(claim)">
+                <UiButton
+                  variant="outline"
+                  size="sm"
+                  :disabled="resendingActivation === claim.id"
+                  @click="handleResendActivation(claim)"
+                >
+                  <UiSpinner v-if="resendingActivation === claim.id" class="size-4 mr-1" />
+                  <Icon v-else name="heroicons:paper-airplane" class="size-4 mr-1" />
+                  Resend Activation
+                </UiButton>
+              </template>
+              <!-- Other statuses: Show info -->
+              <template v-else>
+                <div class="text-sm text-muted-foreground text-right">
+                  <p v-if="claim.status === 'rejected'">Rejected</p>
+                  <p v-else-if="claim.status === 'completed'">Account activated</p>
+                  <p v-else-if="claim.status === 'unverified'">Awaiting email verification</p>
+                </div>
+              </template>
             </div>
           </div>
         </UiCardContent>
@@ -328,7 +426,7 @@ const getStatusClasses = (status: string) => {
     </div>
 
     <!-- Approve Confirmation Dialog -->
-    <UiAlertDialog :open="showApproveDialog" @update:open="(val) => !val && cancelDialog()">
+    <UiAlertDialog :open="showApproveDialog" @update:open="showApproveDialog = $event">
       <UiAlertDialogContent>
         <UiAlertDialogHeader>
           <UiAlertDialogTitle>Approve Claim</UiAlertDialogTitle>
@@ -337,14 +435,14 @@ const getStatusClasses = (status: string) => {
           </UiAlertDialogDescription>
         </UiAlertDialogHeader>
         <UiAlertDialogFooter>
-          <UiAlertDialogCancel :disabled="processing" @click="cancelDialog">Cancel</UiAlertDialogCancel>
-          <UiAlertDialogAction :disabled="processing" @click="confirmApprove">Approve</UiAlertDialogAction>
+          <UiAlertDialogCancel @click="cancelDialog">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction @click="confirmApprove">Approve</UiAlertDialogAction>
         </UiAlertDialogFooter>
       </UiAlertDialogContent>
     </UiAlertDialog>
 
     <!-- Reject Confirmation Dialog -->
-    <UiAlertDialog :open="showRejectDialog" @update:open="(val) => !val && cancelDialog()">
+    <UiAlertDialog :open="showRejectDialog" @update:open="showRejectDialog = $event">
       <UiAlertDialogContent>
         <UiAlertDialogHeader>
           <UiAlertDialogTitle>Reject Claim</UiAlertDialogTitle>
@@ -363,8 +461,8 @@ const getStatusClasses = (status: string) => {
           />
         </div>
         <UiAlertDialogFooter>
-          <UiAlertDialogCancel :disabled="processing" @click="cancelDialog">Cancel</UiAlertDialogCancel>
-          <UiAlertDialogAction variant="destructive" :disabled="processing" @click="confirmReject">Reject</UiAlertDialogAction>
+          <UiAlertDialogCancel @click="cancelDialog">Cancel</UiAlertDialogCancel>
+          <UiAlertDialogAction variant="destructive" @click="confirmReject">Reject</UiAlertDialogAction>
         </UiAlertDialogFooter>
       </UiAlertDialogContent>
     </UiAlertDialog>

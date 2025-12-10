@@ -1,4 +1,5 @@
 import type { Database } from '~/types/supabase'
+import type { ClaimStatus } from '~/types/claims'
 
 type BusinessClaim = Database['public']['Tables']['business_claims']['Row']
 type Contractor = Database['public']['Tables']['contractors']['Row']
@@ -9,8 +10,8 @@ export interface ClaimWithContractor extends BusinessClaim {
 }
 
 export interface AdminClaimsFilters {
-  /** Filter by claim status */
-  status?: 'pending' | 'approved' | 'rejected' | null
+  /** Filter by claim status (all 5 statuses or 'all' for no filter) */
+  status?: ClaimStatus | 'all' | null
   /** Search by claimant name or email */
   search?: string | null
   /** Current page number (1-based) */
@@ -118,6 +119,22 @@ export function useAdminClaims() {
   }
 
   /**
+   * Resend activation email for an approved claim
+   */
+  const resendActivationEmail = async (claimId: string): Promise<boolean> => {
+    try {
+      await $fetch(`/api/claims/${claimId}/resend-activation`, {
+        method: 'POST',
+      })
+      return true
+    } catch (err) {
+      error.value = err as Error
+      console.error('Error resending activation email:', err)
+      return false
+    }
+  }
+
+  /**
    * Refresh the current claims list
    */
   const refresh = async (filters: AdminClaimsFilters = {}) => {
@@ -131,6 +148,7 @@ export function useAdminClaims() {
     error: readonly(error),
     fetchClaims,
     updateClaimStatus,
+    resendActivationEmail,
     refresh,
   }
 }

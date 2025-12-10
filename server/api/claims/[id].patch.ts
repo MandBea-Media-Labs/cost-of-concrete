@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Check claim is still pending
+    // Check claim is still pending (must be email-verified to be reviewable)
     if (existingClaim.status !== 'pending') {
       throw createError({
         statusCode: 400,
@@ -86,16 +86,33 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Prepare update payload
+    const now = new Date()
+    const updatePayload: Record<string, unknown> = {
+      status: validatedData.status,
+      admin_notes: validatedData.adminNotes || null,
+      reviewed_by: adminUserId,
+      reviewed_at: now.toISOString(),
+      updated_at: now.toISOString(),
+    }
+
+    // If approving, generate activation token with 7-day expiry
+    let activationToken: string | null = null
+    if (validatedData.status === 'approved') {
+      activationToken = crypto.randomUUID()
+      const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      updatePayload.account_activation_token = activationToken
+      updatePayload.account_activation_expires_at = expiresAt.toISOString()
+
+      if (import.meta.dev) {
+        consola.info(`PATCH /api/claims/${id} - Generated activation token, expires:`, expiresAt.toISOString())
+      }
+    }
+
     // Update the claim
     const { data: updatedClaim, error: updateError } = await client
       .from('business_claims')
-      .update({
-        status: validatedData.status,
-        admin_notes: validatedData.adminNotes || null,
-        reviewed_by: adminUserId,
-        reviewed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select('*, contractor:contractors!business_claims_contractor_id_fkey (id, company_name, slug)')
       .single()
@@ -109,25 +126,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // If approved, update the contractor
-    if (validatedData.status === 'approved') {
-      const { error: contractorError } = await client
-        .from('contractors')
-        .update({
-          is_claimed: true,
-          claimed_by: existingClaim.claimant_user_id || null,
-          claimed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingClaim.contractor_id)
-
-      if (contractorError) {
-        consola.error(`PATCH /api/claims/${id} - Contractor update error:`, contractorError)
-        // Don't throw - claim was updated, just log the error
-      } else if (import.meta.dev) {
-        consola.success(`PATCH /api/claims/${id} - Contractor marked as claimed`)
-      }
-    }
+    // Note: Contractor is NOT marked as claimed here anymore.
+    // That happens during account activation (Phase 4) to ensure the user
+    // actually completes the activation flow before claiming the profile.
 
     if (import.meta.dev) {
       consola.success(`PATCH /api/claims/${id} - Claim ${validatedData.status}`)
@@ -150,17 +151,14 @@ export default defineEventHandler(async (event) => {
       }
 
       // Fire and forget - don't block the response
-      if (validatedData.status === 'approved') {
-        // TODO: Phase 5 (BAM-211) will refactor this to generate activation token
-        // For now, use a placeholder - the full activation flow will be implemented later
-        const activationToken = crypto.randomUUID()
+      if (validatedData.status === 'approved' && activationToken) {
         emailService.sendClaimApprovedEmail({
           ...emailData,
           activationToken,
         }).catch((err) => {
           consola.error('Failed to send claim approved email:', err)
         })
-      } else {
+      } else if (validatedData.status === 'rejected') {
         emailService.sendClaimRejectedEmail({
           ...emailData,
           rejectionReason: validatedData.adminNotes,
