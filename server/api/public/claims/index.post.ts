@@ -3,6 +3,12 @@
  *
  * Public endpoint to submit a business claim request
  * Anyone can submit a claim for an unclaimed contractor
+ *
+ * Flow:
+ * 1. Creates claim with status='unverified' and email_verification_token
+ * 2. Sends verification email with link to /claim/verify?token={uuid}
+ * 3. Token expires after 24 hours
+ * 4. Expired unverified claims can be replaced by new submissions
  */
 
 import { z } from 'zod'
@@ -16,6 +22,9 @@ const claimRequestSchema = z.object({
   claimantEmail: z.string().email('Invalid email address'),
   claimantPhone: z.string().optional(),
 })
+
+// Token expiry durations
+const EMAIL_VERIFICATION_EXPIRY_HOURS = 24
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -65,26 +74,63 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Check if there's already a pending claim for this contractor
-  const { data: existingClaim } = await client
+  // Check for existing claims on this contractor
+  const { data: existingClaims } = await client
     .from('business_claims')
-    .select('id, status')
+    .select('id, status, email_verification_expires_at')
     .eq('contractor_id', contractorId)
-    .eq('status', 'pending')
-    .single()
+    .in('status', ['unverified', 'pending'])
 
-  if (existingClaim) {
+  // Check for active (non-expired) claims
+  const now = new Date()
+  const activeClaim = existingClaims?.find((claim) => {
+    if (claim.status === 'pending') {
+      // Pending claims are always active (already verified, awaiting admin review)
+      return true
+    }
+    if (claim.status === 'unverified' && claim.email_verification_expires_at) {
+      // Unverified claims are active only if not expired
+      return new Date(claim.email_verification_expires_at) > now
+    }
+    return false
+  })
+
+  if (activeClaim) {
+    const message = activeClaim.status === 'pending'
+      ? 'A claim for this business is already pending review'
+      : 'A claim for this business is awaiting email verification. Please check your email.'
     throw createError({
       statusCode: 400,
-      message: 'A claim for this business is already pending review',
+      message,
     })
+  }
+
+  // Delete any expired unverified claims for this contractor to allow new submission
+  const expiredClaims = existingClaims?.filter((claim) => {
+    if (claim.status === 'unverified' && claim.email_verification_expires_at) {
+      return new Date(claim.email_verification_expires_at) <= now
+    }
+    return false
+  })
+
+  if (expiredClaims && expiredClaims.length > 0) {
+    const expiredIds = expiredClaims.map(c => c.id)
+    await client
+      .from('business_claims')
+      .delete()
+      .in('id', expiredIds)
+    consola.info(`Deleted ${expiredIds.length} expired unverified claim(s) for contractor ${contractorId}`)
   }
 
   // Determine verification method
   const emailMatch = contractor.email?.toLowerCase() === claimantEmail.toLowerCase()
   const verificationMethod = emailMatch ? 'email_match' : 'admin_approval'
 
-  // Create the claim
+  // Generate verification token and expiry
+  const verificationToken = crypto.randomUUID()
+  const verificationExpiresAt = new Date(now.getTime() + EMAIL_VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000)
+
+  // Create the claim with unverified status
   const { data: claim, error: claimError } = await client
     .from('business_claims')
     .insert({
@@ -94,7 +140,9 @@ export default defineEventHandler(async (event) => {
       claimant_name: claimantName,
       claimant_phone: claimantPhone || null,
       verification_method: verificationMethod,
-      status: 'pending',
+      status: 'unverified',
+      email_verification_token: verificationToken,
+      email_verification_expires_at: verificationExpiresAt.toISOString(),
     })
     .select()
     .single()
@@ -107,9 +155,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  consola.success(`Claim submitted for ${contractor.company_name} by ${claimantEmail}`)
+  consola.success(`Claim submitted (unverified) for ${contractor.company_name} by ${claimantEmail}`)
 
-  // Send confirmation email to claimant (non-blocking)
+  // Send verification email to claimant (non-blocking)
   const config = useRuntimeConfig()
   if (config.resendApiKey) {
     const emailService = new EmailService({
@@ -124,14 +172,15 @@ export default defineEventHandler(async (event) => {
       claimantEmail,
       claimantName,
       businessName: contractor.company_name,
+      verificationToken,
     }).catch((err) => {
-      consola.error('Failed to send claim submitted email:', err)
+      consola.error('Failed to send verification email:', err)
     })
   }
 
   return {
     success: true,
-    message: 'Your claim has been submitted for review',
+    message: 'Please check your email to verify your claim. The verification link expires in 24 hours.',
     claimId: claim.id,
     verificationMethod,
   }

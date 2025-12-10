@@ -52,7 +52,7 @@ Once approved, execute this cycle:
 
 ### 5. Finalization (The Paper Trail)
 *   **Linear Sync:**
-    *   Post a comment on the **Sub-Issue** (and Root if applicable) detailing the implementation (e.g., "Added UserProfile.vue and connected to store").
+    *   Post a comment on the **Sub-Issue** (and Root if applicable) detailing the implementation (e.g., "Added UserProfile.vue and connected to store"). This comment is curcial to helping other developers understand the progress and work completed. Make sure you keep this in mind when creating to comment as this is to be useful for future dev work.
     *   Mark the **Sub-Issue** as 'Done' and if this is the last **Sub-Issue** to be completed in the **Root Issue** mark the **Root Issue** as 'Done' as well.
     *   **Checklist Update:** If the ticket has a Markdown checklist in the description, verify the items completed. Only check items that were actually compelted.
 *   **Git:** Stage changes and ask permission to commit with a Semantic Message (e.g., `feat(user): implement profile settings page`).

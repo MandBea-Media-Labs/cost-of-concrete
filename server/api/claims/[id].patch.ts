@@ -151,13 +151,19 @@ export default defineEventHandler(async (event) => {
 
       // Fire and forget - don't block the response
       if (validatedData.status === 'approved') {
-        emailService.sendClaimApprovedEmail(emailData).catch((err) => {
+        // TODO: Phase 5 (BAM-211) will refactor this to generate activation token
+        // For now, use a placeholder - the full activation flow will be implemented later
+        const activationToken = crypto.randomUUID()
+        emailService.sendClaimApprovedEmail({
+          ...emailData,
+          activationToken,
+        }).catch((err) => {
           consola.error('Failed to send claim approved email:', err)
         })
       } else {
         emailService.sendClaimRejectedEmail({
           ...emailData,
-          adminNotes: validatedData.adminNotes,
+          rejectionReason: validatedData.adminNotes,
         }).catch((err) => {
           consola.error('Failed to send claim rejected email:', err)
         })
