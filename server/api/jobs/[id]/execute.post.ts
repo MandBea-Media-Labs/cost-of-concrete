@@ -14,6 +14,10 @@
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { JobService } from '../../../services/JobService'
+import { registerExecutors } from '../../../services/executors'
+
+// Register job executors before handling requests
+registerExecutors()
 
 export default defineEventHandler(async (event) => {
   try {
@@ -77,7 +81,7 @@ export default defineEventHandler(async (event) => {
 
     // For execution errors, return 500 but log the details
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',

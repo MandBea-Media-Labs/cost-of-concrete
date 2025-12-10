@@ -2,35 +2,122 @@
 /**
  * Image Enrichment Page
  *
- * Dedicated page for processing contractor image enrichment.
- * Downloads images from external URLs and uploads them to Supabase storage.
+ * Queue background jobs for processing contractor image enrichment.
+ * Jobs run via pg_cron without requiring the browser tab to stay open.
  */
 
 definePageMeta({
   layout: 'admin',
 })
 
-// Page state
-const enrichmentComplete = ref(false)
-const lastSummary = ref<{
-  processedContractors: number
-  totalImages: number
-  failedImages: number
-  contractorsRemaining: number
-} | null>(null)
+// =====================================================
+// STATE
+// =====================================================
 
-// Handle enrichment completion
-const handleComplete = (summary: typeof lastSummary.value) => {
-  enrichmentComplete.value = true
-  lastSummary.value = summary
+const isLoading = ref(false)
+const isQueuing = ref(false)
+const errorMessage = ref<string | null>(null)
+
+interface QueueStats {
+  pendingContractors: number
+  totalPendingImages: number
 }
 
-// Handle enrichment error
-const handleError = (message: string) => {
-  if (import.meta.dev) {
-    console.error('Enrichment error:', message)
+interface ActiveJob {
+  id: string
+  status: string
+  processedItems: number
+  totalItems: number | null
+  failedItems: number
+}
+
+const queueStats = ref<QueueStats>({
+  pendingContractors: 0,
+  totalPendingImages: 0,
+})
+
+const activeJob = ref<ActiveJob | null>(null)
+
+// =====================================================
+// COMPUTED
+// =====================================================
+
+const hasActiveJob = computed(() => {
+  return activeJob.value && ['pending', 'processing'].includes(activeJob.value.status)
+})
+
+const canQueueJob = computed(() => {
+  return !hasActiveJob.value && queueStats.value.pendingContractors > 0 && !isQueuing.value
+})
+
+// =====================================================
+// METHODS
+// =====================================================
+
+const fetchQueueStats = async () => {
+  try {
+    const response = await $fetch<{
+      success: boolean
+      stats: QueueStats
+    }>('/api/contractors/enrichment-queue')
+    queueStats.value = response.stats
+  } catch {
+    // Silently fail - stats are informational
   }
 }
+
+const fetchActiveJob = async () => {
+  try {
+    const response = await $fetch<{
+      success: boolean
+      data: ActiveJob[]
+    }>('/api/jobs', {
+      query: { jobType: 'image_enrichment', limit: 1 },
+    })
+    // Get most recent job that's pending or processing
+    const active = response.data.find(j => ['pending', 'processing'].includes(j.status))
+    activeJob.value = active || null
+  } catch {
+    // Silently fail
+  }
+}
+
+const queueJob = async () => {
+  if (!canQueueJob.value) return
+
+  isQueuing.value = true
+  errorMessage.value = null
+
+  try {
+    await $fetch('/api/jobs', {
+      method: 'POST',
+      body: {
+        jobType: 'image_enrichment',
+        payload: { batchSize: 10 },
+      },
+    })
+    // Refresh to show new job
+    await fetchActiveJob()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to queue job'
+  } finally {
+    isQueuing.value = false
+  }
+}
+
+const refreshData = async () => {
+  isLoading.value = true
+  await Promise.all([fetchQueueStats(), fetchActiveJob()])
+  isLoading.value = false
+}
+
+// =====================================================
+// LIFECYCLE
+// =====================================================
+
+onMounted(() => {
+  refreshData()
+})
 </script>
 
 <template>
@@ -44,17 +131,27 @@ const handleError = (message: string) => {
             Download and process contractor images from external sources
           </p>
         </div>
+        <UiButton variant="ghost" size="sm" :disabled="isLoading" @click="refreshData">
+          <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
+        </UiButton>
       </div>
     </div>
 
     <!-- Info Alert -->
     <UiAlert variant="info" class="mb-6">
       <Icon name="heroicons:information-circle" class="size-4" />
-      <UiAlertTitle>How it works</UiAlertTitle>
+      <UiAlertTitle>Background Processing</UiAlertTitle>
       <UiAlertDescription>
-        This tool processes contractors with pending external images. It downloads images from
-        their original URLs and uploads them to our storage for faster, more reliable delivery.
+        Jobs run in the background via pg_cron. You can close this tab after queuing a job.
+        Monitor progress on the <NuxtLink to="/admin/maintenance/jobs" class="underline hover:no-underline">Jobs dashboard</NuxtLink>.
       </UiAlertDescription>
+    </UiAlert>
+
+    <!-- Error Alert -->
+    <UiAlert v-if="errorMessage" variant="destructive" class="mb-6">
+      <Icon name="heroicons:exclamation-triangle" class="size-4" />
+      <UiAlertTitle>Error</UiAlertTitle>
+      <UiAlertDescription>{{ errorMessage }}</UiAlertDescription>
     </UiAlert>
 
     <!-- Main Card -->
@@ -65,52 +162,73 @@ const handleError = (message: string) => {
           Enrichment Queue
         </UiCardTitle>
         <UiCardDescription>
-          Process pending contractor images in batches
+          Queue background jobs to process contractor images
         </UiCardDescription>
       </UiCardHeader>
       <UiCardContent>
-        <AdminEnrichmentProgress
-          @complete="handleComplete"
-          @error="handleError"
-        />
-      </UiCardContent>
-    </UiCard>
-
-    <!-- Success Summary Card (shown after completion) -->
-    <UiCard v-if="enrichmentComplete && lastSummary" class="mt-6">
-      <UiCardHeader>
-        <UiCardTitle class="flex items-center gap-2 text-green-600 dark:text-green-400">
-          <Icon name="heroicons:check-circle" class="size-5" />
-          Last Batch Summary
-        </UiCardTitle>
-      </UiCardHeader>
-      <UiCardContent>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <!-- Queue Stats -->
+        <div class="mb-6 grid grid-cols-2 gap-4">
           <div class="rounded-lg border bg-muted/50 p-4 text-center">
             <div class="text-2xl font-bold text-foreground">
-              {{ lastSummary.processedContractors }}
+              {{ queueStats.pendingContractors }}
             </div>
-            <div class="text-xs text-muted-foreground">Contractors</div>
+            <div class="text-xs text-muted-foreground">Pending Contractors</div>
           </div>
           <div class="rounded-lg border bg-muted/50 p-4 text-center">
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-              {{ lastSummary.totalImages }}
+            <div class="text-2xl font-bold text-foreground">
+              {{ queueStats.totalPendingImages }}
             </div>
-            <div class="text-xs text-muted-foreground">Downloaded</div>
-          </div>
-          <div class="rounded-lg border bg-muted/50 p-4 text-center">
-            <div class="text-2xl font-bold" :class="lastSummary.failedImages > 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'">
-              {{ lastSummary.failedImages }}
-            </div>
-            <div class="text-xs text-muted-foreground">Failed</div>
-          </div>
-          <div class="rounded-lg border bg-muted/50 p-4 text-center">
-            <div class="text-2xl font-bold" :class="lastSummary.contractorsRemaining > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'">
-              {{ lastSummary.contractorsRemaining }}
-            </div>
-            <div class="text-xs text-muted-foreground">Remaining</div>
+            <div class="text-xs text-muted-foreground">Pending Images</div>
           </div>
         </div>
+
+        <!-- Active Job Status -->
+        <div v-if="hasActiveJob && activeJob" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+          <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+            <Icon name="heroicons:arrow-path" class="size-4 animate-spin" />
+            <span class="font-medium">Job {{ activeJob.status === 'pending' ? 'Queued' : 'Processing' }}</span>
+          </div>
+          <p class="mt-1 text-sm text-amber-700 dark:text-amber-400">
+            <template v-if="activeJob.status === 'processing' && activeJob.totalItems">
+              Processing {{ activeJob.processedItems }}/{{ activeJob.totalItems }} contractors
+              <template v-if="activeJob.failedItems > 0">({{ activeJob.failedItems }} failed)</template>
+            </template>
+            <template v-else>
+              Waiting for job runner to pick up this job...
+            </template>
+          </p>
+          <NuxtLink
+            :to="`/admin/maintenance/jobs/${activeJob.id}`"
+            class="mt-2 inline-flex items-center gap-1 text-sm text-amber-600 hover:underline dark:text-amber-400"
+          >
+            View Details
+            <Icon name="heroicons:arrow-right" class="size-3" />
+          </NuxtLink>
+        </div>
+
+        <!-- Queue Button -->
+        <div class="flex items-center gap-4">
+          <UiButton :disabled="!canQueueJob" @click="queueJob">
+            <Icon v-if="isQueuing" name="heroicons:arrow-path" class="mr-2 size-4 animate-spin" />
+            <Icon v-else name="heroicons:plus" class="mr-2 size-4" />
+            Queue Enrichment Job
+          </UiButton>
+
+          <NuxtLink to="/admin/maintenance/jobs">
+            <UiButton variant="outline">
+              <Icon name="heroicons:queue-list" class="mr-2 size-4" />
+              View All Jobs
+            </UiButton>
+          </NuxtLink>
+        </div>
+
+        <!-- Helper text -->
+        <p v-if="!canQueueJob && hasActiveJob" class="mt-3 text-sm text-muted-foreground">
+          A job is already queued or processing. Wait for it to complete before queuing another.
+        </p>
+        <p v-else-if="!canQueueJob && queueStats.pendingContractors === 0" class="mt-3 text-sm text-muted-foreground">
+          No contractors with pending images. Import contractors to add images to the queue.
+        </p>
       </UiCardContent>
     </UiCard>
 
@@ -138,14 +256,14 @@ const handleError = (message: string) => {
         <UiCardHeader>
           <UiCardTitle class="text-base">
             <Icon name="heroicons:bolt" class="mr-2 inline size-4 text-muted-foreground" />
-            Performance Tips
+            Background Processing
           </UiCardTitle>
         </UiCardHeader>
         <UiCardContent class="text-sm text-muted-foreground">
           <ul class="list-inside list-disc space-y-1">
-            <li>Run during off-peak hours for best results</li>
-            <li>Keep this tab open during processing</li>
-            <li>Failed images can be retried later</li>
+            <li>Jobs run via pg_cron every 15 seconds</li>
+            <li>No need to keep browser tab open</li>
+            <li>Failed jobs automatically retry up to 3 times</li>
           </ul>
         </UiCardContent>
       </UiCard>

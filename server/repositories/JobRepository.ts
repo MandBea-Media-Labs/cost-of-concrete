@@ -146,7 +146,11 @@ export class JobRepository {
       .update(updateData)
       .eq('id', id)
       .select()
+      .single()
 
+    if (error) throw error
+    return data
+  }
 
   /**
    * Set job result (on completion)
@@ -222,7 +226,11 @@ export class JobRepository {
     if (error) throw error
     return (count || 0) > 0
   }
-}
+
+  /**
+   * Update job progress
+   */
+  async updateProgress(id: string, progress: JobProgressUpdate): Promise<BackgroundJobRow> {
     const updateData: BackgroundJobUpdate = {}
     if (progress.processedItems !== undefined) updateData.processed_items = progress.processedItems
     if (progress.failedItems !== undefined) updateData.failed_items = progress.failedItems
@@ -238,4 +246,4 @@ export class JobRepository {
     if (error) throw error
     return data
   }
-
+}

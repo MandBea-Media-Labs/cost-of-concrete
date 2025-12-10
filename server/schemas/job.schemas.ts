@@ -76,7 +76,7 @@ export type JobResult = ImageEnrichmentResult // | OtherResult in future
  */
 export const createJobSchema = z.object({
   jobType: z.enum(JOB_TYPES),
-  payload: z.record(z.unknown()).optional().default({}),
+  payload: z.record(z.string(), z.any()).optional().default({}),
 })
 
 export type CreateJobInput = z.infer<typeof createJobSchema>

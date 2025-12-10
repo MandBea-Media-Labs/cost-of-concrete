@@ -28,6 +28,11 @@ export default defineEventHandler(async (event) => {
 
     // Get and validate request body
     const body = await readBody(event)
+
+    if (import.meta.dev) {
+      consola.info('POST /api/jobs - Raw body:', JSON.stringify(body, null, 2))
+    }
+
     const validatedData = createJobSchema.parse(body)
 
     if (import.meta.dev) {
