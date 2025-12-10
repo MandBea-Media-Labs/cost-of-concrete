@@ -64,6 +64,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           metadata: Json
+          status: string
           updated_at: string | null
         }
         Insert: {
@@ -72,6 +73,7 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           metadata?: Json
+          status?: string
           updated_at?: string | null
         }
         Update: {
@@ -80,6 +82,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           metadata?: Json
+          status?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -128,6 +131,9 @@ export type Database = {
       }
       business_claims: {
         Row: {
+          account_activated_at: string | null
+          account_activation_expires_at: string | null
+          account_activation_token: string | null
           admin_notes: string | null
           claimant_email: string
           claimant_name: string | null
@@ -135,6 +141,9 @@ export type Database = {
           claimant_user_id: string | null
           contractor_id: string
           created_at: string | null
+          email_verification_expires_at: string | null
+          email_verification_token: string | null
+          email_verified_at: string | null
           id: string
           metadata: Json | null
           reviewed_at: string | null
@@ -144,6 +153,9 @@ export type Database = {
           verification_method: string | null
         }
         Insert: {
+          account_activated_at?: string | null
+          account_activation_expires_at?: string | null
+          account_activation_token?: string | null
           admin_notes?: string | null
           claimant_email: string
           claimant_name?: string | null
@@ -151,6 +163,9 @@ export type Database = {
           claimant_user_id?: string | null
           contractor_id: string
           created_at?: string | null
+          email_verification_expires_at?: string | null
+          email_verification_token?: string | null
+          email_verified_at?: string | null
           id?: string
           metadata?: Json | null
           reviewed_at?: string | null
@@ -160,6 +175,9 @@ export type Database = {
           verification_method?: string | null
         }
         Update: {
+          account_activated_at?: string | null
+          account_activation_expires_at?: string | null
+          account_activation_token?: string | null
           admin_notes?: string | null
           claimant_email?: string
           claimant_name?: string | null
@@ -167,6 +185,9 @@ export type Database = {
           claimant_user_id?: string | null
           contractor_id?: string
           created_at?: string | null
+          email_verification_expires_at?: string | null
+          email_verification_token?: string | null
+          email_verified_at?: string | null
           id?: string
           metadata?: Json | null
           reviewed_at?: string | null
