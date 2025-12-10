@@ -119,14 +119,25 @@ export async function optionalAuth(event: H3Event): Promise<string | null> {
   }
 }
 
+/** Account status type for clarity */
+export type AccountStatus = 'active' | 'suspended' | 'deleted' | null
+
+/** Result from getAuthUserAndIsAdmin */
+export interface AuthUserInfo {
+  userId: string | null
+  isAdmin: boolean | null
+  status: AccountStatus
+}
+
 /**
- * Get authenticated user and admin flag for server-side route guards
+ * Get authenticated user, admin flag, and account status for server-side route guards
  *
- * Returns both the user ID (or null if unauthenticated) and the is_admin flag
- * from the account_profiles table. This is intentionally non-throwing so that
- * callers (like route middleware) can decide whether to redirect or throw.
+ * Returns the user ID (or null if unauthenticated), the is_admin flag,
+ * and the account status from the account_profiles table.
+ * This is intentionally non-throwing so that callers (like route middleware)
+ * can decide whether to redirect or throw.
  */
-export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: string | null; isAdmin: boolean | null }> {
+export async function getAuthUserAndIsAdmin(event: H3Event): Promise<AuthUserInfo> {
   try {
     const client = await serverSupabaseClient(event)
     const { data: { user }, error } = await client.auth.getUser()
@@ -135,12 +146,12 @@ export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: s
       if (import.meta.dev) {
         consola.warn('getAuthUserAndIsAdmin: no authenticated user', error?.message || 'No user')
       }
-      return { userId: null, isAdmin: null }
+      return { userId: null, isAdmin: null, status: null }
     }
 
     const { data, error: profileError } = await client
       .from('account_profiles')
-      .select('is_admin, account_type, metadata')
+      .select('is_admin, account_type, status, metadata')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -149,17 +160,18 @@ export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: s
     }
 
     const isAdmin = data ? !!data.is_admin : false
+    const status = (data?.status as AccountStatus) ?? null
 
     if (import.meta.dev) {
-      consola.info('getAuthUserAndIsAdmin: resolved admin flag', { userId: user.id, isAdmin })
+      consola.info('getAuthUserAndIsAdmin: resolved admin info', { userId: user.id, isAdmin, status })
     }
 
-    return { userId: user.id, isAdmin }
+    return { userId: user.id, isAdmin, status }
   } catch (error) {
     if (import.meta.dev) {
       consola.error('getAuthUserAndIsAdmin: unexpected error', error)
     }
-    return { userId: null, isAdmin: null }
+    return { userId: null, isAdmin: null, status: null }
   }
 }
 
@@ -168,15 +180,16 @@ export async function getAuthUserAndIsAdmin(event: H3Event): Promise<{ userId: s
 /**
  * Require admin access for an API endpoint
  *
- * Uses getAuthUserAndIsAdmin to ensure the user is authenticated and has
- * admin privileges based on the account_profiles.is_admin flag.
+ * Uses getAuthUserAndIsAdmin to ensure the user is authenticated, has
+ * admin privileges based on the account_profiles.is_admin flag, and
+ * has an active account status.
  *
  * @param event - H3 event object
- * @throws {Error} - 401 Unauthorized if not authenticated, 403 Forbidden if not admin
+ * @throws {Error} - 401 Unauthorized if not authenticated, 403 Forbidden if not admin or account suspended/deleted
  * @returns {Promise<string>} - User ID of the admin user
  */
 export async function requireAdmin(event: H3Event): Promise<string> {
-  const { userId, isAdmin } = await getAuthUserAndIsAdmin(event)
+  const { userId, isAdmin, status } = await getAuthUserAndIsAdmin(event)
 
   if (!userId) {
     if (import.meta.dev) {
@@ -202,8 +215,23 @@ export async function requireAdmin(event: H3Event): Promise<string> {
     })
   }
 
+  // Check account status - must be 'active' to access admin
+  if (status !== 'active') {
+    if (import.meta.dev) {
+      consola.warn('requireAdmin: account is not active', { userId, status })
+    }
+
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      message: status === 'suspended'
+        ? 'Your account has been suspended. Please contact an administrator.'
+        : 'Your account is no longer active. Please contact an administrator.'
+    })
+  }
+
   if (import.meta.dev) {
-    consola.success('requireAdmin: admin access granted', { userId })
+    consola.success('requireAdmin: admin access granted', { userId, status })
   }
 
   return userId

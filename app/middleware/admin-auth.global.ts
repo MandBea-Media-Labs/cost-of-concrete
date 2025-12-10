@@ -83,10 +83,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.client) {
     const supabase = useSupabaseClient()
 
-    // Global state for the current Supabase user and admin flag.
+    // Global state for the current Supabase user, admin flag, and account status.
     // undefined => not yet resolved, null => explicitly unauthenticated.
     const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
     const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
+    const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
 
     // Resolve the current Supabase user once per client session
     if (authUserState.value === undefined) {
@@ -118,12 +119,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return redirectToLogin()
     }
 
-    // Resolve is_admin flag for the current user once per client session
+    // Resolve is_admin flag and account status for the current user once per client session
     if (isAdminState.value === undefined) {
       try {
         const { data, error } = await supabase
           .from('account_profiles')
-          .select('is_admin, account_type, metadata')
+          .select('is_admin, account_type, status, metadata')
           .eq('id', authUserState.value.id)
           .maybeSingle()
 
@@ -133,13 +134,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
         // If there is no row or is_admin is false, treat as non-admin
         isAdminState.value = !!data?.is_admin
+        accountStatusState.value = data?.status ?? null
       }
       catch (err: any) {
         if (import.meta.dev) {
           consola.error('Admin route guard (client): unexpected error when checking is_admin', err)
         }
-        // Fail closed: treat as non-admin
+        // Fail closed: treat as non-admin with no status
         isAdminState.value = false
+        accountStatusState.value = null
       }
     }
 
@@ -159,10 +162,32 @@ export default defineNuxtRouteMiddleware(async (to) => {
       })
     }
 
+    // Admin but account is not active: throw a 403
+    if (accountStatusState.value !== 'active') {
+      if (import.meta.dev) {
+        consola.info('Admin route guard (client): account not active, throwing 403', {
+          path: to.fullPath,
+          userId: authUserState.value?.id,
+          status: accountStatusState.value,
+        })
+      }
+
+      const message = accountStatusState.value === 'suspended'
+        ? 'Your account has been suspended. Please contact an administrator.'
+        : 'Your account is no longer active. Please contact an administrator.'
+
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Forbidden',
+        message,
+      })
+    }
+
     if (import.meta.dev) {
       consola.success('Admin route guard (client): admin access granted', {
         path: to.fullPath,
         userId: authUserState.value?.id,
+        status: accountStatusState.value,
       })
     }
   }

@@ -51,6 +51,21 @@ export const adminNavMenu: AdminNavMenu[] = [
       },
     ],
   },
+  {
+    heading: 'Accounts',
+    items: [
+      {
+        title: 'System Accounts',
+        icon: 'i-lucide-users',
+        link: '/admin/accounts/system',
+      },
+      {
+        title: 'Contractor Accounts',
+        icon: 'i-lucide-building',
+        link: '/admin/accounts/contractors',
+      },
+    ],
+  },
 ]
 
 export const adminNavMenuBottom: AdminNavMenuItems = [
