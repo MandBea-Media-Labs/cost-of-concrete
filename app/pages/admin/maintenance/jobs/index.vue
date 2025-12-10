@@ -82,6 +82,7 @@ const jobTypeOptions = [
 const quickFilterOptions = [
   { value: 'pending', label: 'Pending', icon: 'heroicons:clock' },
   { value: 'processing', label: 'Processing', icon: 'heroicons:arrow-path' },
+  { value: 'completed', label: 'Completed', icon: 'heroicons:check-circle' },
   { value: 'failed', label: 'Failed', icon: 'heroicons:x-circle' },
 ]
 

@@ -138,14 +138,14 @@ onMounted(() => {
     </div>
 
     <!-- Info Alert -->
-    <UiAlert variant="info" class="mb-6">
+    <!-- <UiAlert variant="info" class="mb-6">
       <Icon name="heroicons:information-circle" class="size-4" />
       <UiAlertTitle>Background Processing</UiAlertTitle>
       <UiAlertDescription>
         Jobs run in the background via pg_cron. You can close this tab after queuing a job.
         Monitor progress on the <NuxtLink to="/admin/maintenance/jobs" class="underline hover:no-underline">Jobs dashboard</NuxtLink>.
       </UiAlertDescription>
-    </UiAlert>
+    </UiAlert> -->
 
     <!-- Error Alert -->
     <UiAlert v-if="errorMessage" variant="destructive" class="mb-6">
@@ -209,14 +209,14 @@ onMounted(() => {
         <!-- Queue Button -->
         <div class="flex items-center gap-4">
           <UiButton :disabled="!canQueueJob" @click="queueJob">
-            <Icon v-if="isQueuing" name="heroicons:arrow-path" class="mr-2 size-4 animate-spin" />
-            <Icon v-else name="heroicons:plus" class="mr-2 size-4" />
+            <Icon v-if="isQueuing" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
+            <Icon v-else name="heroicons:plus" class="size-4 mr-2" />
             Queue Enrichment Job
           </UiButton>
 
           <NuxtLink to="/admin/maintenance/jobs">
             <UiButton variant="outline">
-              <Icon name="heroicons:queue-list" class="mr-2 size-4" />
+              <Icon name="heroicons:queue-list" class="size-4 mr-2" />
               View All Jobs
             </UiButton>
           </NuxtLink>
@@ -239,7 +239,7 @@ onMounted(() => {
       <UiCard>
         <UiCardHeader>
           <UiCardTitle class="text-base">
-            <Icon name="heroicons:question-mark-circle" class="mr-2 inline size-4 text-muted-foreground" />
+            <Icon name="heroicons:question-mark-circle" class="size-4 mr-2 inline text-muted-foreground" />
             What gets processed?
           </UiCardTitle>
         </UiCardHeader>
@@ -255,7 +255,7 @@ onMounted(() => {
       <UiCard>
         <UiCardHeader>
           <UiCardTitle class="text-base">
-            <Icon name="heroicons:bolt" class="mr-2 inline size-4 text-muted-foreground" />
+            <Icon name="heroicons:bolt" class="size-4 mr-2 inline text-muted-foreground" />
             Background Processing
           </UiCardTitle>
         </UiCardHeader>
