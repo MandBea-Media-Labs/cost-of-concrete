@@ -3,47 +3,56 @@ type: "manual"
 description: "Example description"
 ---
 
-# Linear Issue Resolution & Implementation
+# Linear Task Execution & Implementation
 
-**Trigger:** Use this when provided a specific Linear Issue ID to fix or implement.
+**Trigger:** Use this when provided a Linear Issue ID (Root or Sub-issue) to **build, refactor, or implement** functionality.
 
-### 1. Deep Context Extraction
-Your first step is **Analysis**, not action.
-1.  **Retrieve & Audit:** Fetch the main Issue ID.
-2.  **Hierarchy Scan:** Search for all linked **Sub-Issues**.
-    *   *Prioritize:* Focus on the specific sub-issue that is currently "In Progress" or "Todo".
-3.  **Conversation Review:** Read the comment history on both the parent and sub-issues. Look for:
-    *   Hidden requirements or constraints mentioned by the team.
-    *   Previous failed attempts to fix the issue.
-    *   Specific **Acceptance Criteria**.
+### 1. Deep Context & Hierarchy Extraction
+Your first step is to orient yourself within the project scope.
+1.  **Hierarchy Alignment:** Fetch the provided Issue ID.
+    *   If it is a **Root Issue**, identify the current active **Sub-Issue** to work on.
+    *   If it is a **Sub-Issue**, identify the **Parent Issue** to understand the broader goal.
+2.  **Spec Extraction:** Read the descriptions and comments of the Root and Sub-issues to extract:
+    *   **User Stories / Requirements:** What is being built?
+    *   **Acceptance Criteria:** What does "Done" look like?
+    *   **Design Assets:** Are there links to Figma or architectural constraints?
+3.  **State Check:** Confirm the ticket status (ensure we aren't working on a "Done" ticket).
 
-### 2. The "Ultra Think" Strategy (Simulation)
-Before proposing a plan, internally simulate the issue:
-*   **Hypothesis:** Based on the ticket description, where exactly in the `..\app\` structure is the logic failing?
-*   **Impact Analysis:** What other components rely on this logic? (Review `package.json` and imports).
-*   **Documentation:** Use `Context7` to check documentation for any involved modules to ensure we aren't using deprecated methods.
+### 2. The "Ultra Think" Strategy (Architecture Fit)
+Before writing code, simulate the implementation mentally:
+*   **Integration Points:** Where in the `..\app\` structure will this new feature live? Does it require new directories or extend existing components?
+*   **Dependency Audit:** Do we need new modules? (Check `package.json` vs requirements). Use `Context7` to check docs if new libraries are required.
+*   **Data Flow:** How will data reach this new feature? (Pinia, API, Props?).
 
-### 3. The Plan Proposal
-Present a numbered implementation plan. **Do not write code yet.**
-*   **Verification Strategy:** Define exactly how we will prove the fix works (e.g., "We will verify that clicking 'Submit' no longer throws a 400 error").
+### 3. The Implementation Plan
+Present a numbered plan focused on the **Current Sub-Issue**. **Do not write code yet.**
+*   **Scope Definition:** Explicitly state: "I am working on Sub-Issue [ID]: [Title]."
+*   **Verification Strategy:** Define how we will prove the feature exists and works (e.g., "We will verify that the new 'Settings' route loads and saves data").
 *   *Wait for user approval before proceeding.*
 
 ### 4. Implementation & Validation Protocol
-Once approved, execute in this order:
+Once approved, execute this cycle:
 
-**A. Reproduction (The "Red" State)**
-*   Use the **Playwright MCP** to navigate to the relevant page.
-*   Attempt to trigger the bug/issue as described.
-*   **Monitor:** Capture logs from the **Browser Console** (client side) and **Server Terminal** (server side/`consola`).
-*   *Confirm you have reproduced the issue.*
+**Update the Root Iissue and Sub-Issue Status:** Set to "In Progress"
 
-**B. The Fix (The Code)**
-*   Apply the fix following the **General Rules** (Mobile-first, standard file structure, `pnpm`).
+**A. Conditional Baseline (The "Before" State)**
+*   **IF this is a BUG:** You **MUST** use **Playwright MCP** to reproduce the issue and confirm the failure state ("Red" state) before fixing.
+*   **IF this is a FEATURE or REFACTOR:** Do **NOT** run Playwright yet. Rely on code analysis and your "Ultra Think" simulation to understand the starting point.
 
-**C. Verification (The "Green" State)**
-*   Use **Playwright** again to run the exact same steps from Step A.
-*   **Assert:** Confirm the error is gone and the `consola` logs show success.
+**B. The Execution (The Build)**
+*   Implement the code following **General Rules** (Mobile-first, `..\app\` structure, `pnpm`).
+*   **Incremental Checks:** If the task is large, stop halfway to check in with the user.
+
+**C. Final Verification (The "Green" State)**
+*   **MANDATORY:** Once the code is implemented/fixed, use **Playwright** to test the result.
+*   **Assert:**
+    *   *Features:* The new UI elements appear and interact correctly.
+    *   *Refactors:* The functionality persists (no regressions).
+    *   *Bugs:* The error is definitively gone.
 
 ### 5. Finalization (The Paper Trail)
-*   **Update Linear:** Post a comment on the issue with a summary of the fix and the specific file(s) changed.
-*   **Git:** Stage changes and ask the user for permission to commit using a Conventional Commit message (e.g., `fix(auth): handle null token in session store`).
+*   **Linear Sync:**
+    *   Post a comment on the **Sub-Issue** (and Root if applicable) detailing the implementation (e.g., "Added UserProfile.vue and connected to store").
+    *   Mark the **Sub-Issue** as 'Done' and if this is the last **Sub-Issue** to be completed in the **Root Issue** mark the **Root Issue** as 'Done' as well.
+    *   **Checklist Update:** If the ticket has a Markdown checklist in the description, verify the items completed. Only check items that were actually compelted.
+*   **Git:** Stage changes and ask permission to commit with a Semantic Message (e.g., `feat(user): implement profile settings page`).
