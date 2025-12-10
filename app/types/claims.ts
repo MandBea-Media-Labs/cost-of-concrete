@@ -113,9 +113,17 @@ export interface AdminClaimUpdateRequest {
 }
 
 /**
+ * Resend verification email request (from /claim/verify expired page)
+ */
+export interface ResendVerificationRequest {
+  claimId?: string
+  email?: string
+  contractorId?: string
+}
+
+/**
  * Resend activation email request
  */
 export interface ResendActivationRequest {
   claimId: string
 }
-
