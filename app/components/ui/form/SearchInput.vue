@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
-import { mockZipCodes, type ZipCodeData } from '~/mock-data/zipCodes'
 import { consola } from 'consola'
 import {
   SelectRoot,
@@ -14,11 +13,26 @@ import {
   SelectItem,
   SelectItemText
 } from 'reka-ui'
+import { getStateByCode } from '~/utils/usStates'
 
 export interface ServiceOption {
   id: number | null
   name: string
   slug: string | null
+}
+
+// Location result from API
+interface LocationResult {
+  type: 'city' | 'zip'
+  value: string
+  cityName: string
+  citySlug: string | null
+  stateCode: string
+  stateName: string
+  lat: number
+  lng: number
+  zip?: string
+  cityId?: string
 }
 
 interface Props {
@@ -93,7 +107,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  submit: [value: ZipCodeData | string | { location: string, service: ServiceOption | null }]
+  submit: [value: LocationResult | string | { location: string, service: ServiceOption | null }]
   input: [value: string]
 }>()
 
@@ -105,6 +119,8 @@ const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
 const selectedService = ref<string>('')
 const isServiceDropdownOpen = ref(false)
+const locationResults = ref<LocationResult[]>([])
+const isSearching = ref(false)
 
 // Computed: Is button mode active
 const isButtonMode = computed(() => props.button !== null && props.button !== undefined)
@@ -123,23 +139,31 @@ watch(() => props.serviceDropdownValues, (newValue) => {
   }
 }, { immediate: true })
 
-// Computed: Filtered results (autocomplete mode only)
+// Debounced API search for locations
+const searchLocations = useDebounceFn(async (query: string) => {
+  if (query.length < props.minCharacters) {
+    locationResults.value = []
+    return
+  }
+
+  isSearching.value = true
+  try {
+    const results = await $fetch<LocationResult[]>('/api/public/locations', {
+      query: { q: query, limit: props.maxResults }
+    })
+    locationResults.value = results
+  } catch (error) {
+    consola.error('Location search failed:', error)
+    locationResults.value = []
+  } finally {
+    isSearching.value = false
+  }
+}, 300)
+
+// Computed: Filtered results (now from API)
 const filteredResults = computed(() => {
   if (isButtonMode.value) return []
-  if (searchQuery.value.length < props.minCharacters) return []
-
-  const query = searchQuery.value.toLowerCase().trim()
-
-  return mockZipCodes
-    .filter(item => {
-      return (
-        item.zip.includes(query) ||
-        item.city.toLowerCase().includes(query) ||
-        item.state.toLowerCase().includes(query) ||
-        item.stateAbbr.toLowerCase().includes(query)
-      )
-    })
-    .slice(0, props.maxResults)
+  return locationResults.value
 })
 
 // Computed: Show dropdown
@@ -149,7 +173,7 @@ const showDropdown = computed(() => {
 
 // Computed: Show "no results" message
 const showNoResults = computed(() => {
-  return showDropdown.value && filteredResults.value.length === 0
+  return showDropdown.value && filteredResults.value.length === 0 && !isSearching.value
 })
 
 // Computed: Show clear button (autocomplete mode only)
@@ -281,34 +305,59 @@ const handleInput = (event: Event) => {
   if (!isButtonMode.value) {
     isOpen.value = true
     selectedIndex.value = -1
+    // Trigger debounced API search
+    searchLocations(searchQuery.value)
+  }
+}
+
+// Navigate to the appropriate page based on location selection
+const navigateToLocation = (result: LocationResult) => {
+  // Get state slug from state code
+  const stateData = getStateByCode(result.stateCode)
+  if (!stateData) {
+    consola.error('State not found for code:', result.stateCode)
+    return
+  }
+
+  // If we have a city slug (from cities table), navigate to city page
+  if (result.citySlug) {
+    navigateTo(`/${stateData.slug}/${result.citySlug}/concrete-contractors/`)
+  } else {
+    // For ZIP codes without city match, navigate to state page
+    // TODO: In future, could create dynamic city pages from ZIP data
+    navigateTo(`/${stateData.slug}/`)
   }
 }
 
 // Handle result selection
-const selectResult = (result: ZipCodeData) => {
-  searchQuery.value = `${result.zip} - ${result.city}, ${result.stateAbbr}`
+const selectResult = (result: LocationResult) => {
+  searchQuery.value = result.value
   isOpen.value = false
   selectedIndex.value = -1
 
   // Consola log for demo (only in dev mode)
   if (import.meta.dev) {
-    consola.success('SearchInput (Autocomplete): Selected ZIP Code', {
-      zip: result.zip,
-      city: result.city,
-      state: result.state,
-      stateAbbr: result.stateAbbr
+    consola.success('SearchInput: Selected location', {
+      type: result.type,
+      cityName: result.cityName,
+      stateCode: result.stateCode,
+      citySlug: result.citySlug,
+      zip: result.zip
     })
   }
 
   // If service dropdown is present, emit object with location and service
   if (hasServiceDropdown.value) {
     emit('submit', {
-      location: `${result.zip} - ${result.city}, ${result.stateAbbr}`,
+      location: result.value,
       service: getSelectedServiceObject()
     })
   } else {
     emit('submit', result)
   }
+
+  // Navigate to the location page
+  navigateToLocation(result)
 }
 
 // Handle button click (button mode)
@@ -520,11 +569,16 @@ watch(selectedIndex, (newIndex) => {
       v-auto-animate
       :class="dropdownClasses"
     >
+      <!-- Loading State -->
+      <div v-if="isSearching" class="px-4 py-6 text-center">
+        <Icon name="svg-spinners:ring-resize" class="mx-auto h-6 w-6 text-blue-500" />
+      </div>
+
       <!-- Results List -->
-      <div v-if="filteredResults.length > 0">
+      <div v-else-if="filteredResults.length > 0">
         <button
           v-for="(result, index) in filteredResults"
-          :key="result.zip"
+          :key="`${result.type}-${result.cityName}-${result.stateCode}-${result.zip || index}`"
           type="button"
           :data-result-index="index"
           :class="[
@@ -535,14 +589,26 @@ watch(selectedIndex, (newIndex) => {
           ]"
           @click="selectResult(result)"
         >
-          <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-            {{ result.zip }} - {{ result.city }}, {{ result.stateAbbr }}
+          <div class="flex items-center gap-2">
+            <!-- Location type icon -->
+            <Icon
+              :name="result.type === 'city' ? 'heroicons:building-office-2' : 'heroicons:map-pin'"
+              class="h-4 w-4 flex-shrink-0 text-neutral-400"
+            />
+            <div>
+              <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                {{ result.value }}
+              </div>
+              <div v-if="result.type === 'zip'" class="text-xs text-neutral-500 dark:text-neutral-400">
+                ZIP: {{ result.zip }}
+              </div>
+            </div>
           </div>
         </button>
       </div>
 
       <!-- No Results Message -->
-      <div v-if="showNoResults" class="px-4 py-6 text-center">
+      <div v-else-if="showNoResults" class="px-4 py-6 text-center">
         <p class="text-sm text-neutral-500 dark:text-neutral-400">
           No results, try something else
         </p>
