@@ -221,8 +221,18 @@ export class ImportService {
       return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported }
     }
 
-    // Resolve city
-    const cityId = await this.resolveCity(row)
+    // Resolve city - skip geocoding if existing contractor already has a city or geocoding already failed
+    let cityId: string | null = null
+    if (existing?.city_id) {
+      // Reuse existing city assignment (avoids unnecessary geocoding API calls)
+      cityId = existing.city_id
+    } else if ((existing?.metadata as ContractorMetadata)?.geocoding_failed) {
+      // Already tried geocoding and failed - don't retry on re-upload
+      cityId = null
+    } else {
+      // Only geocode for new contractors or those that haven't been geocoded yet
+      cityId = await this.resolveCity(row)
+    }
 
     // Build contractor data with smart merge (preserves existing enriched data)
     const contractorData = await this.buildContractorData(row, cityId, existing)
