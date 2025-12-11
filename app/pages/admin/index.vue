@@ -6,6 +6,8 @@
  * Styled to match the reference template aesthetic.
  */
 
+import NumberFlow from '@number-flow/vue'
+
 // Page metadata - use new admin layout
 definePageMeta({
   layout: 'admin'
@@ -15,7 +17,7 @@ definePageMeta({
 const stats = ref([
   {
     label: 'Total Pages',
-    value: 127,
+    value: 0,
     change: '+12%',
     trend: 'up' as const,
     trendText: 'Trending up this month',
@@ -23,7 +25,7 @@ const stats = ref([
   },
   {
     label: 'Published',
-    value: 98,
+    value: 0,
     change: '+8%',
     trend: 'up' as const,
     trendText: 'Strong publishing rate',
@@ -31,7 +33,7 @@ const stats = ref([
   },
   {
     label: 'Drafts',
-    value: 24,
+    value: 0,
     change: '-3%',
     trend: 'down' as const,
     trendText: 'Down 3% this period',
@@ -39,13 +41,51 @@ const stats = ref([
   },
   {
     label: 'Menus',
-    value: 5,
+    value: 0,
     change: '0%',
     trend: 'neutral' as const,
     trendText: 'Stable menu count',
     description: 'No changes this month'
   }
 ])
+
+// Update values on mount to trigger NumberFlow animation
+onMounted(() => {
+  stats.value = [
+    {
+      label: 'Total Pages',
+      value: 127,
+      change: '+12%',
+      trend: 'up' as const,
+      trendText: 'Trending up this month',
+      description: 'Content growth continues'
+    },
+    {
+      label: 'Published',
+      value: 98,
+      change: '+8%',
+      trend: 'up' as const,
+      trendText: 'Strong publishing rate',
+      description: 'More content going live'
+    },
+    {
+      label: 'Drafts',
+      value: 24,
+      change: '-3%',
+      trend: 'down' as const,
+      trendText: 'Down 3% this period',
+      description: 'Fewer pending drafts'
+    },
+    {
+      label: 'Menus',
+      value: 5,
+      change: '0%',
+      trend: 'neutral' as const,
+      trendText: 'Stable menu count',
+      description: 'No changes this month'
+    }
+  ]
+})
 
 // Mock recent activity
 const recentActivity = ref([
@@ -141,7 +181,7 @@ function getTrendIcon(trend: 'up' | 'down' | 'neutral'): string {
           <UiCardHeader>
             <UiCardDescription>{{ stat.label }}</UiCardDescription>
             <UiCardTitle class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {{ stat.value }}
+              <NumberFlow :value="stat.value" />
             </UiCardTitle>
             <UiCardAction>
               <UiBadge variant="outline" class="gap-1">
