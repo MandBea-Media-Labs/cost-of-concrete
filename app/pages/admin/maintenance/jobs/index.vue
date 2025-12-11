@@ -371,12 +371,12 @@ onUnmounted(() => {
         </div>
         <div class="flex items-center gap-3">
           <!-- Realtime indicator -->
-          <div v-if="eventSource" class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <div v-if="eventSource" class="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
             <span class="relative flex h-2 w-2">
               <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
               <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
             </span>
-            Live
+            Active
           </div>
           <UiButton variant="outline" size="sm" :disabled="isLoading" @click="fetchJobs">
             <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
@@ -489,10 +489,10 @@ onUnmounted(() => {
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center py-12 px-4">
-      <Icon name="heroicons:queue-list" class="h-16 w-16 text-neutral-300 dark:text-neutral-600 mb-4" />
-      <h3 class="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-2">No jobs found</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-md">
+    <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center px-4 py-12">
+      <Icon name="heroicons:queue-list" class="mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-600" />
+      <h3 class="mb-2 text-lg font-semibold text-neutral-700 dark:text-neutral-300">No jobs found</h3>
+      <p class="max-w-md text-center text-sm text-neutral-600 dark:text-neutral-400">
         No jobs match your current filters. Try adjusting your search or filters, or queue a new job from the maintenance pages.
       </p>
     </div>
@@ -501,36 +501,36 @@ onUnmounted(() => {
     <div v-else class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
       <table class="w-full">
         <!-- Table Header -->
-        <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+        <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Type</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden md:table-cell">Progress</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden lg:table-cell">Created</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Type</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Status</th>
+            <th class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400 md:table-cell">Progress</th>
+            <th class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400 lg:table-cell">Created</th>
+            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Actions</th>
           </tr>
         </thead>
 
         <!-- Table Body -->
-        <tbody v-auto-animate class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
-          <tr v-for="job in jobs" :key="job.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors group">
+        <tbody v-auto-animate class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700 dark:bg-neutral-900">
+          <tr v-for="job in jobs" :key="job.id" class="group transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800">
             <!-- Type -->
-            <td class="px-6 py-4 whitespace-nowrap">
-              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="text-sm font-medium text-neutral-900 dark:text-neutral-100 hover:underline">
+            <td class="whitespace-nowrap px-6 py-4">
+              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100">
                 {{ formatJobType(job.jobType) }}
               </NuxtLink>
             </td>
 
             <!-- Status -->
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="whitespace-nowrap px-6 py-4">
               <UiBadge :variant="getStatusVariant(job.status)">
-                <Icon v-if="job.status === 'processing'" name="heroicons:arrow-path" class="mr-1 size-3 animate-spin" />
+                <Icon v-if="job.status === 'processing'" name="heroicons:arrow-path" class="size-3 mr-1 animate-spin" />
                 {{ job.status }}
               </UiBadge>
             </td>
 
             <!-- Progress -->
-            <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+            <td class="hidden whitespace-nowrap px-6 py-4 md:table-cell">
               <div v-if="job.status === 'processing' && job.totalItems" class="w-32">
                 <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
                   <span>{{ job.processedItems }}/{{ job.totalItems }}</span>
@@ -545,7 +545,7 @@ onUnmounted(() => {
             </td>
 
             <!-- Created -->
-            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+            <td class="hidden whitespace-nowrap px-6 py-4 lg:table-cell">
               <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ formatDate(job.createdAt) }}</span>
             </td>
 

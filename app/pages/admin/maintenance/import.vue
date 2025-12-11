@@ -62,6 +62,7 @@ const errorMessage = ref<string | null>(null)
 const currentJob = ref<ImportJob | null>(null)
 const uiState = ref<UIState>('upload')
 const processingInterval = ref<ReturnType<typeof setInterval> | null>(null)
+const isProcessingBatch = ref(false)
 
 // =====================================================
 // COMPUTED
@@ -182,7 +183,14 @@ const fetchJobStatus = async (jobId: string) => {
     const response = await $fetch<{ success: boolean; job: ImportJob }>(
       `/api/contractors/import-jobs/${jobId}`,
     )
-    currentJob.value = response.job
+
+    // Update properties in place to maintain object identity for smoother animations
+    if (currentJob.value) {
+      Object.assign(currentJob.value, response.job)
+    }
+    else {
+      currentJob.value = response.job
+    }
 
     // Update UI state based on job status
     if (response.job.status === 'completed') {
@@ -203,8 +211,13 @@ const fetchJobStatus = async (jobId: string) => {
 const processBatch = async () => {
   if (!currentJob.value) return
 
+  // Prevent concurrent batch processing
+  if (isProcessingBatch.value) return
+  isProcessingBatch.value = true
+
   // Don't process if already completed
   if (currentJob.value.status === 'completed' || currentJob.value.status === 'failed' || currentJob.value.status === 'cancelled') {
+    isProcessingBatch.value = false
     stopProcessing()
     return
   }
@@ -235,6 +248,9 @@ const processBatch = async () => {
     errorMessage.value = fetchError.data?.message || fetchError.message || 'Batch processing failed'
     uiState.value = 'error'
     stopProcessing()
+  }
+  finally {
+    isProcessingBatch.value = false
   }
 }
 
@@ -339,7 +355,7 @@ onUnmounted(() => {
                   Drag and drop your JSON file here
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">or</p>
-                <UiButton variant="outline" size="sm" class="mt-3" @click="triggerFileInput">
+                <UiButton size="sm" class="mt-3" @click="triggerFileInput">
                   Browse Files
                 </UiButton>
                 <p class="mt-3 text-xs text-muted-foreground">
@@ -422,7 +438,7 @@ onUnmounted(() => {
 
               <!-- Controls -->
               <div class="flex gap-3">
-                <UiButton v-if="uiState === 'processing'" variant="outline" class="flex-1" @click="pauseProcessing">
+                <UiButton v-if="uiState === 'processing'" class="flex-1" @click="pauseProcessing">
                   <Icon name="heroicons:pause" class="size-4 mr-2" />
                   Pause
                 </UiButton>
@@ -518,12 +534,12 @@ onUnmounted(() => {
               </div>
 
               <!-- Pending Images CTA -->
-              <UiAlert v-if="currentJob.pendingImageCount > 0" variant="warning">
+              <UiAlert v-if="currentJob.pendingImageCount > 0" variant="info">
                 <Icon name="heroicons:photo" class="size-4" />
                 <UiAlertTitle>Images Queued</UiAlertTitle>
-                <UiAlertDescription>
+                <UiAlertDescription class="text-muted-foreground">
                   {{ currentJob.pendingImageCount }} images are queued for processing.
-                  <NuxtLink to="/admin/maintenance/image-enrichment" class="ml-1 font-medium underline underline-offset-2">
+                  <NuxtLink to="/admin/maintenance/image-enrichment" class="ml-1 font-medium text-primary underline underline-offset-2 hover:text-primary/80">
                     Go to Image Enrichment →
                   </NuxtLink>
                 </UiAlertDescription>
@@ -531,12 +547,12 @@ onUnmounted(() => {
 
               <!-- Actions -->
               <div class="flex gap-3">
-                <UiButton variant="outline" class="flex-1" @click="clearFile">
+                <UiButton class="flex-1" @click="clearFile">
                   <Icon name="heroicons:arrow-up-tray" class="size-4 mr-2" />
                   Import Another File
                 </UiButton>
                 <NuxtLink v-if="currentJob.pendingImageCount > 0" to="/admin/maintenance/image-enrichment">
-                  <UiButton>
+                  <UiButton variant="outline">
                     <Icon name="heroicons:photo" class="size-4 mr-2" />
                     Process Images
                   </UiButton>

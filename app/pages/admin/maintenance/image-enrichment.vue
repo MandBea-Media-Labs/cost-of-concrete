@@ -340,13 +340,13 @@ onUnmounted(() => {
           <!-- Live indicator -->
           <span
             v-if="sseConnected"
-            class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400"
+            class="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400"
           >
-            <span class="relative flex size-2">
-              <span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span class="relative inline-flex size-2 rounded-full bg-green-500" />
+            <span class="size-2 relative flex">
+              <span class="size-full absolute inline-flex animate-ping rounded-full bg-green-400 opacity-75" />
+              <span class="size-2 relative inline-flex rounded-full bg-green-500" />
             </span>
-            Live
+            Active
           </span>
         </div>
         <UiCardDescription>
