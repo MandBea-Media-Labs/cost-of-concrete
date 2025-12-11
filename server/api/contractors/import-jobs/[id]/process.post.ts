@@ -88,7 +88,7 @@ export default defineEventHandler(async (event): Promise<ProcessBatchResponse> =
       return {
         success: true,
         jobId: id,
-        batch: { processed: 0, imported: 0, updated: 0, skipped: 0, skippedClaimed: 0, pendingImageCount: 0, errors: [] },
+        batch: { processed: 0, imported: 0, updated: 0, skipped: 0, skippedClaimed: 0, pendingImageCount: 0, reviewsImported: 0, errors: [] },
         job: {
           status: completedJob.status as ImportJobStatus,
           totalRows: completedJob.total_rows,

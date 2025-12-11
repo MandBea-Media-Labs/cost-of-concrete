@@ -15,6 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/supabase'
 import { ContractorRepository } from '../repositories/ContractorRepository'
 import { LookupRepository } from '../repositories/LookupRepository'
+import { ReviewRepository } from '../repositories/ReviewRepository'
 import { GeocodingService } from './GeocodingService'
 import { stateToAbbreviation } from '../utils/stateAbbreviations'
 import {
@@ -26,6 +27,20 @@ import {
   type ImportError,
   type ProcessBatchResult,
 } from '../schemas/import.schemas'
+import type { ApifyReview } from '../schemas/review.schemas'
+
+// Type alias for contractor from database
+type Contractor = Database['public']['Tables']['contractors']['Row']
+
+// Metadata structure for contractors
+interface ContractorMetadata {
+  categories?: string[]
+  social_links?: Record<string, string | null>
+  opening_hours?: Array<{ day: string; hours: string }>
+  pending_images?: string[]
+  images?: Array<{ url: string; alt?: string }>
+  geocoding_failed?: boolean
+}
 
 interface ImportServiceConfig {
   geocodingApiKey: string
@@ -35,6 +50,7 @@ interface ImportServiceConfig {
 export class ImportService {
   private contractorRepo: ContractorRepository
   private lookupRepo: LookupRepository
+  private reviewRepo: ReviewRepository
   private geocodingService: GeocodingService
   private imageAllowlist: string[]
 
@@ -44,6 +60,7 @@ export class ImportService {
   ) {
     this.contractorRepo = new ContractorRepository(client)
     this.lookupRepo = new LookupRepository(client)
+    this.reviewRepo = new ReviewRepository(client)
     this.geocodingService = new GeocodingService(config.geocodingApiKey)
     this.imageAllowlist = config.imageAllowlist
   }
@@ -78,10 +95,12 @@ export class ImportService {
       skipped: result.skipped,
       skippedClaimed: result.skippedClaimed,
       pendingImageCount: result.pendingImageCount,
+      reviewsImported: result.reviewsImported,
       errors: result.errors,
     }
 
-    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected), ${summary.errors.length} errors`)
+    const reviewNote = summary.reviewsImported > 0 ? `, ${summary.reviewsImported} reviews` : ''
+    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected)${reviewNote}, ${summary.errors.length} errors`)
     return summary
   }
 
@@ -101,6 +120,7 @@ export class ImportService {
       skipped: 0,
       skippedClaimed: 0,
       pendingImageCount: 0,
+      reviewsImported: 0,
       errors: [],
     }
 
@@ -118,6 +138,7 @@ export class ImportService {
           result.updated++
         }
         result.pendingImageCount += rowResult.pendingImageCount
+        result.reviewsImported += rowResult.reviewsImported
       } catch (error: unknown) {
         result.processed++
         const message = this.extractErrorMessage(error)
@@ -156,50 +177,89 @@ export class ImportService {
   /**
    * Process a single row from the import file
    * Uses a counter object to track skipped counts
+   *
+   * Smart merge behavior:
+   * - Preserves existing metadata.images (enriched images)
+   * - Preserves images_processed flag
+   * - Only queues pending_images for unprocessed contractors
+   * - Imports reviews even for claimed contractors
    */
   private async processRow(
     row: ApifyRow,
     rowNumber: number,
     counters: { skipped: number; skippedClaimed: number }
-  ): Promise<{ isNew: boolean; isUpdated: boolean; pendingImageCount: number }> {
+  ): Promise<{ isNew: boolean; isUpdated: boolean; pendingImageCount: number; reviewsImported: number }> {
     // Skip permanently closed businesses
     if (row.permanentlyClosed) {
       counters.skipped++
       if (import.meta.dev) {
         consola.info(`Row ${rowNumber}: Skipped (permanently closed)`)
       }
-      return { isNew: false, isUpdated: false, pendingImageCount: 0 }
+      return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported: 0 }
     }
 
     // Check if contractor already exists
     const existing = await this.contractorRepo.findByGooglePlaceId(row.placeId)
     const isNew = !existing
 
-    // Skip claimed contractors to protect owner edits
+    // For claimed contractors: skip DATA updates but still import reviews
     if (existing?.is_claimed) {
       counters.skippedClaimed++
-      if (import.meta.dev) {
-        consola.info(`Row ${rowNumber}: Skipped "${row.title}" (claimed by owner)`)
+
+      // Still process reviews for claimed contractors (reviews are Google data, not owner-editable)
+      let reviewsImported = 0
+      if (row.reviews?.length) {
+        reviewsImported = await this.processReviews(existing.id, row.reviews)
+        if (reviewsImported > 0 && import.meta.dev) {
+          consola.info(`Row ${rowNumber}: Imported ${reviewsImported} reviews for claimed contractor "${row.title}"`)
+        }
       }
-      return { isNew: false, isUpdated: false, pendingImageCount: 0 }
+
+      if (import.meta.dev) {
+        consola.info(`Row ${rowNumber}: Skipped data update for "${row.title}" (claimed by owner)`)
+      }
+      return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported }
     }
 
     // Resolve city
     const cityId = await this.resolveCity(row)
 
-    // Build contractor data
-    const contractorData = await this.buildContractorData(row, cityId)
+    // Build contractor data with smart merge (preserves existing enriched data)
+    const contractorData = await this.buildContractorData(row, cityId, existing)
 
     // Upsert contractor
-    await this.contractorRepo.upsertByGooglePlaceId(contractorData)
+    const contractor = await this.contractorRepo.upsertByGooglePlaceId(contractorData)
 
-    const pendingImageCount = (contractorData.metadata as { pending_images?: string[] })?.pending_images?.length || 0
+    const pendingImageCount = (contractorData.metadata as ContractorMetadata)?.pending_images?.length || 0
 
-    if (import.meta.dev) {
-      consola.success(`Row ${rowNumber}: ${isNew ? 'Created' : 'Updated'} contractor "${row.title}"`)
+    // Process reviews if present in the import data
+    let reviewsImported = 0
+    if (row.reviews?.length) {
+      reviewsImported = await this.processReviews(contractor.id, row.reviews)
     }
 
-    return { isNew, isUpdated: !isNew, pendingImageCount }
+    if (import.meta.dev) {
+      const reviewNote = reviewsImported > 0 ? `, ${reviewsImported} reviews` : ''
+      consola.success(`Row ${rowNumber}: ${isNew ? 'Created' : 'Updated'} contractor "${row.title}"${reviewNote}`)
+    }
+
+    return { isNew, isUpdated: !isNew, pendingImageCount, reviewsImported }
+  }
+
+  /**
+   * Process reviews for a contractor
+   * Uses bulkUpsert which handles deduplication via google_review_id
+   */
+  private async processReviews(contractorId: string, reviews: ApifyReview[]): Promise<number> {
+    if (!reviews.length) return 0
+
+    try {
+      return await this.reviewRepo.bulkUpsert(contractorId, reviews)
+    } catch (error) {
+      consola.error(`Failed to import reviews for contractor ${contractorId}:`, error)
+      // Don't fail the entire row import for review errors
+      return 0
+    }
   }
 
   /**
@@ -244,8 +304,21 @@ export class ImportService {
 
   /**
    * Build contractor data from Apify row
+   *
+   * Smart merge behavior when existing contractor is provided:
+   * - Preserves metadata.images (enriched images from image processing)
+   * - Preserves images_processed flag
+   * - Only sets pending_images if images haven't been processed yet
+   *
+   * @param row - Apify row data
+   * @param cityId - Resolved city ID
+   * @param existing - Optional existing contractor for smart merge
    */
-  private async buildContractorData(row: ApifyRow, cityId: string | null) {
+  private async buildContractorData(
+    row: ApifyRow,
+    cityId: string | null,
+    existing?: Contractor | null
+  ) {
     const slug = this.slugify(row.title)
 
     // Extract categories
@@ -271,20 +344,30 @@ export class ImportService {
       hours: h.hours,
     })) || []
 
-    // Filter and limit image URLs
-    // Apify uses different formats:
-    // - 'imageUrls': array of strings
-    // - 'images': array of objects with imageUrl property, or strings
-    const rawImageUrls = this.extractImageUrls(row)
-    const pendingImages = this.filterImageUrls(rawImageUrls)
+    // --- SMART MERGE LOGIC ---
+    // Extract existing metadata to preserve enriched data
+    const existingMetadata = (existing?.metadata as ContractorMetadata) || {}
 
-    // Build metadata
-    const metadata = {
+    // Check if images were already processed
+    const wasImagesProcessed = existing?.images_processed ?? false
+
+    // Filter and limit image URLs from new import
+    const rawImageUrls = this.extractImageUrls(row)
+
+    // Only set pending_images if images haven't been processed yet
+    // This prevents re-queuing images that have already been downloaded
+    const pendingImages = wasImagesProcessed
+      ? [] // Already processed, don't re-queue
+      : this.filterImageUrls(rawImageUrls)
+
+    // Build metadata - PRESERVE existing enriched images
+    const metadata: ContractorMetadata = {
       categories,
       social_links: socialLinks,
       opening_hours: openingHours,
       pending_images: pendingImages,
-      images: [],
+      // CRITICAL: Preserve existing enriched images instead of resetting to []
+      images: existingMetadata.images || [],
       geocoding_failed: cityId === null && !!(row.location?.lat && row.location?.lng),
     }
 
@@ -305,7 +388,8 @@ export class ImportService {
       rating: row.totalScore ?? null,
       review_count: row.reviewsCount ?? 0,
       status: 'pending' as const,
-      images_processed: false,
+      // CRITICAL: Preserve images_processed flag instead of resetting to false
+      images_processed: wasImagesProcessed,
       metadata,
     }
   }
