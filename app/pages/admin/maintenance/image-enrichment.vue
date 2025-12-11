@@ -5,6 +5,7 @@
  * Queue background jobs for processing contractor image enrichment.
  * Jobs run via pg_cron without requiring the browser tab to stay open.
  */
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
 
 definePageMeta({
   layout: 'admin',
@@ -18,6 +19,12 @@ const isLoading = ref(false)
 const isQueuing = ref(false)
 const errorMessage = ref<string | null>(null)
 const continuousMode = ref(true) // Default to processing all
+const sseConnected = ref(false)
+const eventSource = ref<EventSource | null>(null)
+
+// Polling for job detection (when no active job)
+let pollInterval: ReturnType<typeof setInterval> | null = null
+const POLL_INTERVAL_MS = 3000 // Check every 3 seconds
 
 interface QueueStats {
   pendingContractors: number
@@ -109,18 +116,172 @@ const queueJob = async () => {
   }
 }
 
-const refreshData = async () => {
-  isLoading.value = true
+const refreshData = async (options: { showLoading?: boolean } = {}) => {
+  const { showLoading = true } = options
+  if (showLoading) isLoading.value = true
   await Promise.all([fetchQueueStats(), fetchActiveJob()])
-  isLoading.value = false
+  if (showLoading) isLoading.value = false
 }
+
+// =====================================================
+// SSE CONNECTION
+// =====================================================
+
+const connectSSE = () => {
+  // Cancel any pending disconnect (prevents indicator flicker)
+  if (disconnectTimeout) {
+    clearTimeout(disconnectTimeout)
+    disconnectTimeout = null
+  }
+
+  // Don't connect if no active job
+  if (!hasActiveJob.value || !activeJob.value) {
+    disconnectSSE()
+    return
+  }
+
+  // Already connected
+  if (eventSource.value) return
+
+  // Connect to job-specific SSE stream
+  eventSource.value = new EventSource(`/api/jobs/${activeJob.value.id}/stream`)
+
+  eventSource.value.onopen = () => {
+    sseConnected.value = true
+  }
+
+  eventSource.value.onerror = () => {
+    sseConnected.value = false
+    // Reconnect after delay if still have active job
+    setTimeout(() => {
+      if (hasActiveJob.value) {
+        disconnectSSE()
+        connectSSE()
+      }
+    }, 3000)
+  }
+
+  // Listen for progress updates
+  eventSource.value.addEventListener('progress', (e) => {
+    const data = JSON.parse(e.data)
+    if (activeJob.value) {
+      activeJob.value.processedItems = data.processedItems
+      activeJob.value.failedItems = data.failedItems
+      if (data.totalItems) activeJob.value.totalItems = data.totalItems
+      if (data.status) activeJob.value.status = data.status
+    }
+    // Refresh queue stats to show updated pending counts
+    fetchQueueStats()
+  })
+
+  // Listen for job completion
+  eventSource.value.addEventListener('complete', () => {
+    disconnectSSE()
+    // Refresh everything silently - job completed, stats changed
+    refreshData({ showLoading: false })
+  })
+
+  // Listen for job failure
+  eventSource.value.addEventListener('failed', () => {
+    disconnectSSE()
+    refreshData({ showLoading: false })
+  })
+
+  // Listen for job cancellation
+  eventSource.value.addEventListener('cancelled', () => {
+    disconnectSSE()
+    refreshData({ showLoading: false })
+  })
+}
+
+// Track disconnect timeout to prevent flicker during job transitions
+let disconnectTimeout: ReturnType<typeof setTimeout> | null = null
+
+const disconnectSSE = (immediate = false) => {
+  // Clear any pending disconnect
+  if (disconnectTimeout) {
+    clearTimeout(disconnectTimeout)
+    disconnectTimeout = null
+  }
+
+  if (eventSource.value) {
+    eventSource.value.close()
+    eventSource.value = null
+  }
+
+  // Delay hiding the indicator to prevent flicker during job transitions
+  if (immediate) {
+    sseConnected.value = false
+  } else {
+    disconnectTimeout = setTimeout(() => {
+      sseConnected.value = false
+      disconnectTimeout = null
+    }, 500)
+  }
+}
+
+// Watch for job ID changes (when a new job is chained after completion)
+watch(
+  () => activeJob.value?.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId && hasActiveJob.value) {
+      // New job started - reconnect SSE to new job's stream
+      disconnectSSE()
+      connectSSE()
+    }
+  }
+)
+
+// =====================================================
+// POLLING (for cross-tab job detection)
+// =====================================================
+
+const startPolling = () => {
+  if (pollInterval) return // Already polling
+  pollInterval = setInterval(async () => {
+    await fetchActiveJob()
+    await fetchQueueStats()
+  }, POLL_INTERVAL_MS)
+}
+
+const stopPolling = () => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
+// Start/stop polling based on job state
+watch(hasActiveJob, (hasJob) => {
+  if (hasJob) {
+    // Job found - stop polling, start SSE
+    stopPolling()
+    connectSSE()
+  } else {
+    // No job - disconnect SSE, start polling
+    disconnectSSE()
+    startPolling()
+  }
+})
 
 // =====================================================
 // LIFECYCLE
 // =====================================================
 
-onMounted(() => {
-  refreshData()
+onMounted(async () => {
+  await refreshData()
+  if (hasActiveJob.value) {
+    // Active job exists - connect SSE
+    connectSSE()
+  } else {
+    // No active job - start polling to detect when one is created
+    startPolling()
+  }
+})
+
+onUnmounted(() => {
+  stopPolling()
+  disconnectSSE(true) // Immediate disconnect on unmount
 })
 </script>
 
@@ -135,8 +296,9 @@ onMounted(() => {
             Download and process contractor images from external sources
           </p>
         </div>
-        <UiButton variant="ghost" size="sm" :disabled="isLoading" @click="refreshData">
+        <UiButton variant="outline" size="sm" :disabled="isLoading" @click="refreshData">
           <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
+          Refresh
         </UiButton>
       </div>
     </div>
@@ -161,15 +323,28 @@ onMounted(() => {
     <!-- Main Card -->
     <UiCard>
       <UiCardHeader>
-        <UiCardTitle class="flex items-center gap-2">
-          <Icon name="heroicons:cloud-arrow-down" class="size-5 text-muted-foreground" />
-          Enrichment Queue
-        </UiCardTitle>
+        <div class="flex items-center justify-between">
+          <UiCardTitle class="flex items-center gap-2">
+            <Icon name="heroicons:cloud-arrow-down" class="size-5 text-muted-foreground" />
+            Enrichment Queue
+          </UiCardTitle>
+          <!-- Live indicator -->
+          <span
+            v-if="sseConnected"
+            class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400"
+          >
+            <span class="relative flex size-2">
+              <span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span class="relative inline-flex size-2 rounded-full bg-green-500" />
+            </span>
+            Live
+          </span>
+        </div>
         <UiCardDescription>
           Queue background jobs to process contractor images
         </UiCardDescription>
       </UiCardHeader>
-      <UiCardContent>
+      <UiCardContent v-auto-animate>
         <!-- Queue Stats -->
         <div class="mb-6 grid grid-cols-2 gap-4">
           <div class="rounded-lg border bg-muted/50 p-4 text-center">

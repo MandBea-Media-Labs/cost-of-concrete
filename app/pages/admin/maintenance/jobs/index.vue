@@ -6,6 +6,7 @@
  * and actions for cancel/retry.
  */
 import { toast } from 'vue-sonner'
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
 
 definePageMeta({
   layout: 'admin',
@@ -56,6 +57,10 @@ const jobs = ref<Job[]>([])
 const pagination = ref({ total: 0, page: 1, limit: 25, totalPages: 1 })
 const errorMessage = ref<string | null>(null)
 const eventSource = ref<EventSource | null>(null)
+
+// Polling for job detection (when no active jobs in view)
+let pollInterval: ReturnType<typeof setInterval> | null = null
+const POLL_INTERVAL_MS = 3000
 
 // Rows per page options
 const rowsPerPageOptions = [10, 25, 50, 100]
@@ -122,8 +127,9 @@ const hasActiveFilters = computed(() => {
 // METHODS
 // =====================================================
 
-const fetchJobs = async () => {
-  isLoading.value = true
+const fetchJobs = async (options: { showLoading?: boolean } = {}) => {
+  const { showLoading = true } = options
+  if (showLoading) isLoading.value = true
   errorMessage.value = null
 
   try {
@@ -140,7 +146,7 @@ const fetchJobs = async () => {
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load jobs'
   } finally {
-    isLoading.value = false
+    if (showLoading) isLoading.value = false
   }
 }
 
@@ -258,9 +264,9 @@ const startSSE = () => {
     const activeJobs = data.jobs as Job[]
     const removedJobIds = data.removedJobIds as string[] || []
 
-    // If jobs completed/failed, refresh the full list to get final state
+    // If jobs completed/failed, refresh the full list to get final state (silently)
     if (removedJobIds.length > 0) {
-      fetchJobs()
+      fetchJobs({ showLoading: false })
       return
     }
 
@@ -292,12 +298,34 @@ const closeSSE = () => {
   }
 }
 
-// Watch for active jobs and manage SSE connection
+// =====================================================
+// POLLING (for detecting new jobs from other tabs/users)
+// =====================================================
+
+const startPolling = () => {
+  if (pollInterval) return
+  pollInterval = setInterval(() => {
+    fetchJobs({ showLoading: false }) // Silent polling - no loading spinner
+  }, POLL_INTERVAL_MS)
+}
+
+const stopPolling = () => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
+// Watch for active jobs and manage SSE/polling
 watch(hasActiveJobs, (hasActive) => {
   if (hasActive) {
+    // Active jobs found - stop polling, start SSE for real-time updates
+    stopPolling()
     startSSE()
   } else {
+    // No active jobs - close SSE, start polling to detect new ones
     closeSSE()
+    startPolling()
   }
 })
 
@@ -314,15 +342,18 @@ watch([selectedStatus, selectedType], async () => {
   await fetchJobs()
 })
 
-// Initial fetch and SSE setup
+// Initial fetch and SSE/polling setup
 onMounted(async () => {
   await fetchJobs()
   if (hasActiveJobs.value) {
     startSSE()
+  } else {
+    startPolling()
   }
 })
 
 onUnmounted(() => {
+  stopPolling()
   closeSSE()
 })
 </script>
@@ -481,7 +512,7 @@ onUnmounted(() => {
         </thead>
 
         <!-- Table Body -->
-        <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
+        <tbody v-auto-animate class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
           <tr v-for="job in jobs" :key="job.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors group">
             <!-- Type -->
             <td class="px-6 py-4 whitespace-nowrap">
