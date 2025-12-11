@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
-import {
-  serviceOptions,
-  serviceTypeOptions,
-  distanceOptions,
-  ratingOptions,
-  availabilityOptions,
-  sortByOptions
-} from '~/mock-data'
+import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
+import { serviceOptions, ratingOptions, sortByOptions } from '~/mock-data'
+
+// TODO: Future AI enrichment will categorize contractors against service_types table
+// Currently, service type filtering uses keyword matching against metadata.categories
 
 // Runtime config for site URL
 const config = useRuntimeConfig()
@@ -55,12 +53,24 @@ const selectedCategory = ref<string | undefined>()
 const minRating = ref<number | undefined>()
 const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
+// Fetch service types for filter dropdown
+const { data: serviceTypesData } = await useFetch<{ id: number; name: string; slug: string }[]>('/api/public/service-types')
+const serviceTypeOptions = computed<FilterOption[]>(() => {
+  const base: FilterOption[] = [{ value: 'all', label: 'All Services' }]
+  if (serviceTypesData.value) {
+    return [...base, ...serviceTypesData.value.map(st => ({ value: st.slug, label: st.name }))]
+  }
+  return base
+})
+
+// Distance filter composable
+const distanceFilter = useDistanceFilter()
+
 // Local filter state for UI
 const filters = reactive({
   serviceType: null as string | null,
   distance: null as string | null,
   rating: null as string | null,
-  availability: null as string | null,
   sortBy: 'top-rated' as string
 })
 
@@ -90,14 +100,17 @@ const resetFilters = () => {
   filters.serviceType = null
   filters.distance = null
   filters.rating = null
-  filters.availability = null
   filters.sortBy = 'top-rated'
+  distanceFilter.reset()
 }
 
-// Handle search submission from Hero - navigate to city/state page
+// Handle search submission from Hero - search is handled via SearchInput navigation
 const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
-  // TODO (Phase 3): Implement navigation to city/state pages based on location search
-  console.log('Search submitted:', value)
+  // Navigation is now handled by SearchInput.vue via navigateToLocation()
+  // This handler is retained for any additional logic needed after search
+  if (import.meta.dev) {
+    console.log('Search submitted:', value)
+  }
 }
 
 // Watch for filter changes to update the API query
@@ -128,14 +141,12 @@ watch(() => filters.rating, (newValue) => {
         background-color="#edf2fc"
         :service-options="serviceOptions"
         :service-type-filter-options="serviceTypeOptions"
-        :distance-filter-options="distanceOptions"
+        :distance-filter-options="distanceFilter.distanceOptions"
         :rating-filter-options="ratingOptions"
-        :availability-filter-options="availabilityOptions"
         :sort-by-filter-options="sortByOptions"
         v-model:service-type-filter="filters.serviceType"
         v-model:distance-filter="filters.distance"
         v-model:rating-filter="filters.rating"
-        v-model:availability-filter="filters.availability"
         v-model:sort-by-filter="filters.sortBy"
         @search="handleHeroSearch"
         @reset-filters="resetFilters"
@@ -162,8 +173,8 @@ watch(() => filters.rating, (newValue) => {
         </div>
       </div>
 
-      <!-- Results Grid -->
-      <div v-else-if="contractors.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <!-- Results Grid (with autoanimate for smooth transitions) -->
+      <div v-else-if="contractors.length > 0" v-auto-animate class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <ContractorCard
           v-for="contractor in contractors"
           :key="contractor.id"

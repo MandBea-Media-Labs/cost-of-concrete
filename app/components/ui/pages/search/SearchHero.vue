@@ -30,11 +30,6 @@ interface Props {
   ratingFilterOptions?: FilterOption[]
 
   /**
-   * Filter options for Availability
-   */
-  availabilityFilterOptions?: FilterOption[]
-
-  /**
    * Filter options for Sort By
    */
   sortByFilterOptions?: FilterOption[]
@@ -70,9 +65,6 @@ const props = withDefaults(defineProps<Props>(), {
   ratingFilterOptions: () => [
     { value: 'all', label: 'Rating' }
   ],
-  availabilityFilterOptions: () => [
-    { value: 'all', label: 'Availability' }
-  ],
   sortByFilterOptions: () => [
     { value: 'default', label: 'Search By: Top Rated' }
   ],
@@ -107,7 +99,6 @@ const emit = defineEmits<{
   'update:serviceTypeFilter': [value: string | number | null]
   'update:distanceFilter': [value: string | number | null]
   'update:ratingFilter': [value: string | number | null]
-  'update:availabilityFilter': [value: string | number | null]
   'update:sortByFilter': [value: string | number | null]
   resetFilters: []
 }>()
@@ -116,7 +107,6 @@ const emit = defineEmits<{
 const serviceTypeFilter = defineModel<string | number | null>('serviceTypeFilter', { default: null })
 const distanceFilter = defineModel<string | number | null>('distanceFilter', { default: null })
 const ratingFilter = defineModel<string | number | null>('ratingFilter', { default: null })
-const availabilityFilter = defineModel<string | number | null>('availabilityFilter', { default: null })
 const sortByFilter = defineModel<string | number | null>('sortByFilter', { default: null })
 
 // Check if any filters are active
@@ -124,7 +114,6 @@ const hasActiveFilters = computed(() => {
   return serviceTypeFilter.value !== null ||
          distanceFilter.value !== null ||
          ratingFilter.value !== null ||
-         availabilityFilter.value !== null ||
          sortByFilter.value !== null
 })
 
@@ -212,16 +201,6 @@ const handleResetFilters = () => {
                 v-model="ratingFilter"
                 :options="ratingFilterOptions"
                 placeholder="Rating"
-                size="md"
-              />
-            </div>
-
-            <!-- Availability Filter -->
-            <div class="w-full sm:w-auto sm:min-w-[140px] sm:flex-1 md:max-w-[230px]">
-              <FilterSelect
-                v-model="availabilityFilter"
-                :options="availabilityFilterOptions"
-                placeholder="Availability"
                 size="md"
               />
             </div>
