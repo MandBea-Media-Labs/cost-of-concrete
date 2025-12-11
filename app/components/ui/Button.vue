@@ -32,6 +32,12 @@ interface Props {
   disabled?: boolean
 
   /**
+   * Whether the button is in a loading state
+   * @default false
+   */
+  loading?: boolean
+
+  /**
    * The button type attribute
    * @default 'button'
    */
@@ -77,6 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
   location: null,
   variant: 'primary',
   disabled: false,
+  loading: false,
   type: 'button',
   icon: null,
   colors: null,
@@ -235,12 +242,18 @@ const isLink = computed(() => props.location && !props.disabled)
   <button
     v-else
     :type="type"
-    :disabled="disabled"
+    :disabled="disabled || loading"
     :class="buttonClasses"
     :style="customStyles"
   >
-    {{ text }}
-    <Icon v-if="icon" :name="icon" :class="iconSizeClasses" />
+    <Icon
+      v-if="loading"
+      name="svg-spinners:ring-resize"
+      :class="iconSizeClasses"
+    />
+    <span v-if="!loading">{{ text }}</span>
+    <span v-else>{{ text }}</span>
+    <Icon v-if="icon && !loading" :name="icon" :class="iconSizeClasses" />
   </button>
 </template>
 

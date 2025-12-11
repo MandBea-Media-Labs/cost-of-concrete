@@ -9,7 +9,7 @@ interface Props {
 
   /**
    * Placeholder text for the input
-   * @default ""
+   * @default "Enter your password"
    */
   placeholder?: string
 
@@ -26,45 +26,37 @@ interface Props {
   disabled?: boolean
 
   /**
-   * Input type
-   * @default 'text'
-   */
-  type?: 'text' | 'email' | 'password' | 'search' | 'url' | 'tel'
-
-  /**
    * Optional icon name (uses Nuxt Icon)
    * When provided, displays on the left side of the input
-   * Example: 'heroicons:magnifying-glass'
+   * Example: 'heroicons:lock-closed'
    */
   icon?: string | null
-
-  /**
-   * Whether to show a clear button when input has value
-   * @default false
-   */
-  clearable?: boolean
 
   /**
    * Optional label text displayed above the input
    * @default undefined
    */
   label?: string
+
+  /**
+   * Autocomplete attribute
+   * @default 'current-password'
+   */
+  autocomplete?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: '',
+  placeholder: 'Enter your password',
   size: 'md',
   disabled: false,
-  type: 'text',
   icon: null,
-  clearable: false,
-  label: undefined
+  label: undefined,
+  autocomplete: 'current-password'
 })
 
 // Emits
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
-  'clear': []
 }>()
 
 // Local value for v-model
@@ -72,6 +64,9 @@ const internalValue = computed({
   get: () => props.modelValue ?? '',
   set: (value: string) => emit('update:modelValue', value || null)
 })
+
+// Show/hide password toggle
+const showPassword = ref(false)
 
 // Size classes for the input container
 const sizeClasses = computed(() => {
@@ -99,16 +94,10 @@ const iconSizeClasses = computed(() => {
   }
 })
 
-// Handle clear button click
-const handleClear = () => {
-  emit('update:modelValue', null)
-  emit('clear')
+// Toggle password visibility
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
 }
-
-// Show clear button
-const showClearButton = computed(() => {
-  return props.clearable && (props.modelValue?.length ?? 0) > 0 && !props.disabled
-})
 </script>
 
 <template>
@@ -140,9 +129,10 @@ const showClearButton = computed(() => {
       <!-- Input Field -->
       <input
         v-model="internalValue"
-        :type="type"
+        :type="showPassword ? 'text' : 'password'"
         :placeholder="placeholder"
         :disabled="disabled"
+        :autocomplete="autocomplete"
         :class="[
           'w-full rounded-full border border-neutral-300 bg-white text-neutral-700 transition-all outline-none',
           'hover:border-neutral-400',
@@ -154,28 +144,24 @@ const showClearButton = computed(() => {
           'dark:disabled:bg-neutral-900',
           sizeClasses,
           icon ? 'pl-10' : '',
-          showClearButton ? 'pr-10' : ''
+          'pr-10'
         ]"
       />
 
-      <!-- Clear Button (right side) -->
+      <!-- Toggle Password Visibility Button (right side) -->
       <button
-        v-if="showClearButton"
         type="button"
         class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-        @click="handleClear"
-        aria-label="Clear input"
+        :disabled="disabled"
+        @click="togglePasswordVisibility"
+        aria-label="Toggle password visibility"
       >
         <Icon
-          name="heroicons:x-mark"
+          :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'"
           :class="iconSizeClasses"
         />
       </button>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
 
