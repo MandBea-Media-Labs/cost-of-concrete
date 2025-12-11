@@ -7,34 +7,38 @@ import { serviceOptions, ratingOptions, sortByOptions } from '~/mock-data'
 // TODO: Future AI enrichment will categorize contractors against service_types table
 // Currently, service type filtering uses keyword matching against metadata.categories
 
-// Runtime config for site URL
-const config = useRuntimeConfig()
-const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
-const siteName = config.public.siteName || 'Cost of Concrete'
+// Pagination and filter state (defined early for SEO composable)
+const currentPage = ref(1)
+const limit = 12
+const selectedCategory = ref<string | undefined>()
+const minRating = ref<number | undefined>()
+const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
-// SEO Meta
-const pageTitle = `Find Concrete Contractors Near You | ${siteName}`
-const pageDescription = 'Search and compare top-rated concrete contractors across the United States. Get quotes for driveways, patios, foundations, stamped concrete, and more.'
-const canonicalUrl = `${siteUrl}/concrete-contractors/`
-
-useSeoMeta({
-  title: pageTitle,
-  description: pageDescription,
-  ogTitle: 'Find Concrete Contractors Near You',
-  ogDescription: pageDescription,
-  ogType: 'website',
-  ogUrl: canonicalUrl,
-  ogSiteName: siteName,
-  ogLocale: 'en_US',
-  twitterCard: 'summary',
-  twitterTitle: 'Find Concrete Contractors Near You',
-  twitterDescription: pageDescription
+// Fetch contractors from API (nationwide - no location filter)
+const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
+  query: computed(() => ({
+    category: selectedCategory.value,
+    minRating: minRating.value,
+    limit,
+    offset: (currentPage.value - 1) * limit,
+    orderBy: sortBy.value
+  })),
+  watch: [currentPage, selectedCategory, minRating, sortBy]
 })
 
-useHead({
-  title: pageTitle,
-  link: [{ rel: 'canonical', href: canonicalUrl }]
+// Computed values for display
+const contractors = computed(() => contractorsData.value?.contractors || [])
+const totalContractors = computed(() => contractorsData.value?.total || 0)
+const totalPages = computed(() => Math.ceil(totalContractors.value / limit))
+
+// SEO composable with Schema.org structured data
+const { applySeoMeta } = useContractorSearchSeo({
+  totalContractors
 })
+applySeoMeta()
+
+// Future: Featured/sponsored contractors section for monetization
+// TODO: Add "Top Rated" badge or premium listing indicator for sponsored contractors
 
 // Supabase client for building storage URLs
 const supabase = useSupabaseClient()
@@ -45,13 +49,6 @@ function buildImageUrl(storagePath: string | undefined): string | undefined {
   const { data } = supabase.storage.from('contractors').getPublicUrl(storagePath)
   return data.publicUrl
 }
-
-// Pagination and filter state
-const currentPage = ref(1)
-const limit = 12
-const selectedCategory = ref<string | undefined>()
-const minRating = ref<number | undefined>()
-const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
 // Fetch service types for filter dropdown
 const { data: serviceTypesData } = await useFetch<{ id: number; name: string; slug: string }[]>('/api/public/service-types')
@@ -73,23 +70,6 @@ const filters = reactive({
   rating: null as string | null,
   sortBy: 'top-rated' as string
 })
-
-// Fetch contractors from API (nationwide - no location filter)
-const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
-  query: computed(() => ({
-    category: selectedCategory.value,
-    minRating: minRating.value,
-    limit,
-    offset: (currentPage.value - 1) * limit,
-    orderBy: sortBy.value
-  })),
-  watch: [currentPage, selectedCategory, minRating, sortBy]
-})
-
-// Computed values for display
-const contractors = computed(() => contractorsData.value?.contractors || [])
-const totalContractors = computed(() => contractorsData.value?.total || 0)
-const totalPages = computed(() => Math.ceil(totalContractors.value / limit))
 
 // Reset filters
 const resetFilters = () => {
