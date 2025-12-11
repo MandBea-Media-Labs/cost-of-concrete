@@ -59,8 +59,8 @@ export const apifyReviewSchema = z.object({
 
   // Rich context (JSONB)
   reviewImageUrls: z.array(z.string()).optional().default([]),
-  reviewContext: z.record(z.string()).optional().default({}),
-  reviewDetailedRating: z.record(z.unknown()).optional().default({}),
+  reviewContext: z.record(z.string(), z.string()).optional().default({}),
+  reviewDetailedRating: z.record(z.string(), z.unknown()).optional().default({}),
 
   // Fields we ignore but may be present
   rating: z.unknown().optional(),
