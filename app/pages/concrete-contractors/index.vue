@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
-import { getStateBySlug } from '~/utils/usStates'
 import {
   serviceOptions,
   serviceTypeOptions,
@@ -10,19 +9,34 @@ import {
   sortByOptions
 } from '~/mock-data'
 
-// Validate that the state param is a valid US state slug
-// This prevents the route from matching non-state paths like /owner, /admin, etc.
-definePageMeta({
-  validate: async (route) => {
-    const stateSlug = route.params.state as string
-    const state = getStateBySlug(stateSlug)
-    return !!state
-  }
+// Runtime config for site URL
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
+const siteName = config.public.siteName || 'Cost of Concrete'
+
+// SEO Meta
+const pageTitle = `Find Concrete Contractors Near You | ${siteName}`
+const pageDescription = 'Search and compare top-rated concrete contractors across the United States. Get quotes for driveways, patios, foundations, stamped concrete, and more.'
+const canonicalUrl = `${siteUrl}/concrete-contractors/`
+
+useSeoMeta({
+  title: pageTitle,
+  description: pageDescription,
+  ogTitle: 'Find Concrete Contractors Near You',
+  ogDescription: pageDescription,
+  ogType: 'website',
+  ogUrl: canonicalUrl,
+  ogSiteName: siteName,
+  ogLocale: 'en_US',
+  twitterCard: 'summary',
+  twitterTitle: 'Find Concrete Contractors Near You',
+  twitterDescription: pageDescription
 })
 
-// Get the state slug from route params
-const route = useRoute()
-const stateSlug = computed(() => route.params.state as string)
+useHead({
+  title: pageTitle,
+  link: [{ rel: 'canonical', href: canonicalUrl }]
+})
 
 // Supabase client for building storage URLs
 const supabase = useSupabaseClient()
@@ -34,88 +48,14 @@ function buildImageUrl(storagePath: string | undefined): string | undefined {
   return data.publicUrl
 }
 
-// Validate state slug and get state data
-const stateData = computed(() => getStateBySlug(stateSlug.value))
-
-// Throw 404 if state is not valid
-if (!stateData.value) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'State Not Found',
-    message: `The state "${stateSlug.value}" was not found. Please check the URL and try again.`
-  })
-}
-
-// Runtime config for site URL
-const config = useRuntimeConfig()
-const siteUrl = config.public.siteUrl || 'https://costofconcrete.com'
-const siteName = config.public.siteName || 'Cost of Concrete'
-
-// Build SEO data
-const pageTitle = `Concrete Contractors in ${stateData.value.name} | ${siteName}`
-const pageDescription = `Find top-rated concrete contractors in ${stateData.value.name}. Compare ratings, services, and get quotes from verified professionals for driveways, patios, foundations, and more.`
-const canonicalUrl = `${siteUrl}/${stateData.value.slug}/`
-
-// Schema.org BreadcrumbList
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  'itemListElement': [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: 'Home',
-      item: siteUrl
-    },
-    {
-      '@type': 'ListItem',
-      position: 2,
-      name: stateData.value.name,
-      item: canonicalUrl
-    }
-  ]
-}
-
-// SEO Meta - state-specific with full optimization
-useSeoMeta({
-  title: pageTitle,
-  description: pageDescription,
-
-  // Open Graph
-  ogTitle: `Concrete Contractors in ${stateData.value.name}`,
-  ogDescription: pageDescription,
-  ogType: 'website',
-  ogUrl: canonicalUrl,
-  ogSiteName: siteName,
-  ogLocale: 'en_US',
-
-  // Twitter Card
-  twitterCard: 'summary',
-  twitterTitle: `Concrete Contractors in ${stateData.value.name}`,
-  twitterDescription: pageDescription
-})
-
-// Add canonical URL and structured data
-useHead({
-  title: pageTitle,
-  link: [
-    { rel: 'canonical', href: canonicalUrl }
-  ],
-  script: [
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify(breadcrumbSchema)
-    }
-  ]
-})
-
 // Pagination and filter state
 const currentPage = ref(1)
 const limit = 12
 const selectedCategory = ref<string | undefined>()
+const minRating = ref<number | undefined>()
 const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
-// Local filter state for UI (these filters are client-side for now)
+// Local filter state for UI
 const filters = reactive({
   serviceType: null as string | null,
   distance: null as string | null,
@@ -124,16 +64,16 @@ const filters = reactive({
   sortBy: 'top-rated' as string
 })
 
-// Fetch contractors from API
+// Fetch contractors from API (nationwide - no location filter)
 const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
   query: computed(() => ({
-    stateCode: stateData.value?.abbreviation,
     category: selectedCategory.value,
+    minRating: minRating.value,
     limit,
     offset: (currentPage.value - 1) * limit,
     orderBy: sortBy.value
   })),
-  watch: [currentPage, selectedCategory, sortBy]
+  watch: [currentPage, selectedCategory, minRating, sortBy]
 })
 
 // Computed values for display
@@ -144,6 +84,7 @@ const totalPages = computed(() => Math.ceil(totalContractors.value / limit))
 // Reset filters
 const resetFilters = () => {
   selectedCategory.value = undefined
+  minRating.value = undefined
   sortBy.value = 'rating'
   currentPage.value = 1
   filters.serviceType = null
@@ -153,9 +94,10 @@ const resetFilters = () => {
   filters.sortBy = 'top-rated'
 }
 
-// Handle search submission from Hero
-const handleHeroSearch = (_value: { location: string, service: ServiceOption | null }) => {
-  // Could navigate to a city page if location is provided
+// Handle search submission from Hero - navigate to city/state page
+const handleHeroSearch = (value: { location: string, service: ServiceOption | null }) => {
+  // TODO (Phase 3): Implement navigation to city/state pages based on location search
+  console.log('Search submitted:', value)
 }
 
 // Watch for filter changes to update the API query
@@ -170,29 +112,20 @@ watch(() => filters.serviceType, (newValue) => {
   selectedCategory.value = newValue || undefined
   currentPage.value = 1
 })
+
+watch(() => filters.rating, (newValue) => {
+  // Parse rating filter (e.g., "4" -> 4)
+  minRating.value = newValue ? parseInt(newValue) : undefined
+  currentPage.value = 1
+})
 </script>
 
 <template>
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <!-- Breadcrumbs -->
-    <div class="container mx-auto px-4 pt-6">
-      <nav class="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-        <NuxtLink to="/concrete-contractors" class="hover:text-blue-600 dark:hover:text-blue-400">
-          Find Contractors
-        </NuxtLink>
-        <Icon name="heroicons:chevron-right" class="h-4 w-4" />
-        <span class="font-medium text-neutral-900 dark:text-neutral-100">
-          {{ stateData?.name }}
-        </span>
-      </nav>
-    </div>
-
-    <!-- Hero Section with state context -->
+    <!-- Hero Section with filter bar -->
     <div class="container mx-auto mb-12 px-4 py-8">
       <SearchHero
         background-color="#edf2fc"
-        :state-name="stateData?.name"
-        :state-abbreviation="stateData?.abbreviation"
         :service-options="serviceOptions"
         :service-type-filter-options="serviceTypeOptions"
         :distance-filter-options="distanceOptions"
@@ -215,7 +148,7 @@ watch(() => filters.serviceType, (newValue) => {
       <div class="mb-6">
         <p class="text-sm text-neutral-600 dark:text-neutral-400">
           Showing <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ contractors.length }}</span>
-          of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ totalContractors }}</span> contractors in {{ stateData?.name }}
+          of <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ totalContractors }}</span> contractors
         </p>
       </div>
 
@@ -242,7 +175,7 @@ watch(() => filters.serviceType, (newValue) => {
           :contractor-id="contractor.id"
           :contractor-slug="contractor.slug"
           :city-slug="contractor.citySlug || 'unknown'"
-          :state-code="stateSlug"
+          :state-code="contractor.stateCode?.toLowerCase() || 'unknown'"
         >
           {{ contractor.description || contractor.metadata?.categories?.join(', ') || '' }}
         </ContractorCard>
@@ -262,11 +195,11 @@ watch(() => filters.serviceType, (newValue) => {
       </div>
     </div>
 
-    <!-- Browse by City Section -->
-    <BrowseByCity v-if="stateData" :state-name="stateData.name" :state-slug="stateData.slug" :cities="stateData.cities" />
-
     <!-- Popular Services Section -->
     <PopularServices />
+
+    <!-- Browse by State Section -->
+    <BrowseByState />
 
     <!-- Bottom CTA -->
     <BottomCta />
