@@ -279,7 +279,7 @@ const handleRowsPerPageChange = async (value: string) => {
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Contractors</h1>
+          <h1 class="text-2xl font-bold">Contractor Profiles</h1>
           <p class="mt-1 text-sm text-muted-foreground">Manage contractor profiles</p>
         </div>
 
@@ -309,7 +309,7 @@ const handleRowsPerPageChange = async (value: string) => {
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <!-- Search Input -->
         <div class="relative w-64">
-          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Icon name="heroicons:magnifying-glass" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <UiInput
             id="search"
             v-model="searchQuery"
@@ -351,7 +351,7 @@ const handleRowsPerPageChange = async (value: string) => {
             <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed" :disabled="loadingCities">
               <Icon name="heroicons:map-pin" class="size-4" />
               City
-              <UiBadge v-if="selectedCity !== 'all'" variant="secondary" class="ml-1 h-5 max-w-24 truncate px-1.5">
+              <UiBadge v-if="selectedCity !== 'all'" variant="secondary" class="max-w-24 ml-1 h-5 truncate px-1.5">
                 {{ cityOptions.find(o => o.value === selectedCity)?.label }}
               </UiBadge>
               <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
@@ -380,7 +380,7 @@ const handleRowsPerPageChange = async (value: string) => {
             <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed" :disabled="loadingServiceTypes">
               <Icon name="heroicons:tag" class="size-4" />
               Category
-              <UiBadge v-if="selectedCategory !== 'all'" variant="secondary" class="ml-1 h-5 max-w-24 truncate px-1.5">
+              <UiBadge v-if="selectedCategory !== 'all'" variant="secondary" class="max-w-24 ml-1 h-5 truncate px-1.5">
                 {{ categoryOptions.find(o => o.value === selectedCategory)?.label }}
               </UiBadge>
               <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />

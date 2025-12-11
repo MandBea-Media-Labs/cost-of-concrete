@@ -236,8 +236,8 @@ const getStatusLabel = (status: string) => {
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Business Claims</h1>
-          <p class="mt-1 text-sm text-muted-foreground">Review and manage business claiming requests</p>
+          <h1 class="text-2xl font-bold">Profile Claims</h1>
+          <p class="mt-1 text-sm text-muted-foreground">Review and manage contractor profile claiming requests</p>
         </div>
       </div>
     </div>
@@ -246,7 +246,7 @@ const getStatusLabel = (status: string) => {
     <div class="mb-6 flex flex-wrap items-center gap-3">
       <!-- Search Input -->
       <div class="relative w-72">
-        <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Icon name="heroicons:magnifying-glass" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <UiInput
           v-model="searchQuery"
           placeholder="Search by name or email..."
@@ -286,7 +286,7 @@ const getStatusLabel = (status: string) => {
     <!-- Error State -->
     <div v-if="error" class="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4">
       <div class="flex items-start gap-3">
-        <Icon name="heroicons:exclamation-triangle" class="mt-0.5 size-5 flex-shrink-0 text-destructive" />
+        <Icon name="heroicons:exclamation-triangle" class="size-5 mt-0.5 flex-shrink-0 text-destructive" />
         <div>
           <h3 class="text-sm font-medium text-destructive">Error loading claims</h3>
           <p class="mt-1 text-sm text-destructive/80">{{ error.message }}</p>
@@ -301,7 +301,7 @@ const getStatusLabel = (status: string) => {
 
     <!-- Empty State -->
     <UiCard v-else-if="claims.length === 0" class="p-12 text-center">
-      <Icon name="heroicons:inbox" class="mx-auto size-12 text-muted-foreground" />
+      <Icon name="heroicons:inbox" class="size-12 mx-auto text-muted-foreground" />
       <h3 class="mt-4 text-lg font-medium text-foreground">No claims found</h3>
       <p class="mt-2 text-sm text-muted-foreground">
         {{ selectedStatus === 'pending' ? 'No pending claims to review.' : 'No claims match your filters.' }}
@@ -325,16 +325,16 @@ const getStatusLabel = (status: string) => {
                 </span>
                 <!-- Email Verified Indicator -->
                 <UiBadge v-if="claim.email_verified_at" variant="outline" class="text-xs">
-                  <Icon name="heroicons:envelope-open" class="mr-1 size-3" />
+                  <Icon name="heroicons:envelope-open" class="size-3 mr-1" />
                   Email Verified
                 </UiBadge>
                 <!-- Activation Status for approved claims -->
                 <UiBadge v-if="claim.status === 'approved' && !claim.account_activated_at" variant="secondary" class="text-xs">
-                  <Icon name="heroicons:clock" class="mr-1 size-3" />
+                  <Icon name="heroicons:clock" class="size-3 mr-1" />
                   Awaiting Activation
                 </UiBadge>
                 <UiBadge v-else-if="claim.status === 'completed' || claim.account_activated_at" variant="default" class="text-xs">
-                  <Icon name="heroicons:check-badge" class="mr-1 size-3" />
+                  <Icon name="heroicons:check-badge" class="size-3 mr-1" />
                   Account Active
                 </UiBadge>
               </div>
@@ -347,7 +347,7 @@ const getStatusLabel = (status: string) => {
                 <p v-if="claim.contractor?.email">
                   <span class="font-medium">Business Email:</span> {{ claim.contractor.email }}
                   <UiBadge v-if="claim.claimant_email === claim.contractor.email" variant="default" class="ml-2">
-                    <Icon name="heroicons:check-circle" class="mr-0.5 size-3" /> Match
+                    <Icon name="heroicons:check-circle" class="size-3 mr-0.5" /> Match
                   </UiBadge>
                 </p>
                 <!-- Show verification/activation timeline -->
@@ -394,7 +394,7 @@ const getStatusLabel = (status: string) => {
               </template>
               <!-- Other statuses: Show info -->
               <template v-else>
-                <div class="text-sm text-muted-foreground text-right">
+                <div class="text-right text-sm text-muted-foreground">
                   <p v-if="claim.status === 'rejected'">Rejected</p>
                   <p v-else-if="claim.status === 'completed'">Account activated</p>
                   <p v-else-if="claim.status === 'unverified'">Awaiting email verification</p>
@@ -451,7 +451,7 @@ const getStatusLabel = (status: string) => {
           </UiAlertDialogDescription>
         </UiAlertDialogHeader>
         <div class="py-4">
-          <label class="block text-sm font-medium text-foreground mb-2">
+          <label class="mb-2 block text-sm font-medium text-foreground">
             Rejection Notes (optional)
           </label>
           <UiTextarea

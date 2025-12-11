@@ -41,7 +41,7 @@ export const adminNavMenu: AdminNavMenu[] = [
         link: '/admin/contractors',
       },
       {
-        title: 'Claims',
+        title: 'Profile Claims',
         icon: 'i-lucide-shield-check',
         link: '/admin/claims',
       },
