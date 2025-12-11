@@ -118,6 +118,11 @@ export class JobService {
       await this.logService.logJobCompleted(jobId, jobType, result as Record<string, unknown>)
       consola.info(`Completed ${jobType} job: ${jobId}`)
 
+      // Handle continuous mode - queue next job if needed
+      if (result && typeof result === 'object' && 'shouldContinue' in result && result.shouldContinue) {
+        await this.queueNextContinuousJob(job)
+      }
+
       return result
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -219,6 +224,28 @@ export class JobService {
     consola.info(`Queued job for retry: ${jobId}`)
 
     return updatedJob
+  }
+
+  /**
+   * Queue next job in continuous chain
+   * Called when a job with continuous=true completes and has more items to process
+   */
+  private async queueNextContinuousJob(completedJob: BackgroundJobRow): Promise<void> {
+    const jobType = completedJob.job_type as JobType
+    const payload = completedJob.payload as JobPayload
+
+    try {
+      // Create next job with same payload (continuous flag preserved)
+      const nextJob = await this.createJob(jobType, payload, completedJob.created_by || undefined)
+      await this.logService.logJobEvent(completedJob.id, 'chain_queued', `Queued next batch: ${nextJob.id}`, {
+        nextJobId: nextJob.id,
+      })
+      consola.info(`Continuous mode: Queued next ${jobType} job: ${nextJob.id}`)
+    } catch (error) {
+      // If we can't queue the next job (e.g., one already exists), log but don't fail
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      consola.warn(`Continuous mode: Could not queue next job: ${errorMessage}`)
+    }
   }
 
   /**

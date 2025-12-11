@@ -105,6 +105,8 @@ export class ImageEnrichmentJobExecutor implements JobExecutor {
       failedImages: summary.failedImages,
       contractorsRemaining: summary.contractorsRemaining,
       errors,
+      // Include flag to trigger next job in chain
+      shouldContinue: payload.continuous === true && summary.contractorsRemaining > 0,
     }
 
     return result

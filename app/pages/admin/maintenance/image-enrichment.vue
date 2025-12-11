@@ -17,6 +17,7 @@ definePageMeta({
 const isLoading = ref(false)
 const isQueuing = ref(false)
 const errorMessage = ref<string | null>(null)
+const continuousMode = ref(true) // Default to processing all
 
 interface QueueStats {
   pendingContractors: number
@@ -93,7 +94,10 @@ const queueJob = async () => {
       method: 'POST',
       body: {
         jobType: 'image_enrichment',
-        payload: { batchSize: 10 },
+        payload: {
+          batchSize: 10,
+          continuous: continuousMode.value,
+        },
       },
     })
     // Refresh to show new job
@@ -206,12 +210,23 @@ onMounted(() => {
           </NuxtLink>
         </div>
 
+        <!-- Continuous Mode Toggle -->
+        <div class="mb-6 flex items-center gap-3">
+          <Switch v-model="continuousMode" />
+          <div>
+            <span class="text-sm font-medium text-foreground">Process all remaining</span>
+            <p class="text-xs text-muted-foreground">
+              {{ continuousMode ? 'Will automatically queue next batch until all images are processed' : 'Will process one batch of 10 contractors' }}
+            </p>
+          </div>
+        </div>
+
         <!-- Queue Button -->
         <div class="flex items-center gap-4">
           <UiButton :disabled="!canQueueJob" @click="queueJob">
             <Icon v-if="isQueuing" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
-            <Icon v-else name="heroicons:plus" class="size-4 mr-2" />
-            Queue Enrichment Job
+            <Icon v-else name="heroicons:play" class="size-4 mr-2" />
+            {{ continuousMode ? 'Start Processing All' : 'Queue Single Batch' }}
           </UiButton>
 
           <NuxtLink to="/admin/maintenance/jobs">
@@ -247,7 +262,7 @@ onMounted(() => {
           <ul class="list-inside list-disc space-y-1">
             <li>Contractors with external image URLs</li>
             <li>Images not yet uploaded to storage</li>
-            <li>Processed in batches of 10 contractors</li>
+            <li>Processed in batches of 10 contractors each</li>
           </ul>
         </UiCardContent>
       </UiCard>
@@ -263,7 +278,7 @@ onMounted(() => {
           <ul class="list-inside list-disc space-y-1">
             <li>Jobs run via pg_cron every 15 seconds</li>
             <li>No need to keep browser tab open</li>
-            <li>Failed jobs automatically retry up to 3 times</li>
+            <li>Cancel anytime to stop after current batch</li>
           </ul>
         </UiCardContent>
       </UiCard>

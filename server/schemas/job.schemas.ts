@@ -38,6 +38,7 @@ export type JobType = typeof JOB_TYPES[number]
  */
 export const imageEnrichmentPayloadSchema = z.object({
   batchSize: z.number().int().min(1).max(100).default(10),
+  continuous: z.boolean().default(false), // Auto-queue next batch on completion
   // Future: could add filters like cityId, contractorIds, etc.
 })
 
@@ -63,6 +64,8 @@ export interface ImageEnrichmentResult {
     companyName: string
     message: string
   }>
+  /** Flag indicating if continuous mode should queue next batch */
+  shouldContinue?: boolean
 }
 
 export type JobResult = ImageEnrichmentResult // | OtherResult in future

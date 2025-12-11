@@ -110,6 +110,13 @@ export default defineNuxtConfig({
     },
   },
 
+  // Allow Docker to access dev server for pg_cron job runner
+  vite: {
+    server: {
+      allowedHosts: ['host.docker.internal'],
+    },
+  },
+
   // Route rules - disable SSR for admin routes (no SEO needed, prevents hydration issues)
   routeRules: {
     '/admin/**': { ssr: false },

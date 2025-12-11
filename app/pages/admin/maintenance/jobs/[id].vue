@@ -109,6 +109,9 @@ const startSSE = () => {
   eventSource.value.addEventListener('progress', (e) => {
     const data = JSON.parse(e.data)
     if (job.value) {
+      // Update status (pending -> processing transition)
+      if (data.status) job.value.status = data.status
+      // Update progress counts
       job.value.processedItems = data.processedItems
       job.value.failedItems = data.failedItems
       if (data.totalItems) job.value.totalItems = data.totalItems
