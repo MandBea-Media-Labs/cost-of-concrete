@@ -27,6 +27,10 @@ const eventSource = ref<EventSource | null>(null)
 let pollInterval: ReturnType<typeof setInterval> | null = null
 const POLL_INTERVAL_MS = 3000 // Check every 3 seconds
 
+// Throttle queue stats fetching during SSE (avoid megapolling)
+let lastQueueStatsFetch = 0
+const QUEUE_STATS_THROTTLE_MS = 2000 // Max once per 2 seconds
+
 interface QueueStats {
   pendingContractors: number
   totalPendingImages: number
@@ -171,8 +175,12 @@ const connectSSE = () => {
       if (data.totalItems) activeJob.value.totalItems = data.totalItems
       if (data.status) activeJob.value.status = data.status
     }
-    // Refresh queue stats to show updated pending counts
-    fetchQueueStats()
+    // Throttle queue stats fetching to avoid megapolling
+    const now = Date.now()
+    if (now - lastQueueStatsFetch >= QUEUE_STATS_THROTTLE_MS) {
+      lastQueueStatsFetch = now
+      fetchQueueStats()
+    }
   })
 
   // Listen for job completion
