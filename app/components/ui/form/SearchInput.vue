@@ -361,7 +361,7 @@ const selectResult = (result: LocationResult) => {
 }
 
 // Handle button click (button mode)
-const handleButtonClick = () => {
+const handleButtonClick = async () => {
   if (searchQuery.value.trim().length === 0) return
 
   // Consola log for demo (only in dev mode)
@@ -381,6 +381,27 @@ const handleButtonClick = () => {
     })
   } else {
     emit('submit', searchQuery.value)
+  }
+
+  // Search for location via API and navigate to the first result
+  isSearching.value = true
+  try {
+    const results = await $fetch<LocationResult[]>('/api/public/locations', {
+      query: { q: searchQuery.value.trim(), limit: 1 }
+    })
+
+    if (results && results.length > 0) {
+      navigateToLocation(results[0])
+    } else {
+      // No results found - stay on page but show message
+      if (import.meta.dev) {
+        consola.warn('SearchInput: No locations found for query', searchQuery.value)
+      }
+    }
+  } catch (error) {
+    consola.error('SearchInput: Location search failed', error)
+  } finally {
+    isSearching.value = false
   }
 }
 

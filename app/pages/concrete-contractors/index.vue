@@ -2,10 +2,35 @@
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
 import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
-import { serviceOptions, ratingOptions, sortByOptions } from '~/mock-data'
+import { getStateSlugFromCode } from '~/utils/usStates'
 
 // TODO: Future AI enrichment will categorize contractors against service_types table
 // Currently, service type filtering uses keyword matching against metadata.categories
+
+// Service options for the search input dropdown
+const serviceOptions: ServiceOption[] = [
+  { id: null, name: 'All Services', slug: null },
+  { id: 1, name: 'Driveways', slug: 'driveways' },
+  { id: 2, name: 'Patios', slug: 'patios' },
+  { id: 3, name: 'Foundations', slug: 'foundations' },
+  { id: 4, name: 'Walkways', slug: 'walkways' },
+  { id: 5, name: 'Stamped & Decorative', slug: 'stamped-decorative' }
+]
+
+// Rating filter options
+const ratingOptions: FilterOption[] = [
+  { value: 'all', label: 'Any Rating' },
+  { value: '4', label: '4+ Stars' },
+  { value: '4.5', label: '4.5+ Stars' },
+  { value: '5', label: '5 Stars Only' }
+]
+
+// Sort by filter options (matching the watcher logic)
+const sortByOptions: FilterOption[] = [
+  { value: 'top-rated', label: 'Top Rated' },
+  { value: 'most-reviews', label: 'Most Reviews' },
+  { value: 'a-z', label: 'A-Z' }
+]
 
 // Pagination and filter state (defined early for SEO composable)
 const currentPage = ref(1)
@@ -102,13 +127,18 @@ watch(() => filters.sortBy, (newValue) => {
 })
 
 watch(() => filters.serviceType, (newValue) => {
-  selectedCategory.value = newValue || undefined
+  // Handle 'all' as no filter, otherwise use the selected value
+  selectedCategory.value = (newValue && newValue !== 'all') ? newValue : undefined
   currentPage.value = 1
 })
 
 watch(() => filters.rating, (newValue) => {
-  // Parse rating filter (e.g., "4" -> 4)
-  minRating.value = newValue ? parseInt(newValue) : undefined
+  // Parse rating filter (e.g., "4" -> 4), 'all' means no filter
+  if (newValue && newValue !== 'all') {
+    minRating.value = parseFloat(newValue)
+  } else {
+    minRating.value = undefined
+  }
   currentPage.value = 1
 })
 </script>
