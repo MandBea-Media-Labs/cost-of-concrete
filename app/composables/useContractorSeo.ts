@@ -9,7 +9,7 @@
  * - Canonical URL
  * - SSR-compatible
  */
-import { getStateName } from '~/utils/usStates'
+import { getStateName, getStateSlugFromCode } from '~/utils/usStates'
 
 export interface ContractorSeoData {
   companyName: string
@@ -40,7 +40,8 @@ export function useContractorSeo(contractor: ContractorSeoData) {
 
   // Build canonical URL with SEO-optimized structure
   // Format: /[state]/[city]/concrete-contractors/[slug]
-  const stateSlug = contractor.stateSlug || contractor.stateCode?.toLowerCase()
+  // Convert state code (e.g., 'SC') to state slug (e.g., 'south-carolina')
+  const stateSlug = contractor.stateSlug || (contractor.stateCode ? getStateSlugFromCode(contractor.stateCode) : undefined)
   const canonicalPath = stateSlug
     ? `/${stateSlug}/${contractor.citySlug}/concrete-contractors/${contractor.slug}`
     : `/${contractor.citySlug}/concrete-contractors/${contractor.slug}`
