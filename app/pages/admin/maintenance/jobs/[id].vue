@@ -243,7 +243,15 @@ watch(isActiveJob, (active) => {
           <h1 class="text-2xl font-bold">{{ formatJobType(job.jobType) }}</h1>
           <p class="mt-1 text-sm text-muted-foreground">Job ID: {{ job.id }}</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-3">
+          <!-- Realtime indicator -->
+          <div v-if="eventSource" class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+            <span class="relative flex h-2 w-2">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            Live
+          </div>
           <UiButton v-if="job.status === 'pending'" variant="outline" @click="handleCancel">
             <Icon name="heroicons:x-mark" class="mr-2 size-4" />
             Cancel

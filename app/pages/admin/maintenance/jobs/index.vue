@@ -55,6 +55,7 @@ const isLoading = ref(true)
 const jobs = ref<Job[]>([])
 const pagination = ref({ total: 0, page: 1, limit: 25, totalPages: 1 })
 const errorMessage = ref<string | null>(null)
+const eventSource = ref<EventSource | null>(null)
 
 // Rows per page options
 const rowsPerPageOptions = [10, 25, 50, 100]
@@ -239,6 +240,67 @@ const clearFilters = () => {
   selectedType.value = 'all'
 }
 
+// =====================================================
+// SSE REALTIME UPDATES
+// =====================================================
+
+const hasActiveJobs = computed(() => {
+  return jobs.value.some(job => ['pending', 'processing'].includes(job.status))
+})
+
+const startSSE = () => {
+  if (eventSource.value) return
+
+  eventSource.value = new EventSource('/api/jobs/stream')
+
+  eventSource.value.addEventListener('jobs', (e) => {
+    const data = JSON.parse(e.data)
+    const activeJobs = data.jobs as Job[]
+    const removedJobIds = data.removedJobIds as string[] || []
+
+    // If jobs completed/failed, refresh the full list to get final state
+    if (removedJobIds.length > 0) {
+      fetchJobs()
+      return
+    }
+
+    // Update existing jobs in the table with new progress data
+    jobs.value = jobs.value.map(job => {
+      const activeJob = activeJobs.find(a => a.id === job.id)
+      if (activeJob) {
+        return { ...job, ...activeJob }
+      }
+      return job
+    })
+  })
+
+  eventSource.value.onerror = () => {
+    closeSSE()
+    // Retry connection after 5 seconds
+    setTimeout(() => {
+      if (hasActiveJobs.value) {
+        startSSE()
+      }
+    }, 5000)
+  }
+}
+
+const closeSSE = () => {
+  if (eventSource.value) {
+    eventSource.value.close()
+    eventSource.value = null
+  }
+}
+
+// Watch for active jobs and manage SSE connection
+watch(hasActiveJobs, (hasActive) => {
+  if (hasActive) {
+    startSSE()
+  } else {
+    closeSSE()
+  }
+})
+
 // Watch filters and sync to URL
 watch([selectedStatus, selectedType], async () => {
   pagination.value.page = 1
@@ -252,9 +314,16 @@ watch([selectedStatus, selectedType], async () => {
   await fetchJobs()
 })
 
-// Initial fetch
-onMounted(() => {
-  fetchJobs()
+// Initial fetch and SSE setup
+onMounted(async () => {
+  await fetchJobs()
+  if (hasActiveJobs.value) {
+    startSSE()
+  }
+})
+
+onUnmounted(() => {
+  closeSSE()
 })
 </script>
 
@@ -269,10 +338,20 @@ onMounted(() => {
             Monitor and manage background processing jobs
           </p>
         </div>
-        <UiButton variant="outline" size="sm" :disabled="isLoading" @click="fetchJobs">
-          <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
-          Refresh
-        </UiButton>
+        <div class="flex items-center gap-3">
+          <!-- Realtime indicator -->
+          <div v-if="eventSource" class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+            <span class="relative flex h-2 w-2">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            Live
+          </div>
+          <UiButton variant="outline" size="sm" :disabled="isLoading" @click="fetchJobs">
+            <Icon name="heroicons:arrow-path" class="size-4" :class="{ 'animate-spin': isLoading }" />
+            Refresh
+          </UiButton>
+        </div>
       </div>
 
       <!-- Quick Filters -->
