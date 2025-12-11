@@ -61,6 +61,7 @@ export default defineEventHandler(async (event): Promise<ImportJobStatusResponse
         skippedClaimedCount: job.skipped_claimed_count,
         errorCount: job.error_count,
         pendingImageCount: job.pending_image_count,
+        reviewsImportedCount: job.reviews_imported_count ?? 0,
         errors: (job.errors || []) as ImportError[],
         createdAt: job.created_at,
         startedAt: job.started_at,

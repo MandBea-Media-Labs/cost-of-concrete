@@ -10,6 +10,9 @@
  * - Results summary with success/error counts
  */
 
+import NumberFlow from '@number-flow/vue'
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
+
 definePageMeta({
   layout: 'admin',
 })
@@ -36,6 +39,7 @@ interface ImportJob {
   skippedClaimedCount: number
   errorCount: number
   pendingImageCount: number
+  reviewsImportedCount: number
   errors: ImportError[]
   createdAt: string
   startedAt: string | null
@@ -304,9 +308,9 @@ onUnmounted(() => {
             Drag and drop or browse to select your export file
           </UiCardDescription>
         </UiCardHeader>
-        <UiCardContent>
+        <UiCardContent v-auto-animate>
           <!-- STATE: Upload / Ready -->
-          <template v-if="uiState === 'upload' || uiState === 'ready'">
+          <div v-if="uiState === 'upload' || uiState === 'ready'" v-auto-animate>
             <!-- Drop Zone -->
             <div
               class="relative rounded-lg border-2 border-dashed p-8 text-center transition-colors"
@@ -363,11 +367,11 @@ onUnmounted(() => {
                 {{ isCreatingJob ? 'Creating Job...' : 'Start Import' }}
               </UiButton>
             </div>
-          </template>
+          </div>
 
           <!-- STATE: Processing / Paused -->
-          <template v-if="(uiState === 'processing' || uiState === 'paused') && currentJob">
-            <div class="space-y-4">
+          <div v-if="(uiState === 'processing' || uiState === 'paused') && currentJob" v-auto-animate>
+            <div class="space-y-4" v-auto-animate>
               <!-- Status Header -->
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -389,17 +393,29 @@ onUnmounted(() => {
               <UiProgress :model-value="progressPercent" class="h-3" />
 
               <!-- Stats Grid -->
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid grid-cols-4 gap-3">
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ currentJob.importedCount }}</p>
+                  <p class="text-xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.importedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Imported</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ currentJob.updatedCount }}</p>
+                  <p class="text-xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.updatedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Updated</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-xl font-bold text-red-600 dark:text-red-400">{{ currentJob.errorCount }}</p>
+                  <p class="text-xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.reviewsImportedCount" />
+                  </p>
+                  <p class="text-xs text-muted-foreground">Reviews</p>
+                </div>
+                <div class="rounded-lg border bg-muted/50 p-3 text-center">
+                  <p class="text-xl font-bold tabular-nums" :class="currentJob.errorCount > 0 ? 'text-destructive' : 'text-foreground'">
+                    <NumberFlow :value="currentJob.errorCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Errors</p>
                 </div>
               </div>
@@ -420,11 +436,11 @@ onUnmounted(() => {
                 </UiButton>
               </div>
             </div>
-          </template>
+          </div>
 
           <!-- STATE: Complete -->
-          <template v-if="uiState === 'complete' && currentJob">
-            <div class="space-y-6">
+          <div v-if="uiState === 'complete' && currentJob" v-auto-animate>
+            <div class="space-y-6" v-auto-animate>
               <!-- Success Header -->
               <UiAlert variant="success">
                 <Icon name="heroicons:check-circle" class="size-4" />
@@ -435,29 +451,47 @@ onUnmounted(() => {
               </UiAlert>
 
               <!-- Stats Grid -->
-              <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ currentJob.importedCount }}</p>
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.importedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Imported</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ currentJob.updatedCount }}</p>
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.updatedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Updated</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-muted-foreground">{{ currentJob.skippedCount }}</p>
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.reviewsImportedCount" />
+                  </p>
+                  <p class="text-xs text-muted-foreground">Reviews</p>
+                </div>
+                <div class="rounded-lg border bg-muted/50 p-3 text-center">
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.skippedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Skipped</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ currentJob.skippedClaimedCount }}</p>
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.skippedClaimedCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Claimed</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ currentJob.errorCount }}</p>
+                  <p class="text-2xl font-bold tabular-nums" :class="currentJob.errorCount > 0 ? 'text-destructive' : 'text-foreground'">
+                    <NumberFlow :value="currentJob.errorCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Errors</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
-                  <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ currentJob.pendingImageCount }}</p>
+                  <p class="text-2xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.pendingImageCount" />
+                  </p>
                   <p class="text-xs text-muted-foreground">Images</p>
                 </div>
               </div>
@@ -509,7 +543,7 @@ onUnmounted(() => {
                 </NuxtLink>
               </div>
             </div>
-          </template>
+          </div>
 
           <!-- Error Message -->
           <UiAlert v-if="errorMessage && uiState !== 'complete'" variant="destructive" class="mt-4">

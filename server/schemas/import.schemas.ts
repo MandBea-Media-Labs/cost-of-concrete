@@ -221,6 +221,7 @@ export interface ImportJobStatusResponse {
     skippedClaimedCount: number
     errorCount: number
     pendingImageCount: number
+    reviewsImportedCount: number
     errors: ImportError[]
     createdAt: string
     startedAt: string | null
