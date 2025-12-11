@@ -42,12 +42,39 @@ export interface DistanceFilterReturn {
   disabledTooltip: string
 }
 
+/**
+ * =============================================================================
+ * DEV-ONLY: TEST COORDINATES FEATURE
+ * =============================================================================
+ *
+ * This feature allows testing the distance filter without requiring actual
+ * geolocation permission. It adds a test option to the distance dropdown
+ * that simulates coordinates for North Charleston, SC (where contractors exist).
+ *
+ * TO REVERT THIS FEATURE:
+ * 1. Delete TEST_COORDS constant below
+ * 2. Delete useTestCoords ref in useDistanceFilter() (~line 58)
+ * 3. Remove TEST_COORDS checks in lat/lng computed props (~lines 85-92)
+ * 4. Remove devOptions from distanceOptions computed (~lines 126-128)
+ * 5. Remove test-* handling in setDistance() function (~lines 178-188)
+ * 6. In app/pages/concrete-contractors/index.vue, remove the test-* check
+ *    in the distance filter watcher (~lines 172-174)
+ *
+ * The feature is gated by import.meta.dev so it won't appear in production.
+ * =============================================================================
+ */
+const TEST_COORDS = {
+  lat: 32.8546,
+  lng: -79.9748
+}
+
 export function useDistanceFilter(): DistanceFilterReturn {
   // Internal state
   const selectedDistance = ref<number | null>(null)
   const hasRequestedLocation = ref(false)
   const locationError = ref<string | null>(null)
   const permissionDeniedFlag = ref(false)
+  const useTestCoords = ref(false) // Flag for using test coordinates
 
   // VueUse geolocation (starts paused - on-demand only)
   const {
@@ -63,7 +90,7 @@ export function useDistanceFilter(): DistanceFilterReturn {
   })
 
   // Computed values
-  const hasPermission = computed(() => locatedAt.value !== null)
+  const hasPermission = computed(() => locatedAt.value !== null || useTestCoords.value)
 
   const permissionDenied = computed(() => {
     // Check if error code 1 (permission denied) occurred
@@ -74,12 +101,14 @@ export function useDistanceFilter(): DistanceFilterReturn {
   })
 
   const lat = computed(() => {
-    if (!hasPermission.value || !coords.value) return null
+    if (useTestCoords.value) return TEST_COORDS.lat
+    if (!locatedAt.value || !coords.value) return null
     return coords.value.latitude
   })
 
   const lng = computed(() => {
-    if (!hasPermission.value || !coords.value) return null
+    if (useTestCoords.value) return TEST_COORDS.lng
+    if (!locatedAt.value || !coords.value) return null
     return coords.value.longitude
   })
 
@@ -113,7 +142,12 @@ export function useDistanceFilter(): DistanceFilterReturn {
       { value: '100', label: 'Within 100 miles', disabled: permissionDenied.value }
     ]
 
-    return [...baseOptions, ...distanceChoices]
+    // DEV ONLY: Add test location option
+    const devOptions: FilterOption[] = import.meta.dev ? [
+      { value: 'test-25', label: '🧪 Test: 25mi from N. Charleston, SC' }
+    ] : []
+
+    return [...baseOptions, ...distanceChoices, ...devOptions]
   })
 
   // Watch for geolocation errors to handle permission denial
@@ -157,7 +191,23 @@ export function useDistanceFilter(): DistanceFilterReturn {
   }
 
   // Set selected distance (auto-requests location if needed)
-  function setDistance(distance: number | null): void {
+  // Accepts raw distance value OR special test value like 'test-25'
+  function setDistance(distanceInput: number | string | null): void {
+    // Handle test coordinates option (DEV only)
+    if (typeof distanceInput === 'string' && distanceInput.startsWith('test-')) {
+      const testDistance = parseInt(distanceInput.replace('test-', ''), 10)
+      useTestCoords.value = true
+      selectedDistance.value = testDistance
+      if (import.meta.dev) {
+        consola.success(`Distance filter: Using TEST coordinates (N. Charleston, SC) - Lat: ${TEST_COORDS.lat}, Lng: ${TEST_COORDS.lng}`)
+      }
+      return
+    }
+
+    // Reset test mode if switching to real geolocation
+    useTestCoords.value = false
+
+    const distance = typeof distanceInput === 'number' ? distanceInput : null
     selectedDistance.value = distance
 
     // Auto-request location when a distance is selected (not "all")

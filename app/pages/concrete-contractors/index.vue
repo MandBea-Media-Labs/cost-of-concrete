@@ -169,7 +169,12 @@ watch(() => filters.rating, (newValue) => {
 // Distance filter watcher - triggers geolocation request via setDistance
 watch(() => filters.distance, (newValue) => {
   if (newValue && newValue !== 'all') {
-    distanceFilter.setDistance(parseInt(newValue, 10))
+    // Handle test coordinates option (test-25) or regular distance values
+    if (newValue.startsWith('test-')) {
+      distanceFilter.setDistance(newValue) // Pass string for test mode
+    } else {
+      distanceFilter.setDistance(parseInt(newValue, 10))
+    }
   } else {
     distanceFilter.setDistance(null)
   }
