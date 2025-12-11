@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+import { apifyReviewSchema } from './review.schemas'
 
 // =====================================================
 // APIFY ROW SCHEMA
@@ -77,6 +78,9 @@ export const apifyRowSchema = z.object({
 
   // Status
   permanentlyClosed: z.boolean().optional().nullable(),
+
+  // Reviews (optional - may be included in enriched exports)
+  reviews: z.array(apifyReviewSchema).optional().default([]),
 })
 
 export type ApifyRow = z.infer<typeof apifyRowSchema>
@@ -109,6 +113,7 @@ export interface ImportSummary {
   skipped: number
   skippedClaimed: number
   pendingImageCount: number
+  reviewsImported: number
   errors: ImportError[]
 }
 
@@ -171,6 +176,7 @@ export interface ProcessBatchResult {
   skipped: number
   skippedClaimed: number
   pendingImageCount: number
+  reviewsImported: number
   errors: ImportError[]
 }
 

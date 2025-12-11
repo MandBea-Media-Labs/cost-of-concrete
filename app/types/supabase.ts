@@ -686,6 +686,98 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          detailed_rating: Json | null
+          google_review_id: string
+          id: string
+          is_local_guide: boolean | null
+          likes_count: number | null
+          original_language: string | null
+          owner_response_date: string | null
+          owner_response_text: string | null
+          published_at: string | null
+          published_at_relative: string | null
+          review_context: Json | null
+          review_image_urls: string[] | null
+          review_origin: string | null
+          review_text: string | null
+          review_text_translated: string | null
+          review_url: string | null
+          reviewer_id: string | null
+          reviewer_name: string
+          reviewer_photo_url: string | null
+          reviewer_review_count: number | null
+          reviewer_url: string | null
+          stars: number
+          updated_at: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          detailed_rating?: Json | null
+          google_review_id: string
+          id?: string
+          is_local_guide?: boolean | null
+          likes_count?: number | null
+          original_language?: string | null
+          owner_response_date?: string | null
+          owner_response_text?: string | null
+          published_at?: string | null
+          published_at_relative?: string | null
+          review_context?: Json | null
+          review_image_urls?: string[] | null
+          review_origin?: string | null
+          review_text?: string | null
+          review_text_translated?: string | null
+          review_url?: string | null
+          reviewer_id?: string | null
+          reviewer_name: string
+          reviewer_photo_url?: string | null
+          reviewer_review_count?: number | null
+          reviewer_url?: string | null
+          stars: number
+          updated_at?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          detailed_rating?: Json | null
+          google_review_id?: string
+          id?: string
+          is_local_guide?: boolean | null
+          likes_count?: number | null
+          original_language?: string | null
+          owner_response_date?: string | null
+          owner_response_text?: string | null
+          published_at?: string | null
+          published_at_relative?: string | null
+          review_context?: Json | null
+          review_image_urls?: string[] | null
+          review_origin?: string | null
+          review_text?: string | null
+          review_text_translated?: string | null
+          review_url?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string
+          reviewer_photo_url?: string | null
+          reviewer_review_count?: number | null
+          reviewer_url?: string | null
+          stars?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_types: {
         Row: {
           created_at: string | null
