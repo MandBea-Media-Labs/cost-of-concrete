@@ -236,6 +236,7 @@ watch(() => filters.distance, (newValue) => {
           :contractor-slug="contractor.slug"
           :city-slug="contractor.citySlug || 'unknown'"
           :state-code="contractor.stateCode?.toLowerCase() || 'unknown'"
+          :distance-miles="contractor.distanceMiles"
         >
           {{ contractor.description || contractor.metadata?.categories?.join(', ') || '' }}
         </ContractorCard>
