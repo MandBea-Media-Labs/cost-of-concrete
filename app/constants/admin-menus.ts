@@ -2,12 +2,18 @@ import type { AdminNavMenu, AdminNavMenuItems } from '~/types/admin-nav'
 
 export const adminNavMenu: AdminNavMenu[] = [
   {
-    heading: 'Dashboard',
+    heading: 'Main',
     items: [
       {
         title: 'Overview',
         icon: 'i-lucide-home',
         link: '/admin',
+      },
+      {
+        title: 'View Site',
+        icon: 'i-lucide-external-link',
+        link: '/',
+        external: true,
       },
     ],
   },
@@ -30,7 +36,7 @@ export const adminNavMenu: AdminNavMenu[] = [
     heading: 'Directory',
     items: [
       {
-        title: 'Contractors',
+        title: 'Contractor Profiles',
         icon: 'i-lucide-building-2',
         link: '/admin/contractors',
       },
@@ -38,6 +44,21 @@ export const adminNavMenu: AdminNavMenu[] = [
         title: 'Claims',
         icon: 'i-lucide-shield-check',
         link: '/admin/claims',
+      },
+    ],
+  },
+  {
+    heading: 'Accounts',
+    items: [
+      {
+        title: 'System Accounts',
+        icon: 'i-lucide-users',
+        link: '/admin/accounts/system',
+      },
+      {
+        title: 'Contractor Accounts',
+        icon: 'i-lucide-building',
+        link: '/admin/accounts/contractors',
       },
     ],
   },
@@ -78,21 +99,6 @@ export const adminNavMenu: AdminNavMenu[] = [
         title: 'System Logs',
         icon: 'i-lucide-scroll-text',
         link: '/admin/system/logs',
-      },
-    ],
-  },
-  {
-    heading: 'Accounts',
-    items: [
-      {
-        title: 'System Accounts',
-        icon: 'i-lucide-users',
-        link: '/admin/accounts/system',
-      },
-      {
-        title: 'Contractor Accounts',
-        icon: 'i-lucide-building',
-        link: '/admin/accounts/contractors',
       },
     ],
   },

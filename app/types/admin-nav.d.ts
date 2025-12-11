@@ -8,6 +8,7 @@ export interface AdminNavLink {
   link: string
   icon?: string
   new?: boolean
+  external?: boolean
 }
 
 export interface AdminNavSectionTitle {
