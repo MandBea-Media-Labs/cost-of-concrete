@@ -6,6 +6,7 @@
  * Jobs run via pg_cron without requiring the browser tab to stay open.
  */
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
+import NumberFlow from '@number-flow/vue'
 
 definePageMeta({
   layout: 'admin',
@@ -348,14 +349,14 @@ onUnmounted(() => {
         <!-- Queue Stats -->
         <div class="mb-6 grid grid-cols-2 gap-4">
           <div class="rounded-lg border bg-muted/50 p-4 text-center">
-            <div class="text-2xl font-bold text-foreground">
-              {{ queueStats.pendingContractors }}
+            <div class="text-2xl font-bold tabular-nums text-foreground">
+              <NumberFlow :value="queueStats.pendingContractors" />
             </div>
             <div class="text-xs text-muted-foreground">Pending Contractors</div>
           </div>
           <div class="rounded-lg border bg-muted/50 p-4 text-center">
-            <div class="text-2xl font-bold text-foreground">
-              {{ queueStats.totalPendingImages }}
+            <div class="text-2xl font-bold tabular-nums text-foreground">
+              <NumberFlow :value="queueStats.totalPendingImages" />
             </div>
             <div class="text-xs text-muted-foreground">Pending Images</div>
           </div>
