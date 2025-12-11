@@ -46,6 +46,15 @@ export interface StateContractorSearchOptions {
   orderDirection?: 'asc' | 'desc'
 }
 
+export interface NationwideContractorSearchOptions {
+  category?: string
+  minRating?: number
+  limit?: number
+  offset?: number
+  orderBy?: 'rating' | 'review_count' | 'company_name'
+  orderDirection?: 'asc' | 'desc'
+}
+
 export interface ContractorWithDistance extends Contractor {
   distance_miles?: number
   city_name?: string
@@ -514,6 +523,71 @@ export class ContractorRepository {
 
     if (error) {
       consola.error('Error searching contractors by state:', error)
+      throw error
+    }
+
+    // Transform results to include city info at the top level
+    const contractors = (data || []).map(c => {
+      const city = c.cities as { id: string; name: string; slug: string; state_code: string }
+      return {
+        ...c,
+        cities: undefined, // Remove nested cities object
+        city_name: city?.name,
+        city_slug: city?.slug,
+        state_code: city?.state_code
+      }
+    }) as ContractorWithDistance[]
+
+    return { contractors, total: count || 0 }
+  }
+
+  /**
+   * Search contractors nationwide (for main search page without location filter)
+   * Returns all active contractors with optional category and rating filters
+   */
+  async searchNationwide(options: NationwideContractorSearchOptions): Promise<{ contractors: ContractorWithDistance[], total: number }> {
+    const {
+      category,
+      minRating,
+      limit = 20,
+      offset = 0,
+      orderBy = 'rating',
+      orderDirection = 'desc'
+    } = options
+
+    // Build query with city join for location info
+    let query = this.client
+      .from('contractors')
+      .select(`
+        *,
+        cities!inner (
+          id,
+          name,
+          slug,
+          state_code
+        )
+      `, { count: 'exact' })
+      .eq('status', 'active')
+      .is('deleted_at', null)
+
+    // Filter by category using JSONB containment
+    if (category) {
+      query = query.contains('metadata', { categories: [category] })
+    }
+
+    // Filter by minimum rating
+    if (minRating && minRating > 0) {
+      query = query.gte('rating', minRating)
+    }
+
+    // Apply ordering
+    query = query.order(orderBy, { ascending: orderDirection === 'asc', nullsFirst: false })
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
+
+    if (error) {
+      consola.error('Error searching contractors nationwide:', error)
       throw error
     }
 

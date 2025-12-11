@@ -4,24 +4,26 @@
  * Public endpoint to search contractors with filters
  * Supports radius-based search using PostGIS (when citySlug provided)
  * Supports state-level search (when stateCode provided without citySlug)
+ * Supports nationwide search (when neither citySlug nor stateCode provided)
  *
  * Query params:
  * - citySlug (optional): City slug to search from (for radius search)
  * - stateCode (optional): State code to search within (e.g., NC, CA)
  * - category (optional): Category slug to filter by
+ * - minRating (optional): Minimum rating to filter by (for nationwide search)
  * - radius (optional): Search radius in miles (default: 25, only for city search)
  * - limit (optional): Results per page (default: 20, max: 50)
  * - offset (optional): Pagination offset (default: 0)
  * - orderBy (optional): Sort field - rating, review_count, distance (default: rating)
  * - orderDirection (optional): Sort direction - asc, desc (default: desc)
  *
- * Note: Either citySlug or stateCode must be provided
+ * When neither citySlug nor stateCode is provided, returns nationwide results.
  */
 
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { ContractorRepository } from '../../../repositories/ContractorRepository'
-import type { PublicContractorSearchOptions, StateContractorSearchOptions } from '../../../repositories/ContractorRepository'
+import type { PublicContractorSearchOptions, StateContractorSearchOptions, NationwideContractorSearchOptions } from '../../../repositories/ContractorRepository'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -29,16 +31,9 @@ export default defineEventHandler(async (event) => {
   const citySlug = query.citySlug as string | undefined
   const stateCode = query.stateCode as string | undefined
 
-  // Require either citySlug or stateCode
-  if (!citySlug && !stateCode) {
-    throw createError({
-      statusCode: 400,
-      message: 'Either citySlug or stateCode is required'
-    })
-  }
-
   // Parse and validate query params
   const category = query.category as string | undefined
+  const minRating = Number(query.minRating) || undefined
   const radiusMiles = Math.min(Math.max(Number(query.radius) || 25, 1), 100)
   const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 50)
   const offset = Math.max(Number(query.offset) || 0, 0)
@@ -73,14 +68,14 @@ export default defineEventHandler(async (event) => {
       const result = await contractorRepo.searchPublic(searchOptions)
       contractors = result.contractors
       total = result.total
-    } else {
+    } else if (stateCode) {
       // State-level search (no radius)
       const orderBy = (['rating', 'review_count', 'company_name'].includes(query.orderBy as string)
         ? query.orderBy
         : 'rating') as 'rating' | 'review_count' | 'company_name'
 
       const searchOptions: StateContractorSearchOptions = {
-        stateCode: stateCode!,
+        stateCode,
         category,
         limit,
         offset,
@@ -89,6 +84,24 @@ export default defineEventHandler(async (event) => {
       }
 
       const result = await contractorRepo.searchByState(searchOptions)
+      contractors = result.contractors
+      total = result.total
+    } else {
+      // Nationwide search (no location filter)
+      const orderBy = (['rating', 'review_count', 'company_name'].includes(query.orderBy as string)
+        ? query.orderBy
+        : 'rating') as 'rating' | 'review_count' | 'company_name'
+
+      const searchOptions: NationwideContractorSearchOptions = {
+        category,
+        minRating,
+        limit,
+        offset,
+        orderBy,
+        orderDirection
+      }
+
+      const result = await contractorRepo.searchNationwide(searchOptions)
       contractors = result.contractors
       total = result.total
     }
