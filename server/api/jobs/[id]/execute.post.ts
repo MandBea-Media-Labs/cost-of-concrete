@@ -16,11 +16,9 @@ import { timingSafeEqual } from 'node:crypto'
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { JobService } from '../../../services/JobService'
-import { registerExecutors } from '../../../services/executors'
 import { applyRateLimit } from '../../../utils/rateLimit'
 
-// Register job executors before handling requests
-registerExecutors()
+// Job executors are registered via Nitro plugin (server/plugins/job-executors.ts)
 
 // Rate limit configuration: 10 requests per minute per IP
 // This is generous for pg_cron (runs every 15 seconds = 4/min)

@@ -41,7 +41,10 @@ export class JobRepository {
   }
 
   /**
-   * Create a new background job
+   * Create a new background job using atomic RPC function
+   *
+   * Uses create_background_job_with_log RPC which creates both the job
+   * and its initial log entry in a single transaction.
    */
   async create(data: {
     jobType: JobType
@@ -51,25 +54,33 @@ export class JobRepository {
   }): Promise<BackgroundJobRow> {
     consola.debug(`Creating background job: ${data.jobType}`)
 
-    const insertData: BackgroundJobInsert = {
-      job_type: data.jobType,
-      payload: (data.payload || {}) as BackgroundJobInsert['payload'],
-      total_items: data.totalItems ?? null,
-      created_by: data.createdBy ?? null,
+    // Use atomic RPC function for transactional job + log creation
+    const { data: rpcResult, error: rpcError } = await this.client
+      .rpc('create_background_job_with_log', {
+        p_job_type: data.jobType,
+        p_payload: data.payload || {},
+        p_created_by: data.createdBy || null,
+      })
+
+    if (rpcError) {
+      consola.error('Failed to create background job:', rpcError)
+      // Pass through the error for constraint handling
+      throw rpcError
     }
 
-    const { data: job, error } = await this.client
-      .from('background_jobs')
-      .insert(insertData)
-      .select()
-      .single()
-
-    if (error) {
-      consola.error('Failed to create background job:', error)
-      throw new Error(`Database error: ${error.message}`)
+    // RPC returns an array, get the first result
+    const result = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult
+    if (!result?.job_id) {
+      throw new Error('Job creation failed - no job ID returned')
     }
 
-    consola.debug(`Created background job ${job.id}`)
+    // Fetch the full job record
+    const job = await this.findById(result.job_id)
+    if (!job) {
+      throw new Error('Job creation failed - job not found after creation')
+    }
+
+    consola.debug(`Created background job ${job.id} (atomic with log)`)
     return job
   }
 
@@ -154,6 +165,7 @@ export class JobRepository {
 
   /**
    * Set job result (on completion)
+   * Clears last_error since the job completed successfully
    */
   async setResult(id: string, result: JobResult): Promise<BackgroundJobRow> {
     const { data, error } = await this.client
@@ -162,6 +174,7 @@ export class JobRepository {
         result: result as BackgroundJobUpdate['result'],
         status: 'completed',
         completed_at: new Date().toISOString(),
+        last_error: null, // Clear error on successful completion
       })
       .eq('id', id)
       .select()
@@ -185,6 +198,31 @@ export class JobRepository {
         attempts: job.attempts + 1,
         next_retry_at: nextRetryAt?.toISOString() ?? null,
         status: 'pending', // Reset to pending for retry
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  /**
+   * Reset job for manual retry
+   * Clears attempts, increases max_attempts, and clears error state
+   */
+  async resetForRetry(id: string): Promise<BackgroundJobRow> {
+    const { data, error } = await this.client
+      .from('background_jobs')
+      .update({
+        status: 'pending',
+        attempts: 0,
+        max_attempts: 3, // Reset to default max attempts
+        last_error: null,
+        next_retry_at: null,
+        started_at: null,
+        completed_at: null,
+        result: null,
       })
       .eq('id', id)
       .select()

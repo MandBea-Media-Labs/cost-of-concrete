@@ -37,6 +37,8 @@ export class JobService {
    * Uses database-level unique constraint (idx_one_active_job_per_type) to
    * atomically enforce one active job per type. This prevents race conditions
    * that could occur with application-level checks.
+   *
+   * Job creation and initial logging are handled atomically via RPC function.
    */
   async createJob(
     jobType: JobType,
@@ -44,14 +46,14 @@ export class JobService {
     createdBy?: string
   ): Promise<BackgroundJobRow> {
     try {
-      // Attempt to create the job - database constraint will prevent duplicates
+      // Repository uses atomic RPC that creates job + log in one transaction
       const job = await this.repository.create({
         jobType,
         payload,
         createdBy,
       })
 
-      await this.logService.logJobCreated(job.id, jobType, createdBy)
+      // Log is created atomically by RPC - no separate call needed
       consola.info(`Created ${jobType} job: ${job.id}`)
 
       return job
@@ -125,6 +127,33 @@ export class JobService {
   }
 
   /**
+   * Calculate retry delay based on attempt number
+   *
+   * Uses exponential backoff with predefined delays.
+   * This method is public for testability.
+   *
+   * @param attemptNumber - Current attempt number (1-based)
+   * @returns Delay in minutes before next retry
+   */
+  static calculateRetryDelay(attemptNumber: number): number {
+    // attemptNumber is 1-based, RETRY_DELAYS_MINUTES is 0-indexed
+    const index = Math.max(0, attemptNumber - 1)
+    return RETRY_DELAYS_MINUTES[index] ?? RETRY_DELAYS_MINUTES[RETRY_DELAYS_MINUTES.length - 1]
+  }
+
+  /**
+   * Calculate the next retry timestamp
+   *
+   * @param attemptNumber - Current attempt number (1-based)
+   * @param baseTime - Base time to calculate from (defaults to now)
+   * @returns Date of next retry attempt
+   */
+  static calculateNextRetryAt(attemptNumber: number, baseTime: Date = new Date()): Date {
+    const delayMinutes = JobService.calculateRetryDelay(attemptNumber)
+    return new Date(baseTime.getTime() + delayMinutes * 60 * 1000)
+  }
+
+  /**
    * Handle job failure with retry logic
    */
   private async handleJobFailure(job: BackgroundJobRow, errorMessage: string): Promise<void> {
@@ -134,8 +163,8 @@ export class JobService {
 
     if (attempts < maxAttempts) {
       // Calculate next retry time with exponential backoff
-      const delayMinutes = RETRY_DELAYS_MINUTES[attempts - 1] || RETRY_DELAYS_MINUTES[RETRY_DELAYS_MINUTES.length - 1]
-      const nextRetryAt = new Date(Date.now() + delayMinutes * 60 * 1000)
+      const delayMinutes = JobService.calculateRetryDelay(attempts)
+      const nextRetryAt = JobService.calculateNextRetryAt(attempts)
 
       await this.repository.setStatus(job.id, 'pending', { error: errorMessage })
       await this.repository.incrementAttempts(job.id, nextRetryAt)
@@ -173,6 +202,7 @@ export class JobService {
 
   /**
    * Retry a failed job
+   * Resets attempts to 0 and increases max_attempts to allow fresh retries
    */
   async retryJob(jobId: string): Promise<BackgroundJobRow> {
     const job = await this.repository.findById(jobId)
@@ -184,8 +214,8 @@ export class JobService {
       throw new Error(`Can only retry failed jobs (current: ${job.status})`)
     }
 
-    // Reset for retry
-    const updatedJob = await this.repository.setStatus(jobId, 'pending')
+    // Reset for retry - clear attempts and increase max_attempts
+    const updatedJob = await this.repository.resetForRetry(jobId)
     consola.info(`Queued job for retry: ${jobId}`)
 
     return updatedJob

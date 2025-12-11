@@ -1,0 +1,36 @@
+/**
+ * Nitro Plugin: Job Executor Registration
+ *
+ * Registers all job executors once on server startup.
+ * This ensures executors are available before any job execution requests.
+ *
+ * @see https://nitro.unjs.io/guide/plugins
+ */
+
+import { consola } from 'consola'
+import { JobExecutorRegistry } from '../services/JobExecutorRegistry'
+import { ImageEnrichmentJobExecutor } from '../services/executors/ImageEnrichmentJobExecutor'
+
+export default defineNitroPlugin(() => {
+  // Register all job executors
+  const executors = [
+    { type: 'image_enrichment', executor: new ImageEnrichmentJobExecutor() },
+    // Add more executors here as they are created
+    // { type: 'contractor_enrichment', executor: new ContractorEnrichmentJobExecutor() },
+    // { type: 'review_enrichment', executor: new ReviewEnrichmentJobExecutor() },
+  ] as const
+
+  let registeredCount = 0
+
+  for (const { type, executor } of executors) {
+    if (!JobExecutorRegistry.has(type)) {
+      JobExecutorRegistry.register(type, executor)
+      registeredCount++
+    }
+  }
+
+  if (registeredCount > 0) {
+    consola.success(`Registered ${registeredCount} job executor(s) on server startup`)
+  }
+})
+
