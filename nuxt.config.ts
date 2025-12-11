@@ -115,6 +115,11 @@ export default defineNuxtConfig({
     server: {
       allowedHosts: ['host.docker.internal'],
     },
+    // Fix ESM/CJS compatibility issue with @supabase/supabase-js
+    // See: https://github.com/supabase/supabase-js/issues/1400
+    optimizeDeps: {
+      include: ['@supabase/supabase-js'],
+    },
   },
 
   // Route rules - disable SSR for admin routes (no SEO needed, prevents hydration issues)
