@@ -33,34 +33,50 @@ export class JobService {
 
   /**
    * Create a new background job
+   *
+   * Uses database-level unique constraint (idx_one_active_job_per_type) to
+   * atomically enforce one active job per type. This prevents race conditions
+   * that could occur with application-level checks.
    */
   async createJob(
     jobType: JobType,
     payload: JobPayload,
     createdBy?: string
   ): Promise<BackgroundJobRow> {
-    // Check if same job type is already processing
-    const isProcessing = await this.repository.isJobTypeProcessing(jobType)
-    if (isProcessing) {
-      throw new Error(`A ${jobType} job is already processing. Please wait for it to complete.`)
+    try {
+      // Attempt to create the job - database constraint will prevent duplicates
+      const job = await this.repository.create({
+        jobType,
+        payload,
+        createdBy,
+      })
+
+      await this.logService.logJobCreated(job.id, jobType, createdBy)
+      consola.info(`Created ${jobType} job: ${job.id}`)
+
+      return job
+    } catch (error) {
+      // Handle unique constraint violation (PostgreSQL error code 23505)
+      if (this.isUniqueConstraintViolation(error)) {
+        throw new Error(`A ${jobType} job is already queued or processing. Please wait for it to complete.`)
+      }
+      throw error
     }
+  }
 
-    // Check for pending jobs of same type
-    const activeJobs = await this.repository.findActive(jobType)
-    if (activeJobs.length > 0) {
-      throw new Error(`A ${jobType} job is already queued. Please wait for it to complete.`)
+  /**
+   * Check if error is a PostgreSQL unique constraint violation
+   */
+  private isUniqueConstraintViolation(error: unknown): boolean {
+    if (error && typeof error === 'object') {
+      // Supabase/PostgreSQL error format
+      const pgError = error as { code?: string; message?: string }
+      // 23505 is PostgreSQL's unique_violation error code
+      if (pgError.code === '23505') return true
+      // Also check message for constraint name as fallback
+      if (pgError.message?.includes('idx_one_active_job_per_type')) return true
     }
-
-    const job = await this.repository.create({
-      jobType,
-      payload,
-      createdBy,
-    })
-
-    await this.logService.logJobCreated(job.id, jobType, createdBy)
-    consola.info(`Created ${jobType} job: ${job.id}`)
-
-    return job
+    return false
   }
 
   /**
