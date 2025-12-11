@@ -3,6 +3,8 @@
 // Features clickable card with image, company info, rating, and CTA button
 // Supports intelligent image rendering (standard img for webp/png, NuxtImage for other formats)
 
+import { getStateSlugFromCode } from '~/utils/usStates'
+
 interface Props {
   /**
    * The image URL or path to the contractor's image
@@ -90,9 +92,11 @@ const useStandardImg = computed(() => {
 })
 
 // Build contractor profile URL with SEO-optimized structure
+// Converts state code (e.g., 'SC') to state slug (e.g., 'south-carolina')
 const contractorUrl = computed(() => {
   if (props.stateCode) {
-    return `/${props.stateCode}/${props.citySlug}/concrete-contractors/${props.contractorSlug}`
+    const stateSlug = getStateSlugFromCode(props.stateCode)
+    return `/${stateSlug}/${props.citySlug}/concrete-contractors/${props.contractorSlug}`
   }
   return `/${props.citySlug}/concrete-contractors/${props.contractorSlug}`
 })
