@@ -13,7 +13,16 @@ const user = useSupabaseUser()
 
 async function handleLogout() {
   await supabase.auth.signOut()
-  navigateTo('/admin/login')
+
+  // Invalidate the middleware's cached auth state to ensure clean logout
+  const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
+  const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
+  const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
+  authUserState.value = undefined
+  isAdminState.value = undefined
+  accountStatusState.value = undefined
+
+  navigateTo('/login')
 }
 </script>
 

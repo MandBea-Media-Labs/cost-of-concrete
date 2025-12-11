@@ -24,9 +24,10 @@ const email = ref<string | null>('')
 const password = ref<string | null>('')
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
+const isRedirecting = ref(false) // Track if we're in the middle of a redirect
 
 // Default redirect destination
-const defaultRedirect = '/admin/pages'
+const defaultRedirect = '/admin'
 
 // Determine redirect destination after successful login
 const redirectTo = computed(() => {
@@ -38,8 +39,9 @@ const redirectTo = computed(() => {
 })
 
 // If already logged in, redirect to destination
+// Skip this check if we're already in the middle of a redirect from login submission
 watchEffect(() => {
-  if (user.value) {
+  if (user.value && !isRedirecting.value) {
     const destination = redirectTo.value
 
     if (import.meta.dev) {
@@ -88,6 +90,15 @@ async function handleSubmit() {
       return
     }
 
+    // Invalidate the middleware's cached auth state to force re-fetch on next navigation
+    // This fixes the redirect loop bug where middleware sees stale null state after login
+    const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
+    const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
+    const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
+    authUserState.value = undefined
+    isAdminState.value = undefined
+    accountStatusState.value = undefined
+
     const destination = redirectTo.value
 
     if (import.meta.dev) {
@@ -96,6 +107,9 @@ async function handleSubmit() {
 
     // Clear the stored redirect path before navigating
     redirectAfterLogin.value = null
+
+    // Set redirecting flag to prevent watchEffect from triggering during this redirect
+    isRedirecting.value = true
 
     await router.replace(destination)
   } catch (err: any) {
