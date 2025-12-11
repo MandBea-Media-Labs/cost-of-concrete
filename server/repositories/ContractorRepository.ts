@@ -40,6 +40,7 @@ export interface PublicContractorSearchOptions {
 export interface StateContractorSearchOptions {
   stateCode: string
   category?: string
+  minRating?: number
   limit?: number
   offset?: number
   orderBy?: 'rating' | 'review_count' | 'company_name'
@@ -52,6 +53,18 @@ export interface NationwideContractorSearchOptions {
   limit?: number
   offset?: number
   orderBy?: 'rating' | 'review_count' | 'company_name'
+  orderDirection?: 'asc' | 'desc'
+}
+
+export interface CoordinateSearchOptions {
+  lat: number
+  lng: number
+  radiusMiles: number
+  category?: string
+  minRating?: number
+  limit?: number
+  offset?: number
+  orderBy?: 'rating' | 'review_count' | 'distance'
   orderDirection?: 'asc' | 'desc'
 }
 
@@ -488,6 +501,7 @@ export class ContractorRepository {
     const {
       stateCode,
       category,
+      minRating,
       limit = 20,
       offset = 0,
       orderBy = 'rating',
@@ -513,6 +527,11 @@ export class ContractorRepository {
     // Filter by category using JSONB containment
     if (category) {
       query = query.contains('metadata', { categories: [category] })
+    }
+
+    // Filter by minimum rating (exclude NULL and 0 ratings)
+    if (minRating && minRating > 0) {
+      query = query.not('rating', 'is', null).gt('rating', 0).gte('rating', minRating)
     }
 
     // Apply ordering
@@ -575,9 +594,9 @@ export class ContractorRepository {
       query = query.contains('metadata', { categories: [category] })
     }
 
-    // Filter by minimum rating
+    // Filter by minimum rating (exclude NULL and 0 ratings)
     if (minRating && minRating > 0) {
-      query = query.gte('rating', minRating)
+      query = query.not('rating', 'is', null).gt('rating', 0).gte('rating', minRating)
     }
 
     // Apply ordering
@@ -604,6 +623,60 @@ export class ContractorRepository {
     }) as ContractorWithDistance[]
 
     return { contractors, total: count || 0 }
+  }
+
+  /**
+   * Search contractors by user's coordinates with radius
+   * Uses Haversine formula via database RPC for efficient spatial queries
+   */
+  async searchByCoordinates(options: CoordinateSearchOptions): Promise<{ contractors: ContractorWithDistance[], total: number }> {
+    const {
+      lat,
+      lng,
+      radiusMiles,
+      category,
+      minRating,
+      limit = 20,
+      offset = 0,
+      orderBy = 'distance',
+      orderDirection = 'asc'
+    } = options
+
+    const radiusMeters = radiusMiles * 1609.34
+
+    // Query for data with coordinate-based radius search
+    const { data, error } = await this.client.rpc('search_contractors_by_coordinates', {
+      p_lat: lat,
+      p_lng: lng,
+      p_radius_meters: radiusMeters,
+      p_category: category || null,
+      p_min_rating: minRating || null,
+      p_limit: limit,
+      p_offset: offset,
+      p_order_by: orderBy,
+      p_order_direction: orderDirection
+    })
+
+    if (error) {
+      consola.error('Error in searchByCoordinates RPC:', error.message)
+      throw error
+    }
+
+    // Count total results
+    const { data: countData, error: countError } = await this.client.rpc('count_contractors_by_coordinates', {
+      p_lat: lat,
+      p_lng: lng,
+      p_radius_meters: radiusMeters,
+      p_category: category || null,
+      p_min_rating: minRating || null
+    })
+
+    const total = countError ? (data?.length || 0) : (countData || 0)
+
+    return {
+      contractors: (data || []) as ContractorWithDistance[],
+      total
+    }
   }
 }
 

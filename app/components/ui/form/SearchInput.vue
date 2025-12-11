@@ -15,6 +15,9 @@ import {
 } from 'reka-ui'
 import { getStateByCode } from '~/utils/usStates'
 
+// Composable for storing search location coordinates
+const { setLocation: saveSearchLocation } = useSearchLocation()
+
 export interface ServiceOption {
   id: number | null
   name: string
@@ -160,15 +163,17 @@ const searchLocations = useDebounceFn(async (query: string) => {
   }
 }, 300)
 
-// Computed: Filtered results (now from API)
+// Track if a location has been selected from autocomplete (for button mode)
+const selectedLocation = ref<LocationResult | null>(null)
+
+// Computed: Filtered results (now from API) - works in both modes
 const filteredResults = computed(() => {
-  if (isButtonMode.value) return []
   return locationResults.value
 })
 
-// Computed: Show dropdown
+// Computed: Show dropdown - now works in button mode too
 const showDropdown = computed(() => {
-  return !isButtonMode.value && isOpen.value && searchQuery.value.length >= props.minCharacters
+  return isOpen.value && searchQuery.value.length >= props.minCharacters
 })
 
 // Computed: Show "no results" message
@@ -176,9 +181,9 @@ const showNoResults = computed(() => {
   return showDropdown.value && filteredResults.value.length === 0 && !isSearching.value
 })
 
-// Computed: Show clear button (autocomplete mode only)
+// Computed: Show clear button - now works in button mode too
 const showClearButton = computed(() => {
-  return !isButtonMode.value && searchQuery.value.length > 0
+  return searchQuery.value.length > 0
 })
 
 // Size classes
@@ -296,18 +301,21 @@ const dropdownClasses = computed(() => {
   ].join(' ')
 })
 
-// Handle input change
+// Handle input change - now triggers search in both modes
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   searchQuery.value = target.value
   emit('input', searchQuery.value)
 
-  if (!isButtonMode.value) {
-    isOpen.value = true
-    selectedIndex.value = -1
-    // Trigger debounced API search
-    searchLocations(searchQuery.value)
+  // Clear selected location when user types (in button mode)
+  if (isButtonMode.value) {
+    selectedLocation.value = null
   }
+
+  // Open dropdown and trigger search in both modes
+  isOpen.value = true
+  selectedIndex.value = -1
+  searchLocations(searchQuery.value)
 }
 
 // Navigate to the appropriate page based on location selection
@@ -318,6 +326,16 @@ const navigateToLocation = (result: LocationResult) => {
     consola.error('State not found for code:', result.stateCode)
     return
   }
+
+  // Store search location coordinates for distance-based sorting on destination page
+  saveSearchLocation({
+    lat: result.lat,
+    lng: result.lng,
+    displayName: result.value,
+    type: result.type,
+    citySlug: result.citySlug || undefined,
+    stateCode: result.stateCode
+  })
 
   // If we have a city slug (from cities table), navigate to city page
   if (result.citySlug) {
@@ -346,7 +364,14 @@ const selectResult = (result: LocationResult) => {
     })
   }
 
-  // If service dropdown is present, emit object with location and service
+  // In button mode: populate input and store location, wait for button click
+  if (isButtonMode.value) {
+    selectedLocation.value = result
+    // Don't emit or navigate - wait for button click
+    return
+  }
+
+  // In autocomplete mode: emit and navigate immediately
   if (hasServiceDropdown.value) {
     emit('submit', {
       location: result.value,
@@ -369,7 +394,8 @@ const handleButtonClick = async () => {
     consola.info('SearchInput (Button Mode): Submitted value', {
       value: searchQuery.value,
       buttonText: props.button,
-      service: hasServiceDropdown.value ? selectedService.value : null
+      service: hasServiceDropdown.value ? selectedService.value : null,
+      hasSelectedLocation: !!selectedLocation.value
     })
   }
 
@@ -383,7 +409,13 @@ const handleButtonClick = async () => {
     emit('submit', searchQuery.value)
   }
 
-  // Search for location via API and navigate to the first result
+  // If we have a selected location from autocomplete, use it directly
+  if (selectedLocation.value) {
+    navigateToLocation(selectedLocation.value)
+    return
+  }
+
+  // Otherwise, search for location via API and navigate to the first result
   isSearching.value = true
   try {
     const results = await $fetch<LocationResult[]>('/api/public/locations', {

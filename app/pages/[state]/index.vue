@@ -1,14 +1,46 @@
 <script setup lang="ts">
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
+import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
 import { getStateBySlug } from '~/utils/usStates'
-import {
-  serviceOptions,
-  serviceTypeOptions,
-  distanceOptions,
-  ratingOptions,
-  availabilityOptions,
-  sortByOptions
-} from '~/mock-data'
+import { consola } from 'consola'
+
+// Service options for the search input dropdown
+const serviceOptions: ServiceOption[] = [
+  { id: null, name: 'All Services', slug: null },
+  { id: 1, name: 'Driveways', slug: 'driveways' },
+  { id: 2, name: 'Patios', slug: 'patios' },
+  { id: 3, name: 'Foundations', slug: 'foundations' },
+  { id: 4, name: 'Walkways', slug: 'walkways' },
+  { id: 5, name: 'Stamped & Decorative', slug: 'stamped-decorative' }
+]
+
+// Rating filter options
+const ratingOptions: FilterOption[] = [
+  { value: 'all', label: 'Any Rating' },
+  { value: '4', label: '4+ Stars' },
+  { value: '4.5', label: '4.5+ Stars' },
+  { value: '5', label: '5 Stars Only' }
+]
+
+// Sort by filter options
+const sortByOptions: FilterOption[] = [
+  { value: 'top-rated', label: 'Top Rated' },
+  { value: 'most-reviews', label: 'Most Reviews' },
+  { value: 'a-z', label: 'A-Z' }
+]
+
+// Fetch service types for filter dropdown
+const { data: serviceTypesData } = await useFetch<{ id: number; name: string; slug: string }[]>('/api/public/service-types')
+const serviceTypeOptions = computed<FilterOption[]>(() => {
+  const base: FilterOption[] = [{ value: 'all', label: 'All Services' }]
+  if (serviceTypesData.value) {
+    return [...base, ...serviceTypesData.value.map(st => ({ value: st.slug, label: st.name }))]
+  }
+  return base
+})
+
+// Distance filter composable
+const distanceFilter = useDistanceFilter()
 
 // Validate that the state param is a valid US state slug
 // This prevents the route from matching non-state paths like /owner, /admin, etc.

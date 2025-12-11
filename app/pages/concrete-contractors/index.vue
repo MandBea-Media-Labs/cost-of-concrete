@@ -2,7 +2,7 @@
 import type { ServiceOption } from '~/components/ui/form/SearchInput.vue'
 import type { FilterOption } from '~/components/ui/form/FilterSelect.vue'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
-import { getStateSlugFromCode } from '~/utils/usStates'
+import { consola } from 'consola'
 
 // TODO: Future AI enrichment will categorize contractors against service_types table
 // Currently, service type filtering uses keyword matching against metadata.categories
@@ -39,16 +39,23 @@ const selectedCategory = ref<string | undefined>()
 const minRating = ref<number | undefined>()
 const sortBy = ref<'rating' | 'review_count' | 'company_name'>('rating')
 
-// Fetch contractors from API (nationwide - no location filter)
+// Distance filter composable (defined early for useFetch)
+const distanceFilter = useDistanceFilter()
+
+// Fetch contractors from API (supports coordinate-based or nationwide search)
 const { data: contractorsData, pending } = await useFetch('/api/public/contractors', {
   query: computed(() => ({
     category: selectedCategory.value,
     minRating: minRating.value,
+    // Include coordinates if distance filter is active and location is available
+    lat: distanceFilter.isEnabled.value && distanceFilter.selectedDistance.value ? distanceFilter.lat.value : undefined,
+    lng: distanceFilter.isEnabled.value && distanceFilter.selectedDistance.value ? distanceFilter.lng.value : undefined,
+    radius: distanceFilter.selectedDistance.value ?? undefined,
     limit,
     offset: (currentPage.value - 1) * limit,
     orderBy: sortBy.value
   })),
-  watch: [currentPage, selectedCategory, minRating, sortBy]
+  watch: [currentPage, selectedCategory, minRating, sortBy, distanceFilter.lat, distanceFilter.lng, distanceFilter.selectedDistance]
 })
 
 // Computed values for display
@@ -85,8 +92,8 @@ const serviceTypeOptions = computed<FilterOption[]>(() => {
   return base
 })
 
-// Distance filter composable
-const distanceFilter = useDistanceFilter()
+// Unwrap distanceOptions for template binding (ComputedRef -> Array)
+const distanceOptions = computed(() => distanceFilter.distanceOptions.value)
 
 // Local filter state for UI
 const filters = reactive({
@@ -96,7 +103,24 @@ const filters = reactive({
   sortBy: 'top-rated' as string
 })
 
-// Reset filters
+// Check if distance filter is active
+const isDistanceFilterActive = computed(() => filters.distance !== null && filters.distance !== 'all')
+
+// Clear only the distance filter
+const clearDistanceFilter = () => {
+  filters.distance = null
+  distanceFilter.reset()
+  currentPage.value = 1
+}
+
+// Expand distance filter to a larger radius
+const expandDistanceFilter = (miles: number) => {
+  filters.distance = String(miles)
+  distanceFilter.setDistance(miles)
+  currentPage.value = 1
+}
+
+// Reset all filters
 const resetFilters = () => {
   selectedCategory.value = undefined
   minRating.value = undefined
@@ -114,7 +138,7 @@ const handleHeroSearch = (value: { location: string, service: ServiceOption | nu
   // Navigation is now handled by SearchInput.vue via navigateToLocation()
   // This handler is retained for any additional logic needed after search
   if (import.meta.dev) {
-    console.log('Search submitted:', value)
+    consola.info('Search submitted:', value)
   }
 }
 
@@ -141,6 +165,16 @@ watch(() => filters.rating, (newValue) => {
   }
   currentPage.value = 1
 })
+
+// Distance filter watcher - triggers geolocation request via setDistance
+watch(() => filters.distance, (newValue) => {
+  if (newValue && newValue !== 'all') {
+    distanceFilter.setDistance(parseInt(newValue, 10))
+  } else {
+    distanceFilter.setDistance(null)
+  }
+  currentPage.value = 1
+})
 </script>
 
 <template>
@@ -151,7 +185,7 @@ watch(() => filters.rating, (newValue) => {
         background-color="#edf2fc"
         :service-options="serviceOptions"
         :service-type-filter-options="serviceTypeOptions"
-        :distance-filter-options="distanceFilter.distanceOptions"
+        :distance-filter-options="distanceOptions"
         :rating-filter-options="ratingOptions"
         :sort-by-filter-options="sortByOptions"
         v-model:service-type-filter="filters.serviceType"
@@ -202,7 +236,46 @@ watch(() => filters.rating, (newValue) => {
         </ContractorCard>
       </div>
 
-      <!-- No Results -->
+      <!-- No Results - Distance Filter Active -->
+      <div v-else-if="isDistanceFilterActive" class="py-16 text-center">
+        <Icon name="heroicons:map-pin" class="mx-auto mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-700" />
+        <h3 class="mb-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+          No contractors found within {{ filters.distance }} miles
+        </h3>
+        <p class="mb-6 text-neutral-600 dark:text-neutral-400">
+          Try expanding your search radius or clear the distance filter
+        </p>
+        <div class="flex flex-col items-center gap-4">
+          <!-- Expand radius options -->
+          <div class="flex flex-wrap justify-center gap-2">
+            <Button
+              v-if="Number(filters.distance) < 25"
+              text="Try 25 miles"
+              variant="secondary"
+              size="sm"
+              @click="expandDistanceFilter(25)"
+            />
+            <Button
+              v-if="Number(filters.distance) < 50"
+              text="Try 50 miles"
+              variant="secondary"
+              size="sm"
+              @click="expandDistanceFilter(50)"
+            />
+            <Button
+              v-if="Number(filters.distance) < 100"
+              text="Try 100 miles"
+              variant="secondary"
+              size="sm"
+              @click="expandDistanceFilter(100)"
+            />
+          </div>
+          <!-- Clear distance filter -->
+          <Button text="Clear Distance Filter" variant="primary" size="md" @click="clearDistanceFilter" />
+        </div>
+      </div>
+
+      <!-- No Results - Generic -->
       <div v-else class="py-16 text-center">
         <Icon name="heroicons:magnifying-glass" class="mx-auto mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-700" />
         <h3 class="mb-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">No contractors found</h3>

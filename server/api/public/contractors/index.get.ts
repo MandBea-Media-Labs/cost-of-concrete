@@ -2,31 +2,39 @@
  * GET /api/public/contractors
  *
  * Public endpoint to search contractors with filters
+ * Supports coordinate-based radius search (when lat/lng provided)
  * Supports radius-based search using PostGIS (when citySlug provided)
  * Supports state-level search (when stateCode provided without citySlug)
  * Supports nationwide search (when neither citySlug nor stateCode provided)
  *
  * Query params:
+ * - lat (optional): User's latitude for radius search
+ * - lng (optional): User's longitude for radius search
  * - citySlug (optional): City slug to search from (for radius search)
  * - stateCode (optional): State code to search within (e.g., NC, CA)
  * - category (optional): Category slug to filter by
- * - minRating (optional): Minimum rating to filter by (for nationwide search)
- * - radius (optional): Search radius in miles (default: 25, only for city search)
+ * - minRating (optional): Minimum rating to filter by
+ * - radius (optional): Search radius in miles (default: 25)
  * - limit (optional): Results per page (default: 20, max: 50)
  * - offset (optional): Pagination offset (default: 0)
  * - orderBy (optional): Sort field - rating, review_count, distance (default: rating)
  * - orderDirection (optional): Sort direction - asc, desc (default: desc)
  *
- * When neither citySlug nor stateCode is provided, returns nationwide results.
+ * Priority: lat/lng > citySlug > stateCode > nationwide
  */
 
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { ContractorRepository } from '../../../repositories/ContractorRepository'
-import type { PublicContractorSearchOptions, StateContractorSearchOptions, NationwideContractorSearchOptions } from '../../../repositories/ContractorRepository'
+import type { PublicContractorSearchOptions, StateContractorSearchOptions, NationwideContractorSearchOptions, CoordinateSearchOptions } from '../../../repositories/ContractorRepository'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
+
+  // Parse coordinate params for user location search
+  const lat = query.lat ? Number(query.lat) : undefined
+  const lng = query.lng ? Number(query.lng) : undefined
+  const hasCoordinates = lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)
 
   const citySlug = query.citySlug as string | undefined
   const stateCode = query.stateCode as string | undefined
@@ -48,7 +56,29 @@ export default defineEventHandler(async (event) => {
     let contractors: Awaited<ReturnType<typeof contractorRepo.searchPublic>>['contractors']
     let total: number
 
-    if (citySlug) {
+    if (hasCoordinates) {
+      // Coordinate-based radius search from user's location
+      const orderBy = (['rating', 'review_count', 'distance'].includes(query.orderBy as string)
+        ? query.orderBy
+        : 'distance') as 'rating' | 'review_count' | 'distance'
+
+      const searchOptions: CoordinateSearchOptions = {
+        lat: lat!,
+        lng: lng!,
+        radiusMiles,
+        category,
+        minRating,
+        limit,
+        offset,
+        orderBy,
+        orderDirection: orderBy === 'distance' ? 'asc' : orderDirection // Default ascending for distance
+      }
+
+      consola.info(`Coordinate search: lat=${lat}, lng=${lng}, radius=${radiusMiles}mi`)
+      const result = await contractorRepo.searchByCoordinates(searchOptions)
+      contractors = result.contractors
+      total = result.total
+    } else if (citySlug) {
       // Radius-based search from a city
       const orderBy = (['rating', 'review_count', 'distance'].includes(query.orderBy as string)
         ? query.orderBy
