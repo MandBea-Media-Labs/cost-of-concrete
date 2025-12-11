@@ -121,6 +121,7 @@ export default defineEventHandler(async (event): Promise<ProcessBatchResponse> =
       skipped_claimed_count: job.skipped_claimed_count + batchResult.skippedClaimed,
       error_count: job.error_count + batchResult.errors.length,
       pending_image_count: job.pending_image_count + batchResult.pendingImageCount,
+      reviews_imported_count: job.reviews_imported_count + batchResult.reviewsImported,
     })
 
     // Append errors if any

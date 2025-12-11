@@ -350,6 +350,7 @@ export type Database = {
           pending_image_count: number
           processed_rows: number
           raw_data: Json
+          reviews_imported_count: number
           skipped_claimed_count: number
           skipped_count: number
           started_at: string | null
@@ -369,6 +370,7 @@ export type Database = {
           pending_image_count?: number
           processed_rows?: number
           raw_data?: Json
+          reviews_imported_count?: number
           skipped_claimed_count?: number
           skipped_count?: number
           started_at?: string | null
@@ -388,6 +390,7 @@ export type Database = {
           pending_image_count?: number
           processed_rows?: number
           raw_data?: Json
+          reviews_imported_count?: number
           skipped_claimed_count?: number
           skipped_count?: number
           started_at?: string | null

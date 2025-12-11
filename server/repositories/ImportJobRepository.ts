@@ -26,6 +26,7 @@ export interface ProgressUpdate {
   skipped_claimed_count?: number
   error_count?: number
   pending_image_count?: number
+  reviews_imported_count?: number
 }
 
 export class ImportJobRepository {
