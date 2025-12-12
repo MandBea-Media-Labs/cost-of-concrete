@@ -26,7 +26,7 @@ export type SystemLogInsert = Database['public']['Tables']['system_logs']['Inser
 export const JOB_STATUSES = ['pending', 'processing', 'completed', 'failed', 'cancelled'] as const
 export type JobStatus = typeof JOB_STATUSES[number]
 
-export const JOB_TYPES = ['image_enrichment'] as const // Extend as needed
+export const JOB_TYPES = ['image_enrichment', 'contractor_enrichment'] as const
 export type JobType = typeof JOB_TYPES[number]
 
 // =====================================================
@@ -45,9 +45,19 @@ export const imageEnrichmentPayloadSchema = z.object({
 export type ImageEnrichmentPayload = z.infer<typeof imageEnrichmentPayloadSchema>
 
 /**
+ * Contractor Enrichment Job Payload
+ */
+export const contractorEnrichmentPayloadSchema = z.object({
+  contractorIds: z.array(z.string().uuid()).min(1).max(10),
+  // Future: could add filters, retry options, etc.
+})
+
+export type ContractorEnrichmentPayload = z.infer<typeof contractorEnrichmentPayloadSchema>
+
+/**
  * Union of all job payloads
  */
-export type JobPayload = ImageEnrichmentPayload // | OtherPayload in future
+export type JobPayload = ImageEnrichmentPayload | ContractorEnrichmentPayload
 
 // =====================================================
 // JOB RESULT TYPES (per job type)
@@ -68,7 +78,22 @@ export interface ImageEnrichmentResult {
   shouldContinue?: boolean
 }
 
-export type JobResult = ImageEnrichmentResult // | OtherResult in future
+export interface ContractorEnrichmentResult {
+  processed: number
+  successful: number
+  skipped: number
+  failed: number
+  totalTokens: number
+  results: Array<{
+    contractorId: string
+    companyName: string
+    status: 'success' | 'skipped' | 'failed'
+    message: string
+    serviceTypesAssigned: number
+  }>
+}
+
+export type JobResult = ImageEnrichmentResult | ContractorEnrichmentResult
 
 // =====================================================
 // API REQUEST SCHEMAS
@@ -160,4 +185,7 @@ export const JOB_TIMEOUT_MINUTES = 30
 
 /** Default batch size for image enrichment */
 export const DEFAULT_IMAGE_BATCH_SIZE = 10
+
+/** Default batch size for contractor enrichment (max contractors per job) */
+export const DEFAULT_CONTRACTOR_BATCH_SIZE = 10
 

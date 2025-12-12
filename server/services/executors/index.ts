@@ -7,6 +7,7 @@
 
 import { JobExecutorRegistry } from '../JobExecutorRegistry'
 import { ImageEnrichmentJobExecutor } from './ImageEnrichmentJobExecutor'
+import { ContractorEnrichmentJobExecutor } from './ContractorEnrichmentJobExecutor'
 
 /**
  * Register all job executors
@@ -16,10 +17,13 @@ export function registerExecutors(): void {
   if (!JobExecutorRegistry.has('image_enrichment')) {
     JobExecutorRegistry.register('image_enrichment', new ImageEnrichmentJobExecutor())
   }
+  if (!JobExecutorRegistry.has('contractor_enrichment')) {
+    JobExecutorRegistry.register('contractor_enrichment', new ContractorEnrichmentJobExecutor())
+  }
 }
 
 // Auto-register on module load
 registerExecutors()
 
-export { ImageEnrichmentJobExecutor }
+export { ImageEnrichmentJobExecutor, ContractorEnrichmentJobExecutor }
 
