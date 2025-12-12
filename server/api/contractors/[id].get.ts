@@ -66,13 +66,46 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
+    // Get assigned service types via junction table
+    const { data: serviceTypes, error: stError } = await client
+      .from('contractor_service_types')
+      .select(`
+        source,
+        confidence_score,
+        service_type:service_types (
+          id,
+          name,
+          slug
+        )
+      `)
+      .eq('contractor_id', id)
+
+    if (stError) {
+      if (import.meta.dev) {
+        consola.warn(`GET /api/contractors/${id} - Failed to fetch service types:`, stError)
+      }
+      // Non-fatal, continue without service types
+    }
+
+    // Transform service types to flat structure
+    const flatServiceTypes = (serviceTypes || []).map((st) => ({
+      id: st.service_type?.id,
+      name: st.service_type?.name,
+      slug: st.service_type?.slug,
+      source: st.source,
+      confidenceScore: st.confidence_score,
+    }))
+
     if (import.meta.dev) {
-      consola.success(`GET /api/contractors/${id} - Returning contractor: ${contractor.company_name}`)
+      consola.success(`GET /api/contractors/${id} - Returning contractor: ${contractor.company_name} with ${flatServiceTypes.length} service types`)
     }
 
     return {
       success: true,
-      data: contractor,
+      data: {
+        ...contractor,
+        service_types: flatServiceTypes,
+      },
     }
   } catch (error) {
     if (import.meta.dev) {
