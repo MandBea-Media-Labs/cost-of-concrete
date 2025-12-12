@@ -79,6 +79,25 @@ export default defineEventHandler(async (event) => {
       dbQuery = dbQuery.contains('metadata', { categories: [validatedQuery.category] })
     }
 
+    // Enrichment status filter
+    if (validatedQuery.enrichmentStatus) {
+      if (validatedQuery.enrichmentStatus === 'not_started') {
+        // Not started = no enrichment status in metadata OR null
+        dbQuery = dbQuery.or('metadata->enrichment->>status.is.null,metadata->enrichment.is.null')
+      } else {
+        dbQuery = dbQuery.eq('metadata->enrichment->>status', validatedQuery.enrichmentStatus)
+      }
+    }
+
+    // Has website filter
+    if (validatedQuery.hasWebsite !== undefined) {
+      if (validatedQuery.hasWebsite) {
+        dbQuery = dbQuery.not('website', 'is', null).neq('website', '')
+      } else {
+        dbQuery = dbQuery.or('website.is.null,website.eq.')
+      }
+    }
+
     // Search by company name (case-insensitive)
     if (validatedQuery.search) {
       dbQuery = dbQuery.ilike('company_name', `%${validatedQuery.search}%`)

@@ -156,6 +156,12 @@ export type UpdateContractorInput = z.infer<typeof updateContractorSchema>
 // =====================================================
 
 /**
+ * Enrichment status values for filtering
+ */
+export const enrichmentStatusSchema = z.enum(['not_started', 'completed', 'failed', 'not_applicable'])
+export type EnrichmentStatus = z.infer<typeof enrichmentStatusSchema>
+
+/**
  * List contractors query parameters
  */
 export const listContractorsQuerySchema = z.object({
@@ -164,6 +170,8 @@ export const listContractorsQuerySchema = z.object({
   status: contractorStatusSchema.optional(),
   search: z.string().optional(),
   imagesProcessed: z.coerce.boolean().optional(),
+  enrichmentStatus: enrichmentStatusSchema.optional(),
+  hasWebsite: z.coerce.boolean().optional(),
   includeDeleted: z.coerce.boolean().optional().default(false),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
