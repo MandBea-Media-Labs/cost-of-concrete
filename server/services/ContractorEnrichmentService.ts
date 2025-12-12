@@ -373,6 +373,11 @@ export class ContractorEnrichmentService {
       updateData.phone = result.phone
     }
 
+    // Always update description from AI enrichment
+    if (result.description) {
+      updateData.description = result.description
+    }
+
     await this.client
       .from('contractors')
       .update(updateData)

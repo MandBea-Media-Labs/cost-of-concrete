@@ -34,6 +34,7 @@ export const socialLinksSchema = z.object({
 })
 
 export const extractionResultSchema = z.object({
+  description: z.string().max(80).nullable().describe('Short SEO-friendly business description (max 80 chars)'),
   business_hours: businessHoursSchema.nullable(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
@@ -116,7 +117,7 @@ If the website mentions services or categories specific to this location, priori
     }
 
     const systemPrompt = `You are extracting business information from a contractor website.
-Your task is to identify contact details, business hours, social media links, and applicable service categories.
+Your task is to identify contact details, business hours, social media links, applicable service categories, and generate a short SEO description.
 ${locationInstruction}
 
 Available service type slugs to choose from:
@@ -128,7 +129,23 @@ Rules:
 - For email, extract the primary business email
 - For business hours, use 12-hour format (e.g., "8:00 AM", "5:00 PM")
 - If information is not found, use null
-- Be conservative - only extract information that is clearly present`
+- Be conservative - only extract information that is clearly present
+
+Description Rules (CRITICAL - max 80 characters):
+- Write a short, SEO-friendly description summarizing what the contractor does and where
+- Maximum 80 characters including spaces
+- Use 7th grade reading level (simple, clear language)
+- NO emdashes (—), NO emojis, NO quotation marks
+- NO generic marketing phrases like "passionate about", "dedicated to excellence", "trusted partner", "your go-to"
+- Focus on: service type + specialty + location
+- Good examples:
+  * "Expert concrete driveway installation & repair in Augusta, GA"
+  * "Commercial & residential concrete contractor serving Charleston"
+  * "Pool deck resurfacing specialists with 20+ years experience"
+- Bad examples (DO NOT USE):
+  * "We're passionate about delivering exceptional concrete solutions"
+  * "Your trusted partner for all concrete needs"
+  * "Dedicated to excellence in every project we undertake"`
 
     const userPrompt = `Extract business information for "${companyName}" from this website content:
 
@@ -159,6 +176,7 @@ ${websiteContent.substring(0, 40000)}`
       }
 
       consola.debug(`AIExtractionService: Extracted data for ${companyName}`, {
+        description: result.description,
         servicesFound: result.service_slugs.length,
         hasEmail: !!result.email,
         hasPhone: !!result.phone,
