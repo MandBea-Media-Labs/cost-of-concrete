@@ -269,22 +269,22 @@ const submitClaim = async () => {
           </div>
           <!-- Social Links -->
           <div v-if="hasSocialLinks" class="mt-4 flex flex-wrap gap-3">
-            <a v-if="socialLinks.facebook" :href="socialLinks.facebook" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-[#1877F2] text-white transition-transform hover:scale-110" title="Facebook">
+            <a v-if="socialLinks.facebook" :href="socialLinks.facebook" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="Facebook">
               <Icon name="ion:logo-facebook" class="size-5" />
             </a>
-            <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737] text-white transition-transform hover:scale-110" title="Instagram">
+            <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="Instagram">
               <Icon name="ion:logo-instagram" class="size-5" />
             </a>
-            <a v-if="socialLinks.twitter" :href="socialLinks.twitter" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-black text-white transition-transform hover:scale-110" title="X (Twitter)">
+            <a v-if="socialLinks.twitter" :href="socialLinks.twitter" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="X (Twitter)">
               <Icon name="ion:logo-twitter" class="size-5" />
             </a>
-            <a v-if="socialLinks.linkedin" :href="socialLinks.linkedin" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-[#0A66C2] text-white transition-transform hover:scale-110" title="LinkedIn">
+            <a v-if="socialLinks.linkedin" :href="socialLinks.linkedin" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="LinkedIn">
               <Icon name="ion:logo-linkedin" class="size-5" />
             </a>
-            <a v-if="socialLinks.youtube" :href="socialLinks.youtube" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-[#FF0000] text-white transition-transform hover:scale-110" title="YouTube">
+            <a v-if="socialLinks.youtube" :href="socialLinks.youtube" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="YouTube">
               <Icon name="ion:logo-youtube" class="size-5" />
             </a>
-            <a v-if="socialLinks.yelp" :href="socialLinks.yelp" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-full bg-[#D32323] text-white transition-transform hover:scale-110" title="Yelp">
+            <a v-if="socialLinks.yelp" :href="socialLinks.yelp" target="_blank" rel="noopener noreferrer" class="text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300" title="Yelp">
               <Icon name="ion:logo-yelp" class="size-5" />
             </a>
           </div>
