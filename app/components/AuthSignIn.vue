@@ -21,22 +21,24 @@ const isSendingResetEmail = ref(false)
 const resetEmailSent = ref(false)
 const resetEmailError = ref<string | null>(null)
 
-// Default redirect destination
-const defaultRedirect = '/admin'
+// Access global isAdmin state set by admin-auth middleware
+const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
 
 // Determine redirect destination after successful login
-const redirectTo = computed(() => {
+// Uses stored redirect if available, otherwise routes based on account type
+function getRedirectDestination(isAdmin: boolean | undefined): string {
   const storedRedirect = redirectAfterLogin.value
   if (storedRedirect && storedRedirect.startsWith('/')) {
     return storedRedirect
   }
-  return defaultRedirect
-})
+  // Default: admins go to /admin, business users go to /owner
+  return isAdmin === true ? '/admin' : '/owner'
+}
 
-// If already logged in, redirect to destination
+// If already logged in, redirect to destination based on account type
 watchEffect(() => {
   if (user.value && !isRedirecting.value) {
-    const destination = redirectTo.value
+    const destination = getRedirectDestination(isAdminState.value)
 
     if (import.meta.dev) {
       consola.info('Login page: user already authenticated, redirecting to:', destination)
@@ -137,18 +139,34 @@ async function onSubmit(event: Event) {
       return
     }
 
-    // Invalidate the middleware's cached auth state to force re-fetch on next navigation
-    const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
-    const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
-    const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
-    authUserState.value = undefined
-    isAdminState.value = undefined
-    accountStatusState.value = undefined
+    // Fetch the logged-in user to get their ID
+    const { data: { user: loggedInUser } } = await supabase.auth.getUser()
 
-    const destination = redirectTo.value
+    if (!loggedInUser) {
+      errorMessage.value = 'Login failed. Please try again.'
+      return
+    }
+
+    // Fetch account type to determine redirect destination
+    const { data: profile } = await supabase
+      .from('account_profiles')
+      .select('is_admin, status')
+      .eq('id', loggedInUser.id)
+      .maybeSingle()
+
+    const userIsAdmin = !!profile?.is_admin
+
+    // Update the global auth state with fetched values
+    const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
+    const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
+    authUserState.value = loggedInUser
+    isAdminState.value = userIsAdmin
+    accountStatusState.value = profile?.status ?? null
+
+    const destination = getRedirectDestination(userIsAdmin)
 
     if (import.meta.dev) {
-      consola.success('Login successful, redirecting to:', destination)
+      consola.success('Login successful, redirecting to:', destination, { isAdmin: userIsAdmin })
     }
 
     redirectAfterLogin.value = null

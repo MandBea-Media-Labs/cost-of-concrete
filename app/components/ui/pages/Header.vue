@@ -52,6 +52,9 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const router = useRouter()
 
+// Access global isAdmin state set by admin-auth middleware
+const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
+
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
 const activeSubmenu = ref<string | null>(null)
@@ -65,9 +68,13 @@ const logoSrc = computed(() => {
   return colorMode.value === 'dark' ? '/images/logo-dark.webp' : '/images/logo-light.webp'
 })
 
-// Computed: Auth button text and location based on user state
+// Computed: Auth button text and location based on user state and account type
 const authButtonText = computed(() => user.value ? 'Dashboard' : 'Login')
-const authButtonLocation = computed(() => user.value ? '/admin' : '/login')
+const authButtonLocation = computed(() => {
+  if (!user.value) return '/login'
+  // Redirect admins to /admin, business users to /owner
+  return isAdminState.value === true ? '/admin' : '/owner'
+})
 const secondaryButtonText = computed(() => user.value ? 'Logout' : 'Sign Up')
 
 // Open mobile menu
