@@ -177,6 +177,26 @@ export class WebCrawlerService {
       await this.initialize()
     }
 
+    // Try original URL first
+    const result = await this.crawlUrl(websiteUrl)
+
+    // If HTTP failed with timeout, try HTTPS as fallback
+    if (!result.success && websiteUrl.toLowerCase().startsWith('http://')) {
+      const httpsUrl = websiteUrl.replace(/^http:/i, 'https:')
+      log(`HTTP failed, trying HTTPS fallback: ${httpsUrl}`)
+      const httpsResult = await this.crawlUrl(httpsUrl)
+      if (httpsResult.success) {
+        return httpsResult
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Internal crawl implementation for a specific URL
+   */
+  private async crawlUrl(websiteUrl: string): Promise<CrawlResult> {
     const baseUrl = this.normalizeUrl(websiteUrl)
     log(`Normalized URL: ${baseUrl}`)
 
