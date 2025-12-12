@@ -291,6 +291,21 @@ export class ContractorRepository {
   }
 
   /**
+   * Find contractors by company name (case-insensitive)
+   * Used for duplicate detection during import
+   */
+  async findByCompanyNameCaseInsensitive(companyName: string): Promise<Contractor[]> {
+    const { data, error } = await this.client
+      .from('contractors')
+      .select('*')
+      .ilike('company_name', companyName)
+      .is('deleted_at', null)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
    * Soft delete a contractor
    */
   async softDelete(id: string): Promise<void> {

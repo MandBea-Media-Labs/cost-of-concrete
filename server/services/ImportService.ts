@@ -95,13 +95,15 @@ export class ImportService {
       updated: result.updated,
       skipped: result.skipped,
       skippedClaimed: result.skippedClaimed,
+      skippedDuplicate: result.skippedDuplicate,
       pendingImageCount: result.pendingImageCount,
       reviewsImported: result.reviewsImported,
       errors: result.errors,
     }
 
     const reviewNote = summary.reviewsImported > 0 ? `, ${summary.reviewsImported} reviews` : ''
-    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed (protected)${reviewNote}, ${summary.errors.length} errors`)
+    const duplicateNote = summary.skippedDuplicate > 0 ? `, ${summary.skippedDuplicate} duplicates` : ''
+    consola.success(`Import complete: ${summary.imported} new, ${summary.updated} updated, ${summary.skipped} skipped, ${summary.skippedClaimed} claimed${duplicateNote}${reviewNote}, ${summary.errors.length} errors`)
     return summary
   }
 
@@ -120,6 +122,7 @@ export class ImportService {
       updated: 0,
       skipped: 0,
       skippedClaimed: 0,
+      skippedDuplicate: 0,
       pendingImageCount: 0,
       reviewsImported: 0,
       errors: [],
@@ -188,7 +191,7 @@ export class ImportService {
   private async processRow(
     row: ApifyRow,
     rowNumber: number,
-    counters: { skipped: number; skippedClaimed: number }
+    counters: { skipped: number; skippedClaimed: number; skippedDuplicate: number }
   ): Promise<{ isNew: boolean; isUpdated: boolean; pendingImageCount: number; reviewsImported: number }> {
     // Skip permanently closed businesses
     if (row.permanentlyClosed) {
@@ -199,9 +202,8 @@ export class ImportService {
       return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported: 0 }
     }
 
-    // Check if contractor already exists
+    // Check if contractor already exists by Google Place ID
     const existing = await this.contractorRepo.findByGooglePlaceId(row.placeId)
-    const isNew = !existing
 
     // For claimed contractors: skip DATA updates but still import reviews
     if (existing?.is_claimed) {
@@ -221,6 +223,46 @@ export class ImportService {
       }
       return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported }
     }
+
+    // --- NAME-BASED COLLISION DETECTION (for new records only) ---
+    // If no existing record by google_place_id, check for name collisions
+    if (!existing) {
+      const sanitizedName = processCompanyName(row.title)
+      const collisions = await this.contractorRepo.findByCompanyNameCaseInsensitive(sanitizedName)
+
+      if (collisions.length > 0) {
+        const incomingAddress = row.street?.trim() || null
+
+        // Case A: Incoming has no address → SKIP
+        if (!incomingAddress) {
+          counters.skippedDuplicate++
+          if (import.meta.dev) {
+            consola.info(`Row ${rowNumber}: Skipped duplicate "${sanitizedName}" (no address to differentiate)`)
+          }
+          return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported: 0 }
+        }
+
+        // Case B: Check if any existing record has the same address
+        const sameAddressExists = collisions.some(c =>
+          c.street_address?.toLowerCase().trim() === incomingAddress.toLowerCase()
+        )
+
+        if (sameAddressExists) {
+          counters.skippedDuplicate++
+          if (import.meta.dev) {
+            consola.info(`Row ${rowNumber}: Skipped duplicate "${sanitizedName}" at "${incomingAddress}" (same address exists)`)
+          }
+          return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported: 0 }
+        }
+
+        // Case C: Different address → Allow insert (slug will be made unique by repository)
+        if (import.meta.dev) {
+          consola.info(`Row ${rowNumber}: Allowing "${sanitizedName}" at "${incomingAddress}" (different location from ${collisions.length} existing)`)
+        }
+      }
+    }
+
+    const isNew = !existing
 
     // Resolve city - skip geocoding if existing contractor already has a city or geocoding already failed
     let cityId: string | null = null

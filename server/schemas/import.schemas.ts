@@ -112,6 +112,7 @@ export interface ImportSummary {
   updated: number
   skipped: number
   skippedClaimed: number
+  skippedDuplicate: number
   pendingImageCount: number
   reviewsImported: number
   errors: ImportError[]
@@ -175,6 +176,7 @@ export interface ProcessBatchResult {
   updated: number
   skipped: number
   skippedClaimed: number
+  skippedDuplicate: number
   pendingImageCount: number
   reviewsImported: number
   errors: ImportError[]
