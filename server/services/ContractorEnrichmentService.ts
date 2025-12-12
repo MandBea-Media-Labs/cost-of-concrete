@@ -24,7 +24,7 @@ export { SystemError }
 export interface EnrichmentResult {
   contractorId: string
   companyName: string
-  status: 'success' | 'skipped' | 'failed'
+  status: 'success' | 'skipped' | 'failed' | 'not_applicable' | 'bot_blocked'
   message: string
   serviceTypesAssigned: number
   tokensUsed?: number
@@ -258,6 +258,18 @@ export class ContractorEnrichmentService {
       const crawlResult = await this.crawler.crawl(websiteUrl)
 
       if (!crawlResult.success || !crawlResult.content) {
+        // Handle bot protection separately - flag for elevated scraping (Bright Data)
+        if (crawlResult.blockedByBotProtection) {
+          await this.markAsBotBlocked(id, metadata, websiteUrl)
+          return {
+            contractorId: id,
+            companyName: company_name,
+            status: 'bot_blocked',
+            message: 'Website has bot protection - queued for elevated scraping (Bright Data)',
+            serviceTypesAssigned: 0,
+          }
+        }
+
         await this.markAsFailed(id, metadata, crawlResult.error || 'Crawl failed')
         return {
           contractorId: id,
@@ -433,7 +445,8 @@ export class ContractorEnrichmentService {
    */
   private async markAsNotApplicable(
     contractorId: string,
-    existingMetadata: Record<string, unknown> | null
+    existingMetadata: Record<string, unknown> | null,
+    reason = 'No website URL'
   ): Promise<void> {
     const meta = existingMetadata || {}
     await this.client
@@ -443,8 +456,34 @@ export class ContractorEnrichmentService {
           ...meta,
           enrichment: {
             status: 'not_applicable',
-            reason: 'No website URL',
+            reason,
             checked_at: new Date().toISOString(),
+          },
+        },
+      })
+      .eq('id', contractorId)
+  }
+
+  /**
+   * Mark contractor as blocked by bot protection - needs elevated scraping (Bright Data)
+   */
+  private async markAsBotBlocked(
+    contractorId: string,
+    existingMetadata: Record<string, unknown> | null,
+    websiteUrl: string
+  ): Promise<void> {
+    const meta = existingMetadata || {}
+    await this.client
+      .from('contractors')
+      .update({
+        metadata: {
+          ...meta,
+          enrichment: {
+            status: 'bot_blocked',
+            reason: 'Website has bot protection (403/Cloudflare)',
+            website_url: websiteUrl,
+            requires_elevated_scraping: true,
+            blocked_at: new Date().toISOString(),
           },
         },
       })
