@@ -26,46 +26,53 @@ const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => u
 
 // Determine redirect destination after successful login
 // Uses stored redirect if available, otherwise routes based on account type
-function getRedirectDestination(isAdmin: boolean | undefined): string {
+// Returns null if account type is not yet known (caller must wait)
+function getRedirectDestination(isAdmin: boolean | undefined): string | null {
+  // If we don't know the account type yet, don't redirect
+  if (isAdmin === undefined) {
+    return null
+  }
   const storedRedirect = redirectAfterLogin.value
   if (storedRedirect && storedRedirect.startsWith('/')) {
     return storedRedirect
   }
-  // Default: admins go to /admin, business users go to /owner
-  return isAdmin === true ? '/admin' : '/owner'
+  // Admins go to /admin, business users go to /owner
+  return isAdmin ? '/admin' : '/owner'
 }
 
 // If already logged in, fetch account type and redirect appropriately
 watch(user, async (newUser) => {
-  if (newUser && !isRedirecting.value) {
-    isRedirecting.value = true
-
-    // Fetch account type if not already known
-    if (isAdminState.value === undefined) {
-      const { data: profile } = await supabase
-        .from('account_profiles')
-        .select('is_admin, status')
-        .eq('id', newUser.id)
-        .maybeSingle()
-
-      isAdminState.value = !!profile?.is_admin
-
-      // Also update other auth state
-      const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
-      const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
-      authUserState.value = newUser
-      accountStatusState.value = profile?.status ?? null
-    }
-
-    const destination = getRedirectDestination(isAdminState.value)
-
-    if (import.meta.dev) {
-      consola.info('Login page: user already authenticated, redirecting to:', destination)
-    }
-
-    redirectAfterLogin.value = null
-    router.replace(destination)
+  // Ensure we have a valid user with an id before proceeding
+  if (!newUser?.id || isRedirecting.value) {
+    return
   }
+
+  isRedirecting.value = true
+
+  // Always fetch account type to ensure we have fresh data for the current user
+  const { data: profile } = await supabase
+    .from('account_profiles')
+    .select('is_admin, status')
+    .eq('id', newUser.id)
+    .maybeSingle()
+
+  const userIsAdmin = !!profile?.is_admin
+  isAdminState.value = userIsAdmin
+
+  // Also update other auth state
+  const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
+  const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
+  authUserState.value = newUser
+  accountStatusState.value = profile?.status ?? null
+
+  const destination = getRedirectDestination(userIsAdmin)
+
+  if (import.meta.dev) {
+    consola.info('Login page: user already authenticated, redirecting to:', destination)
+  }
+
+  redirectAfterLogin.value = null
+  router.replace(destination!)
 }, { immediate: true })
 
 // Handle forgot password email submission
@@ -182,7 +189,8 @@ async function onSubmit(event: Event) {
     isAdminState.value = userIsAdmin
     accountStatusState.value = profile?.status ?? null
 
-    const destination = getRedirectDestination(userIsAdmin)
+    // userIsAdmin is always a boolean here, so destination will never be null
+    const destination = getRedirectDestination(userIsAdmin)!
 
     if (import.meta.dev) {
       consola.success('Login successful, redirecting to:', destination, { isAdmin: userIsAdmin })
