@@ -155,31 +155,21 @@ export function useContractorEnrichment() {
   }
 
   // Queue enrichment jobs for selected contractors
-  async function queueEnrichmentJobs(contractorIds: string[]): Promise<{ jobIds: string[] }> {
-    const jobIds: string[] = []
-    const batchSize = 10
-
-    // Split into batches of 10
-    for (let i = 0; i < contractorIds.length; i += batchSize) {
-      const batch = contractorIds.slice(i, i + batchSize)
-
-      const response = await $fetch<{ success: boolean; data: { id: string } }>('/api/jobs', {
-        method: 'POST',
-        body: {
-          jobType: 'contractor_enrichment',
-          payload: { contractorIds: batch },
-        },
-      })
-
-      if (response.success && response.data?.id) {
-        jobIds.push(response.data.id)
-      }
-    }
+  async function queueEnrichmentJobs(contractorIds: string[]): Promise<{ jobId: string | null }> {
+    // Create a single job with all contractor IDs
+    // The job executor will handle batch processing internally
+    const response = await $fetch<{ success: boolean; data: { id: string } }>('/api/jobs', {
+      method: 'POST',
+      body: {
+        jobType: 'contractor_enrichment',
+        payload: { contractorIds },
+      },
+    })
 
     // Refresh active job state
     await fetchActiveJob()
 
-    return { jobIds }
+    return { jobId: response.success && response.data?.id ? response.data.id : null }
   }
 
   return {

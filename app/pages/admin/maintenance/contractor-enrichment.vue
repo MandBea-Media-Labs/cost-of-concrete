@@ -630,7 +630,7 @@ const getEnrichmentLabel = (status: string) => {
           <ul class="list-inside list-disc space-y-1">
             <li>Jobs run every 15 seconds</li>
             <li>No need to keep browser tab open</li>
-            <li>Batched in groups of 10 contractors</li>
+            <li>One job processes all selected contractors</li>
           </ul>
         </UiCardContent>
       </UiCard>
