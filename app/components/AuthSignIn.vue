@@ -35,9 +35,28 @@ function getRedirectDestination(isAdmin: boolean | undefined): string {
   return isAdmin === true ? '/admin' : '/owner'
 }
 
-// If already logged in, redirect to destination based on account type
-watchEffect(() => {
-  if (user.value && !isRedirecting.value) {
+// If already logged in, fetch account type and redirect appropriately
+watch(user, async (newUser) => {
+  if (newUser && !isRedirecting.value) {
+    isRedirecting.value = true
+
+    // Fetch account type if not already known
+    if (isAdminState.value === undefined) {
+      const { data: profile } = await supabase
+        .from('account_profiles')
+        .select('is_admin, status')
+        .eq('id', newUser.id)
+        .maybeSingle()
+
+      isAdminState.value = !!profile?.is_admin
+
+      // Also update other auth state
+      const authUserState = useState<any | null | undefined>('admin-auth:user', () => undefined)
+      const accountStatusState = useState<string | null | undefined>('admin-auth:status', () => undefined)
+      authUserState.value = newUser
+      accountStatusState.value = profile?.status ?? null
+    }
+
     const destination = getRedirectDestination(isAdminState.value)
 
     if (import.meta.dev) {
@@ -47,7 +66,7 @@ watchEffect(() => {
     redirectAfterLogin.value = null
     router.replace(destination)
   }
-})
+}, { immediate: true })
 
 // Handle forgot password email submission
 async function onSendResetEmail() {
