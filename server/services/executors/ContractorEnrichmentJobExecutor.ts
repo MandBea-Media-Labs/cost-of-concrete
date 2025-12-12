@@ -70,10 +70,19 @@ export class ContractorEnrichmentJobExecutor implements JobExecutor {
       throw error
     }
 
-    // Fetch contractors by IDs
+    // Fetch contractors by IDs with city data for location context
     const { data: contractors, error: fetchError } = await client
       .from('contractors')
-      .select('id, company_name, website, metadata')
+      .select(`
+        id,
+        company_name,
+        website,
+        phone,
+        street_address,
+        postal_code,
+        metadata,
+        city:cities(name, state_code)
+      `)
       .in('id', batchIds)
 
     if (fetchError) {

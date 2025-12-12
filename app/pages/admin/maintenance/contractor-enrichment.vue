@@ -506,15 +506,15 @@ const getEnrichmentLabel = (status: string) => {
                   />
                 </th>
                 <th class="px-4 py-3 text-left font-medium">Company</th>
-                <th class="px-4 py-3 text-left font-medium hidden sm:table-cell">City</th>
-                <th class="px-4 py-3 text-left font-medium hidden md:table-cell">Website</th>
+                <th class="hidden px-4 py-3 text-left font-medium sm:table-cell">City</th>
+                <th class="hidden px-4 py-3 text-left font-medium md:table-cell">Website</th>
                 <th class="px-4 py-3 text-left font-medium">Status</th>
               </tr>
             </thead>
             <tbody v-auto-animate>
               <tr v-if="pending && contractors.length === 0">
                 <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
-                  <Icon name="heroicons:arrow-path" class="size-5 animate-spin mx-auto mb-2" />
+                  <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
                   Loading contractors...
                 </td>
               </tr>
@@ -537,18 +537,18 @@ const getEnrichmentLabel = (status: string) => {
                 <td class="px-4 py-3">
                   <div class="font-medium">{{ contractor.company_name }}</div>
                 </td>
-                <td class="px-4 py-3 hidden sm:table-cell">
+                <td class="hidden px-4 py-3 sm:table-cell">
                   <span v-if="contractor.city" class="text-muted-foreground">
                     {{ contractor.city.name }}, {{ contractor.city.state_code }}
                   </span>
                   <span v-else class="text-muted-foreground">-</span>
                 </td>
-                <td class="px-4 py-3 hidden md:table-cell">
+                <td class="hidden px-4 py-3 md:table-cell">
                   <a
                     v-if="contractor.website"
                     :href="contractor.website"
                     target="_blank"
-                    class="text-blue-600 hover:underline dark:text-blue-400 truncate block max-w-48"
+                    class="max-w-48 block truncate text-blue-600 hover:underline dark:text-blue-400"
                   >
                     {{ contractor.website.replace(/^https?:\/\//, '') }}
                   </a>
@@ -622,7 +622,7 @@ const getEnrichmentLabel = (status: string) => {
         </UiCardHeader>
         <UiCardContent class="text-sm text-muted-foreground">
           <ul class="list-inside list-disc space-y-1">
-            <li>Jobs run via pg_cron every 15 seconds</li>
+            <li>Jobs run every 15 seconds</li>
             <li>No need to keep browser tab open</li>
             <li>Batched in groups of 10 contractors</li>
           </ul>

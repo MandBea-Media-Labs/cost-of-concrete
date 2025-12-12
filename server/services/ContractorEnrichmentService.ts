@@ -39,7 +39,28 @@ export interface ContractorForEnrichment {
   id: string
   company_name: string
   website: string | null
+  phone: string | null
+  street_address: string | null
+  postal_code: string | null
   metadata: Record<string, unknown> | null
+  city?: {
+    name: string
+    state_code: string
+  } | null
+}
+
+export interface LocationContext {
+  streetAddress: string | null
+  city: string | null
+  state: string | null
+  postalCode: string | null
+}
+
+interface SiblingContractor {
+  id: string
+  company_name: string
+  website: string
+  matchType: 'phone' | 'name'
 }
 
 // Default service type slug when AI extraction fails
@@ -95,27 +116,143 @@ export class ContractorEnrichmentService {
   }
 
   /**
+   * Find a sibling contractor with a website (same phone or similar company name)
+   *
+   * Matching priority:
+   * 1. Same phone number (high confidence)
+   * 2. Similar company name (medium confidence, requires exact match)
+   */
+  private async findSiblingContractor(contractor: ContractorForEnrichment): Promise<SiblingContractor | null> {
+    const { id, phone, company_name } = contractor
+
+    // Try phone match first (high confidence)
+    if (phone && phone.trim()) {
+      // Normalize phone for matching (remove non-digits)
+      const normalizedPhone = phone.replace(/\D/g, '')
+
+      if (normalizedPhone.length >= 10) {
+        const { data: phoneMatches } = await this.client
+          .from('contractors')
+          .select('id, company_name, website')
+          .neq('id', id)
+          .not('website', 'is', null)
+          .is('deleted_at', null)
+
+        // Filter by normalized phone in application layer for flexibility
+        const phoneMatch = phoneMatches?.find((c) => {
+          const cPhone = c.website ? (c as unknown as { phone?: string }).phone : null
+          return false // Phone not in this query, need separate approach
+        })
+
+        // Actually query with phone filter
+        const { data: directPhoneMatches } = await this.client
+          .from('contractors')
+          .select('id, company_name, website, phone')
+          .neq('id', id)
+          .not('website', 'is', null)
+          .not('phone', 'is', null)
+          .is('deleted_at', null)
+          .limit(50)
+
+        if (directPhoneMatches) {
+          for (const match of directPhoneMatches) {
+            const matchPhone = (match.phone || '').replace(/\D/g, '')
+            if (matchPhone === normalizedPhone && match.website) {
+              consola.info(`ContractorEnrichmentService: Found sibling by phone for ${company_name}: ${match.company_name}`)
+              return {
+                id: match.id,
+                company_name: match.company_name,
+                website: match.website,
+                matchType: 'phone',
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Try exact company name match (medium confidence)
+    if (company_name && company_name.trim()) {
+      const { data: nameMatches } = await this.client
+        .from('contractors')
+        .select('id, company_name, website')
+        .neq('id', id)
+        .eq('company_name', company_name.trim())
+        .not('website', 'is', null)
+        .is('deleted_at', null)
+        .limit(1)
+
+      if (nameMatches && nameMatches.length > 0 && nameMatches[0].website) {
+        consola.info(`ContractorEnrichmentService: Found sibling by name for ${company_name}: ${nameMatches[0].company_name}`)
+        return {
+          id: nameMatches[0].id,
+          company_name: nameMatches[0].company_name,
+          website: nameMatches[0].website,
+          matchType: 'name',
+        }
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Build location context from contractor data
+   */
+  private buildLocationContext(contractor: ContractorForEnrichment): LocationContext {
+    return {
+      streetAddress: contractor.street_address || null,
+      city: contractor.city?.name || null,
+      state: contractor.city?.state_code || null,
+      postalCode: contractor.postal_code || null,
+    }
+  }
+
+  /**
    * Enrich a single contractor
    */
   async enrichContractor(contractor: ContractorForEnrichment): Promise<EnrichmentResult> {
     const { id, company_name, website, metadata } = contractor
 
-    // Check if no website
+    // Check if no website - try to find sibling with website
     if (!website) {
-      await this.markAsNotApplicable(id, metadata)
-      return {
-        contractorId: id,
-        companyName: company_name,
-        status: 'skipped',
-        message: 'No website URL',
-        serviceTypesAssigned: 0,
+      const sibling = await this.findSiblingContractor(contractor)
+
+      if (!sibling) {
+        await this.markAsNotApplicable(id, metadata)
+        return {
+          contractorId: id,
+          companyName: company_name,
+          status: 'skipped',
+          message: 'No website URL and no sibling contractor found',
+          serviceTypesAssigned: 0,
+        }
       }
+
+      // Use sibling's website with original contractor's location context
+      consola.info(`ContractorEnrichmentService: Using sibling website ${sibling.website} for ${company_name} (matched by ${sibling.matchType})`)
+      return this.enrichWithWebsite(contractor, sibling.website, true)
     }
+
+    // Has website - enrich directly
+    return this.enrichWithWebsite(contractor, website, false)
+  }
+
+  /**
+   * Enrich contractor using a specific website URL
+   */
+  private async enrichWithWebsite(
+    contractor: ContractorForEnrichment,
+    websiteUrl: string,
+    usingSiblingWebsite: boolean
+  ): Promise<EnrichmentResult> {
+    const { id, company_name, metadata } = contractor
+    const locationContext = this.buildLocationContext(contractor)
 
     try {
       // 1. Crawl website
-      consola.info(`ContractorEnrichmentService: Crawling ${website} for ${company_name}`)
-      const crawlResult = await this.crawler.crawl(website)
+      consola.info(`ContractorEnrichmentService: Crawling ${websiteUrl} for ${company_name}${usingSiblingWebsite ? ' (sibling website)' : ''}`)
+      const crawlResult = await this.crawler.crawl(websiteUrl)
 
       if (!crawlResult.success || !crawlResult.content) {
         await this.markAsFailed(id, metadata, crawlResult.error || 'Crawl failed')
@@ -128,12 +265,13 @@ export class ContractorEnrichmentService {
         }
       }
 
-      // 2. AI extraction
-      consola.info(`ContractorEnrichmentService: AI extracting for ${company_name}`)
+      // 2. AI extraction with location context
+      consola.info(`ContractorEnrichmentService: AI extracting for ${company_name}${locationContext.city ? ` (location: ${locationContext.city}, ${locationContext.state})` : ''}`)
       const aiResult = await this.aiExtractor.extract({
         websiteContent: crawlResult.content,
         availableServiceTypes: this.serviceTypes,
         companyName: company_name,
+        locationContext,
       })
 
       if (!aiResult.success || !aiResult.result) {
@@ -151,13 +289,13 @@ export class ContractorEnrichmentService {
       }
 
       // 3. Update contractor and assign service types
-      const serviceTypesAssigned = await this.applyEnrichmentResult(id, metadata, aiResult.result)
+      const serviceTypesAssigned = await this.applyEnrichmentResult(id, metadata, aiResult.result, usingSiblingWebsite)
 
       return {
         contractorId: id,
         companyName: company_name,
         status: 'success',
-        message: `Enriched successfully (${crawlResult.pagesCrawled} pages crawled)`,
+        message: `Enriched successfully (${crawlResult.pagesCrawled} pages crawled)${usingSiblingWebsite ? ' using sibling website' : ''}`,
         serviceTypesAssigned,
         tokensUsed: aiResult.tokensUsed,
       }
@@ -180,16 +318,22 @@ export class ContractorEnrichmentService {
   private async applyEnrichmentResult(
     contractorId: string,
     existingMetadata: Record<string, unknown> | null,
-    result: ExtractionResult
+    result: ExtractionResult,
+    usingSiblingWebsite = false
   ): Promise<number> {
     const meta = existingMetadata || {}
 
     // Build enrichment metadata
-    const enrichment = {
+    const enrichment: Record<string, unknown> = {
       status: 'completed',
       enriched_at: new Date().toISOString(),
       business_hours: result.business_hours,
       social_links: result.social_links,
+    }
+
+    // Track if enriched via sibling website
+    if (usingSiblingWebsite) {
+      enrichment.source = 'sibling_website'
     }
 
     // Update contractor with enriched data

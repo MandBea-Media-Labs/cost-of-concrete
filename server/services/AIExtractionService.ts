@@ -49,10 +49,18 @@ export interface ServiceType {
   slug: string
 }
 
+export interface LocationContext {
+  streetAddress: string | null
+  city: string | null
+  state: string | null
+  postalCode: string | null
+}
+
 export interface AIExtractionInput {
   websiteContent: string
   availableServiceTypes: ServiceType[]
   companyName: string
+  locationContext?: LocationContext
 }
 
 export interface AIExtractionOutput {
@@ -81,15 +89,35 @@ export class AIExtractionService {
    * Extract business information from website content
    */
   async extract(input: AIExtractionInput): Promise<AIExtractionOutput> {
-    const { websiteContent, availableServiceTypes, companyName } = input
+    const { websiteContent, availableServiceTypes, companyName, locationContext } = input
 
     // Build service types reference for the prompt
     const serviceTypesList = availableServiceTypes
       .map(st => `- ${st.slug}: ${st.name}`)
       .join('\n')
 
+    // Build location context string if provided
+    let locationInstruction = ''
+    if (locationContext) {
+      const locationParts: string[] = []
+      if (locationContext.streetAddress) locationParts.push(locationContext.streetAddress)
+      if (locationContext.city) locationParts.push(locationContext.city)
+      if (locationContext.state) locationParts.push(locationContext.state)
+      if (locationContext.postalCode) locationParts.push(locationContext.postalCode)
+
+      if (locationParts.length > 0) {
+        locationInstruction = `
+Target Location: ${locationParts.join(', ')}
+
+IMPORTANT: This website may serve multiple locations. Focus your analysis on the target location above.
+Look for location-specific pages, services, or information relevant to this area.
+If the website mentions services or categories specific to this location, prioritize those.`
+      }
+    }
+
     const systemPrompt = `You are extracting business information from a contractor website.
 Your task is to identify contact details, business hours, social media links, and applicable service categories.
+${locationInstruction}
 
 Available service type slugs to choose from:
 ${serviceTypesList}
