@@ -180,10 +180,10 @@ const socialPlatforms = [
 
       <!-- Tab 1: Business Info -->
       <TabsContent value="info" class="space-y-5">
-        <div class="grid gap-5 md:grid-cols-2">
+        <div class="grid gap-2 md:grid-cols-2">
           <!-- Company Name -->
           <div class="md:col-span-2">
-            <UiFormTextInput
+            <TextInput
               v-model="formValues.companyName"
               label="Company Name"
               placeholder="Your business name"
@@ -193,7 +193,7 @@ const socialPlatforms = [
 
           <!-- Phone -->
           <div>
-            <UiFormTextInput
+            <TextInput
               v-model="formValues.phone"
               label="Phone"
               type="tel"
@@ -203,7 +203,7 @@ const socialPlatforms = [
 
           <!-- Email -->
           <div>
-            <UiFormTextInput
+            <TextInput
               v-model="formValues.email"
               label="Email"
               type="email"
@@ -214,7 +214,7 @@ const socialPlatforms = [
 
           <!-- Website -->
           <div class="md:col-span-2">
-            <UiFormTextInput
+            <TextInput
               v-model="formValues.website"
               label="Website"
               type="url"
@@ -270,9 +270,9 @@ const socialPlatforms = [
               class="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-300 p-3 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-neutral-600 dark:hover:border-blue-500 dark:hover:bg-blue-900/20"
               :class="{ 'border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30': values.serviceTypeIds?.includes(st.id) }"
             >
-              <UiFormCheckbox
-                :checked="values.serviceTypeIds?.includes(st.id) ?? false"
-                @update:checked="toggleServiceType(st.id)"
+              <Checkbox
+                :model-value="values.serviceTypeIds?.includes(st.id) ?? false"
+                @update:model-value="toggleServiceType(st.id)"
               />
               <span class="text-sm text-neutral-700 dark:text-neutral-300">{{ st.name }}</span>
             </label>
@@ -292,7 +292,7 @@ const socialPlatforms = [
               <Icon :name="platform.icon" class="h-4 w-4" />
               {{ platform.label }}
             </label>
-            <UiFormTextInput
+            <TextInput
               :model-value="(values.socialLinks as any)?.[platform.key] || ''"
               @update:model-value="(v: string | null) => updateSocialLink(platform.key, v || '')"
               type="url"
@@ -305,13 +305,13 @@ const socialPlatforms = [
 
     <!-- Form Actions -->
     <div class="flex items-center justify-end gap-3 border-t border-neutral-200 pt-6 dark:border-neutral-700">
-      <UiButton
+      <Button
         text="Cancel"
         variant="secondary-outline"
         type="button"
         @click="emit('cancel')"
       />
-      <UiButton
+      <Button
         :text="isSubmitting ? 'Saving...' : 'Save Changes'"
         variant="primary"
         type="submit"

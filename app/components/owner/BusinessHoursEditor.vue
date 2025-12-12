@@ -1,20 +1,10 @@
 <script setup lang="ts">
-import { Switch } from '~/components/admin-ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/admin-ui/select'
-import { Button } from '~/components/admin-ui/button'
 import {
   DAYS_OF_WEEK,
   DAY_LABELS,
   TIME_OPTIONS,
   type BusinessHours,
   type DayOfWeek,
-  type DayHours,
 } from '~/schemas/owner/contractor-form.schema'
 
 interface Props {
@@ -99,79 +89,59 @@ function copyMondayToWeekdays() {
 </script>
 
 <template>
-  <div class="space-y-2">
-    <!-- Header row -->
-    <div class="grid grid-cols-[100px_1fr_80px] gap-2 text-xs font-medium text-muted-foreground px-1">
-      <span>Day</span>
-      <span>Hours</span>
-      <span class="text-right">Status</span>
-    </div>
-
+  <div class="space-y-3">
     <!-- Day rows -->
-    <div class="space-y-1.5">
+    <div class="space-y-2">
       <div
         v-for="day in DAYS_OF_WEEK"
         :key="day"
-        class="grid grid-cols-[100px_1fr_80px] gap-2 items-center py-1.5 px-1 rounded-md hover:bg-muted/50"
+        class="flex items-center gap-3 rounded-xl border border-neutral-300 p-3 transition-colors dark:border-neutral-600"
+        :class="{ 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600': dayStates[day].isOpen }"
       >
+        <!-- Open checkbox -->
+        <Checkbox
+          :model-value="dayStates[day].isOpen"
+          @update:model-value="(v: boolean | 'indeterminate') => toggleDay(day, v === true)"
+        />
+
         <!-- Day label -->
-        <span class="text-sm font-medium">{{ DAY_LABELS[day] }}</span>
+        <span class="w-24 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          {{ DAY_LABELS[day] }}
+        </span>
 
         <!-- Time selectors (only show when open) -->
-        <div v-if="dayStates[day].isOpen" class="flex items-center gap-1.5">
-          <Select
-            :model-value="dayStates[day].open"
-            @update:model-value="(v: string) => updateTime(day, 'open', v)"
+        <div v-if="dayStates[day].isOpen" class="flex flex-1 items-center gap-2">
+          <select
+            :value="dayStates[day].open"
+            @change="(e) => updateTime(day, 'open', (e.target as HTMLSelectElement).value)"
+            class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors hover:border-neutral-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
           >
-            <SelectTrigger class="h-8 w-[100px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="time in TIME_OPTIONS" :key="time" :value="time">
-                {{ time }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <span class="text-muted-foreground text-xs">to</span>
-          <Select
-            :model-value="dayStates[day].close"
-            @update:model-value="(v: string) => updateTime(day, 'close', v)"
+            <option v-for="time in TIME_OPTIONS" :key="time" :value="time">{{ time }}</option>
+          </select>
+          <span class="text-sm text-neutral-500">to</span>
+          <select
+            :value="dayStates[day].close"
+            @change="(e) => updateTime(day, 'close', (e.target as HTMLSelectElement).value)"
+            class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors hover:border-neutral-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
           >
-            <SelectTrigger class="h-8 w-[100px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="time in TIME_OPTIONS" :key="time" :value="time">
-                {{ time }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <option v-for="time in TIME_OPTIONS" :key="time" :value="time">{{ time }}</option>
+          </select>
         </div>
-        <div v-else class="text-sm text-muted-foreground italic">
+        <div v-else class="flex-1 text-sm text-neutral-500 italic">
           Closed
-        </div>
-
-        <!-- Open/Closed toggle -->
-        <div class="flex justify-end">
-          <Switch
-            :checked="dayStates[day].isOpen"
-            @update:checked="(v: boolean) => toggleDay(day, v)"
-          />
         </div>
       </div>
     </div>
 
     <!-- Copy to weekdays button -->
-    <div class="pt-2">
-      <Button
+    <div class="pt-1">
+      <button
         type="button"
-        variant="outline"
-        size="sm"
-        class="text-xs"
+        class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
         @click="copyMondayToWeekdays"
       >
         Copy Monday to weekdays
-      </Button>
+      </button>
     </div>
   </div>
 </template>
