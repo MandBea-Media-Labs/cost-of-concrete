@@ -10,6 +10,33 @@ import { z } from 'zod'
 import { serverSupabaseClient } from '#supabase/server'
 import { requireOwner } from '../../../utils/auth'
 
+// Day hours schema
+const dayHoursSchema = z.object({
+  open: z.string(),
+  close: z.string(),
+}).nullable()
+
+// Business hours object format
+const businessHoursSchema = z.object({
+  monday: dayHoursSchema.optional(),
+  tuesday: dayHoursSchema.optional(),
+  wednesday: dayHoursSchema.optional(),
+  thursday: dayHoursSchema.optional(),
+  friday: dayHoursSchema.optional(),
+  saturday: dayHoursSchema.optional(),
+  sunday: dayHoursSchema.optional(),
+}).optional().nullable()
+
+// Social links with all 6 platforms
+const socialLinksSchema = z.object({
+  facebook: z.string().url().or(z.literal('')).nullable().optional(),
+  instagram: z.string().url().or(z.literal('')).nullable().optional(),
+  youtube: z.string().url().or(z.literal('')).nullable().optional(),
+  linkedin: z.string().url().or(z.literal('')).nullable().optional(),
+  twitter: z.string().url().or(z.literal('')).nullable().optional(),
+  yelp: z.string().url().or(z.literal('')).nullable().optional(),
+}).optional().nullable()
+
 // Schema for updatable fields
 const updateContractorSchema = z.object({
   companyName: z.string().min(2).max(200).optional(),
@@ -17,12 +44,11 @@ const updateContractorSchema = z.object({
   phone: z.string().max(50).optional().nullable(),
   email: z.string().email().max(255).optional().nullable(),
   website: z.string().url().max(500).optional().nullable(),
-  streetAddress: z.string().max(500).optional().nullable(),
-  postalCode: z.string().max(20).optional().nullable(),
   // Metadata fields
-  businessHours: z.record(z.string()).optional(),
-  categories: z.array(z.string()).optional(),
-  socialLinks: z.record(z.string()).optional(),
+  businessHours: businessHoursSchema,
+  socialLinks: socialLinksSchema,
+  // Service type IDs for junction table
+  serviceTypeIds: z.array(z.string().uuid()).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -70,11 +96,9 @@ export default defineEventHandler(async (event) => {
   if (updates.phone !== undefined) dbUpdates.phone = updates.phone
   if (updates.email !== undefined) dbUpdates.email = updates.email
   if (updates.website !== undefined) dbUpdates.website = updates.website
-  if (updates.streetAddress !== undefined) dbUpdates.street_address = updates.streetAddress
-  if (updates.postalCode !== undefined) dbUpdates.postal_code = updates.postalCode
 
   // Handle metadata updates (merge with existing)
-  if (updates.businessHours || updates.categories || updates.socialLinks) {
+  if (updates.businessHours !== undefined || updates.socialLinks !== undefined) {
     // First fetch existing metadata
     const { data: existing } = await client
       .from('contractors')
@@ -85,14 +109,26 @@ export default defineEventHandler(async (event) => {
     const existingMetadata = (existing?.metadata as Record<string, unknown>) || {}
     const newMetadata = { ...existingMetadata }
 
-    if (updates.businessHours !== undefined) newMetadata.business_hours = updates.businessHours
-    if (updates.categories !== undefined) newMetadata.categories = updates.categories
-    if (updates.socialLinks !== undefined) newMetadata.social_links = updates.socialLinks
+    // Store business hours in object format (normalized)
+    if (updates.businessHours !== undefined) {
+      newMetadata.business_hours = updates.businessHours
+    }
+
+    // Store social links (filter out empty strings)
+    if (updates.socialLinks !== undefined) {
+      const cleanedLinks: Record<string, string> = {}
+      for (const [key, value] of Object.entries(updates.socialLinks || {})) {
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          cleanedLinks[key] = value.trim()
+        }
+      }
+      newMetadata.social_links = Object.keys(cleanedLinks).length > 0 ? cleanedLinks : null
+    }
 
     dbUpdates.metadata = newMetadata
   }
 
-  // Perform update
+  // Perform contractor update
   const { data: contractor, error } = await client
     .from('contractors')
     .update(dbUpdates)
@@ -107,6 +143,41 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Internal Server Error',
       message: 'Failed to update contractor'
     })
+  }
+
+  // Handle service type updates via junction table
+  if (updates.serviceTypeIds !== undefined) {
+    // Delete existing associations
+    const { error: deleteError } = await client
+      .from('contractor_service_types')
+      .delete()
+      .eq('contractor_id', contractorId)
+
+    if (deleteError) {
+      consola.warn('PATCH /api/owner/contractors/[id] - Failed to delete service types:', deleteError)
+    }
+
+    // Insert new associations
+    if (updates.serviceTypeIds.length > 0) {
+      const inserts = updates.serviceTypeIds.map(serviceTypeId => ({
+        contractor_id: contractorId,
+        service_type_id: serviceTypeId,
+        source: 'manual' as const,
+        confidence_score: 1.0,
+      }))
+
+      const { error: insertError } = await client
+        .from('contractor_service_types')
+        .insert(inserts)
+
+      if (insertError) {
+        consola.warn('PATCH /api/owner/contractors/[id] - Failed to insert service types:', insertError)
+      }
+    }
+
+    if (import.meta.dev) {
+      consola.info(`PATCH /api/owner/contractors/[id] - Updated ${updates.serviceTypeIds.length} service types`)
+    }
   }
 
   if (import.meta.dev) {
