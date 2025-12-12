@@ -409,7 +409,7 @@ onUnmounted(() => {
               <UiProgress :model-value="progressPercent" class="h-3" />
 
               <!-- Stats Grid -->
-              <div class="grid grid-cols-4 gap-3">
+              <div class="grid grid-cols-5 gap-3">
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
                   <p class="text-xl font-bold text-foreground tabular-nums">
                     <NumberFlow :value="currentJob.importedCount" />
@@ -421,6 +421,12 @@ onUnmounted(() => {
                     <NumberFlow :value="currentJob.updatedCount" />
                   </p>
                   <p class="text-xs text-muted-foreground">Updated</p>
+                </div>
+                <div class="rounded-lg border bg-muted/50 p-3 text-center">
+                  <p class="text-xl font-bold text-foreground tabular-nums">
+                    <NumberFlow :value="currentJob.skippedCount" />
+                  </p>
+                  <p class="text-xs text-muted-foreground">Skipped</p>
                 </div>
                 <div class="rounded-lg border bg-muted/50 p-3 text-center">
                   <p class="text-xl font-bold text-foreground tabular-nums">
