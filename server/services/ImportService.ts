@@ -18,6 +18,7 @@ import { LookupRepository } from '../repositories/LookupRepository'
 import { ReviewRepository } from '../repositories/ReviewRepository'
 import { GeocodingService } from './GeocodingService'
 import { stateToAbbreviation } from '../utils/stateAbbreviations'
+import { processCompanyName, sanitizeWebsiteUrl } from '../utils/textSanitization'
 import {
   apifyImportFileSchema,
   MAX_IMPORT_ROWS,
@@ -329,7 +330,9 @@ export class ImportService {
     cityId: string | null,
     existing?: Contractor | null
   ) {
-    const slug = this.slugify(row.title)
+    // Sanitize company name: remove punctuation, normalize case
+    const companyName = processCompanyName(row.title)
+    const slug = this.slugify(companyName)
 
     // Extract categories
     const categories: string[] = []
@@ -384,7 +387,7 @@ export class ImportService {
     return {
       google_place_id: row.placeId,
       google_cid: row.cid || null,
-      company_name: row.title,
+      company_name: companyName,
       slug,
       description: row.description || null,
       city_id: cityId,
@@ -393,7 +396,7 @@ export class ImportService {
       lat: row.location?.lat ?? null,
       lng: row.location?.lng ?? null,
       phone: row.phone || null,
-      website: row.website || null,
+      website: row.website ? sanitizeWebsiteUrl(row.website) : null,
       email: row.emails?.[0] || null,
       rating: row.totalScore ?? null,
       review_count: row.reviewsCount ?? 0,
