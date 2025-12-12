@@ -10,6 +10,21 @@ import { chromium, type Browser, type Page } from 'playwright-core'
 import { consola } from 'consola'
 
 // =====================================================
+// ERRORS
+// =====================================================
+
+/**
+ * System-level error that indicates infrastructure/environment issues
+ * These should NOT mark individual contractor profiles as failed
+ */
+export class SystemError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SystemError'
+  }
+}
+
+// =====================================================
 // TYPES
 // =====================================================
 
@@ -87,7 +102,7 @@ export class WebCrawlerService {
       consola.debug('WebCrawlerService: Browser initialized')
     } catch (error) {
       consola.error('WebCrawlerService: Failed to launch browser', error)
-      throw new Error('Failed to initialize browser. Ensure Chrome/Chromium is installed.')
+      throw new SystemError('Failed to initialize browser. Ensure Chrome/Chromium is installed.')
     }
   }
 

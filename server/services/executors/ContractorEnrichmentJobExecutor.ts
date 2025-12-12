@@ -21,7 +21,7 @@ import type {
 } from '../../schemas/job.schemas'
 import { DEFAULT_CONTRACTOR_BATCH_SIZE } from '../../schemas/job.schemas'
 import type { JobExecutor, ProgressCallback } from '../JobExecutorRegistry'
-import { ContractorEnrichmentService, type EnrichmentResult } from '../ContractorEnrichmentService'
+import { ContractorEnrichmentService, SystemError, type EnrichmentResult } from '../ContractorEnrichmentService'
 import { SystemLogService } from '../SystemLogService'
 import { consola } from 'consola'
 
@@ -118,12 +118,16 @@ export class ContractorEnrichmentJobExecutor implements JobExecutor {
           { contractorId: contractor.id }
         )
 
-        // Enrich contractor
+        // Enrich contractor (SystemError will propagate up and fail the job)
         const result = await enrichmentService.enrichContractor({
           id: contractor.id,
           company_name: contractor.company_name,
           website: contractor.website,
+          phone: contractor.phone,
+          street_address: contractor.street_address,
+          postal_code: contractor.postal_code,
           metadata: contractor.metadata as Record<string, unknown> | null,
+          city: contractor.city as { name: string; state_code: string } | null,
         })
 
         results.push(result)

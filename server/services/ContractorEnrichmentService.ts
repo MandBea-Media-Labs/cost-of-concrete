@@ -10,9 +10,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/supabase'
 import { consola } from 'consola'
-import { WebCrawlerService } from './WebCrawlerService'
+import { WebCrawlerService, SystemError } from './WebCrawlerService'
 import { AIExtractionService, type ExtractionResult, type ServiceType } from './AIExtractionService'
 import { ContractorRepository } from '../repositories/ContractorRepository'
+
+// Re-export SystemError for callers
+export { SystemError }
 
 // =====================================================
 // TYPES
@@ -300,6 +303,12 @@ export class ContractorEnrichmentService {
         tokensUsed: aiResult.tokensUsed,
       }
     } catch (error) {
+      // Re-throw system errors - don't mark contractor as failed for infrastructure issues
+      if (error instanceof SystemError) {
+        throw error
+      }
+
+      // Profile-specific error - mark contractor as failed
       const message = error instanceof Error ? error.message : 'Unknown error'
       await this.markAsFailed(id, metadata, message)
       return {
