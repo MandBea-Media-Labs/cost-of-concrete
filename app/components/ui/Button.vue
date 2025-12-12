@@ -76,6 +76,13 @@ interface Props {
    * @default 'thick'
    */
   borderWidth?: 'thin' | 'thick'
+
+  /**
+   * Whether the link should open in a new tab
+   * Only applies when location is provided
+   * @default false
+   */
+  external?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -88,7 +95,8 @@ const props = withDefaults(defineProps<Props>(), {
   icon: null,
   colors: null,
   textColors: null,
-  borderWidth: 'thick'
+  borderWidth: 'thick',
+  external: false
 })
 
 // Size classes for different button sizes
@@ -231,6 +239,8 @@ const isLink = computed(() => props.location && !props.disabled)
   >
     <NuxtLink
       :to="location!"
+      :target="external ? '_blank' : undefined"
+      :rel="external ? 'noopener noreferrer' : undefined"
       :class="buttonClasses"
       :style="customStyles"
     >

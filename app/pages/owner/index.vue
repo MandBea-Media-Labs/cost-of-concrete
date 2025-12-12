@@ -126,6 +126,7 @@ function getProfileUrl(contractor: Contractor): string {
               variant="secondary-outline"
               size="sm"
               :location="getProfileUrl(contractor)"
+              external
             />
             <Button
               text="Edit"
