@@ -338,11 +338,11 @@ export class WebCrawlerService {
    */
   private async extractPageContent(page: Page): Promise<string> {
     return page.evaluate(() => {
-      // Remove noise elements
+      // Remove noise elements (but KEEP footer - it often has business hours, phone, address)
       const selectorsToRemove = [
         'script', 'style', 'noscript', 'iframe', 'svg',
-        'nav', 'header', 'footer', 'aside',
-        '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
+        'nav', 'header', 'aside',
+        '[role="navigation"]', '[role="banner"]',
         '.cookie-banner', '.popup', '.modal', '.advertisement',
       ]
 
