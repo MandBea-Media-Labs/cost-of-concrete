@@ -34,7 +34,7 @@ export const socialLinksSchema = z.object({
 })
 
 export const extractionResultSchema = z.object({
-  description: z.string().max(80).nullable().describe('Short SEO-friendly business description (max 80 chars)'),
+  description: z.string().max(160).nullable().describe('Short SEO-friendly business description (max 160 chars)'),
   business_hours: businessHoursSchema.nullable(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
@@ -131,21 +131,21 @@ Rules:
 - If information is not found, use null
 - Be conservative - only extract information that is clearly present
 
-Description Rules (CRITICAL - max 80 characters):
+Description Rules (CRITICAL - max 160 characters):
 - Write a short, SEO-friendly description summarizing what the contractor does and where
-- Maximum 80 characters including spaces
+- Maximum 160 characters including spaces
 - Use 7th grade reading level (simple, clear language)
 - NO emdashes (—), NO emojis, NO quotation marks
 - NO generic marketing phrases like "passionate about", "dedicated to excellence", "trusted partner", "your go-to"
-- Focus on: service type + specialty + location
+- Focus on: service type + specialty + location + unique value
 - Good examples:
-  * "Expert concrete driveway installation & repair in Augusta, GA"
-  * "Commercial & residential concrete contractor serving Charleston"
-  * "Pool deck resurfacing specialists with 20+ years experience"
+  * "Concrete driveway and patio installation in Augusta, GA. Serving residential and commercial clients with stamped and decorative finishes."
+  * "Full-service concrete contractor in Charleston, SC. Specializing in foundations, flatwork, and decorative overlays for homes and businesses."
+  * "Pool deck resurfacing and repair in Miami, FL. Over 20 years of experience with slip-resistant coatings and custom designs."
 - Bad examples (DO NOT USE):
-  * "We're passionate about delivering exceptional concrete solutions"
-  * "Your trusted partner for all concrete needs"
-  * "Dedicated to excellence in every project we undertake"`
+  * "We're passionate about delivering exceptional concrete solutions to our valued customers"
+  * "Your trusted partner for all concrete needs in the greater metropolitan area"
+  * "Dedicated to excellence in every project we undertake, no matter the size"`
 
     const userPrompt = `Extract business information for "${companyName}" from this website content:
 
