@@ -375,7 +375,10 @@ export class ImportService {
   ) {
     // Sanitize company name: remove punctuation, normalize case
     const companyName = processCompanyName(row.title)
-    const slug = this.slugify(companyName)
+
+    // CRITICAL: For updates, preserve existing slug to avoid constraint violations
+    // Only generate new slug for new records
+    const slug = existing?.slug ?? this.slugify(companyName)
 
     // --- SMART MERGE: Protected field helper ---
     // If existing has value and incoming is empty, keep existing
@@ -460,7 +463,8 @@ export class ImportService {
       // Non-protected fields - always use incoming
       rating: row.totalScore ?? null,
       review_count: row.reviewsCount ?? 0,
-      status: 'pending' as const,
+      // CRITICAL: Preserve existing status - NEVER reset active contractors to pending
+      status: existing?.status ?? ('pending' as const),
       // CRITICAL: Preserve images_processed flag instead of resetting to false
       images_processed: wasImagesProcessed,
       metadata,
