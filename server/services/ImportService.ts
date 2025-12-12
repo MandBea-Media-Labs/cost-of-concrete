@@ -320,6 +320,7 @@ export class ImportService {
    * - Preserves metadata.images (enriched images from image processing)
    * - Preserves images_processed flag
    * - Only sets pending_images if images haven't been processed yet
+   * - Never overwrites existing good data with empty/null values (protected fields)
    *
    * @param row - Apify row data
    * @param cityId - Resolved city ID
@@ -333,6 +334,17 @@ export class ImportService {
     // Sanitize company name: remove punctuation, normalize case
     const companyName = processCompanyName(row.title)
     const slug = this.slugify(companyName)
+
+    // --- SMART MERGE: Protected field helper ---
+    // If existing has value and incoming is empty, keep existing
+    const mergeField = <T>(incoming: T | null | undefined, existingValue: T | null | undefined): T | null => {
+      const incomingEmpty = incoming === null || incoming === undefined || incoming === ''
+      const existingHasValue = existingValue !== null && existingValue !== undefined && existingValue !== ''
+      if (incomingEmpty && existingHasValue) {
+        return existingValue as T
+      }
+      return (incoming ?? null) as T | null
+    }
 
     // Extract categories
     const categories: string[] = []
@@ -384,20 +396,26 @@ export class ImportService {
       geocoding_failed: cityId === null && !!(row.location?.lat && row.location?.lng),
     }
 
-    return {
+    // --- SMART MERGE: Apply to protected fields ---
+    // These fields preserve existing values if incoming is empty
+    const incomingWebsite = row.website ? sanitizeWebsiteUrl(row.website) : null
+
+    const result = {
       google_place_id: row.placeId,
       google_cid: row.cid || null,
       company_name: companyName,
       slug,
-      description: row.description || null,
-      city_id: cityId,
-      street_address: row.street || null,
-      postal_code: row.postalCode || null,
-      lat: row.location?.lat ?? null,
-      lng: row.location?.lng ?? null,
-      phone: row.phone || null,
-      website: row.website ? sanitizeWebsiteUrl(row.website) : null,
-      email: row.emails?.[0] || null,
+      // Protected fields - preserve existing if incoming is empty
+      description: mergeField(row.description, existing?.description),
+      city_id: cityId ?? existing?.city_id ?? null, // Special: cityId already resolved, preserve if null
+      street_address: mergeField(row.street, existing?.street_address),
+      postal_code: mergeField(row.postalCode, existing?.postal_code),
+      lat: mergeField(row.location?.lat, existing?.lat),
+      lng: mergeField(row.location?.lng, existing?.lng),
+      phone: mergeField(row.phone, existing?.phone),
+      website: mergeField(incomingWebsite, existing?.website),
+      email: mergeField(row.emails?.[0], existing?.email),
+      // Non-protected fields - always use incoming
       rating: row.totalScore ?? null,
       review_count: row.reviewsCount ?? 0,
       status: 'pending' as const,
@@ -405,6 +423,21 @@ export class ImportService {
       images_processed: wasImagesProcessed,
       metadata,
     }
+
+    // Log protected field preservation in dev mode
+    if (import.meta.dev && existing) {
+      const preserved: string[] = []
+      if (!row.street && existing.street_address) preserved.push('street_address')
+      if (!row.phone && existing.phone) preserved.push('phone')
+      if (!row.website && existing.website) preserved.push('website')
+      if (!row.emails?.[0] && existing.email) preserved.push('email')
+      if (!row.description && existing.description) preserved.push('description')
+      if (preserved.length > 0) {
+        consola.debug(`Smart merge preserved fields for "${companyName}": ${preserved.join(', ')}`)
+      }
+    }
+
+    return result
   }
 
   /**
