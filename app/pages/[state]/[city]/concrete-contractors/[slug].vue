@@ -88,16 +88,22 @@ const heroImage = computed(() => images.value.length > 0 ? buildImageUrl(images.
 // Get categories
 const categories = computed(() => contractor.value?.categories || [])
 
-// Get opening hours
-const openingHours = computed(() => contractor.value?.openingHours || {})
+// Get opening hours (stored as array of {day, hours} objects)
+const openingHours = computed(() => contractor.value?.openingHours || [])
 
 // Format opening hours for display
 const formattedHours = computed(() => {
   const hours = openingHours.value
-  if (!hours || Object.keys(hours).length === 0) return 'Hours not available'
-  const firstDay = Object.entries(hours)[0]
-  if (firstDay && firstDay[1]) {
-    return `${firstDay[1]}`
+  // Handle array format: [{day: "Monday", hours: "7 AM to 7 PM"}, ...]
+  if (Array.isArray(hours) && hours.length > 0) {
+    const firstEntry = hours[0]
+    if (firstEntry && typeof firstEntry === 'object' && 'hours' in firstEntry) {
+      return firstEntry.hours
+    }
+  }
+  // Handle empty or missing hours
+  if (!hours || (Array.isArray(hours) && hours.length === 0)) {
+    return 'Hours not available'
   }
   return 'Hours vary'
 })
