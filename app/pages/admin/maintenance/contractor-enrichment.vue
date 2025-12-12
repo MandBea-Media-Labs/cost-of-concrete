@@ -83,13 +83,17 @@ const enrichmentStatusOptions = [
   { value: 'not_applicable', label: 'No Website' },
 ]
 
+const selectedCount = computed(() => selectedIds.value.size)
+
 const canQueueJob = computed(() => {
-  return selectedIds.value.size > 0 && !isQueuing.value && !hasActiveJob.value
+  return selectedCount.value > 0 && !isQueuing.value && !hasActiveJob.value
 })
 
 const allSelected = computed(() => {
   return contractors.value.length > 0 && contractors.value.every(c => selectedIds.value.has(c.id))
 })
+
+const isSelected = (id: string) => selectedIds.value.has(id)
 
 // =====================================================
 // METHODS
@@ -131,30 +135,32 @@ const refreshData = async (options: { showLoading?: boolean } = {}) => {
 
 const handleFilterChange = async () => {
   pagination.value.page = 1
-  selectedIds.value.clear()
+  selectedIds.value = new Set()
   await fetchContractors(buildFilters())
 }
 
 const handlePageChange = async (newPage: number) => {
   pagination.value.page = newPage
-  selectedIds.value.clear()
+  selectedIds.value = new Set()
   await fetchContractors(buildFilters())
 }
 
 const toggleSelectAll = () => {
   if (allSelected.value) {
-    selectedIds.value.clear()
+    selectedIds.value = new Set()
   } else {
-    contractors.value.forEach(c => selectedIds.value.add(c.id))
+    selectedIds.value = new Set(contractors.value.map(c => c.id))
   }
 }
 
 const toggleSelect = (id: string) => {
-  if (selectedIds.value.has(id)) {
-    selectedIds.value.delete(id)
+  const newSet = new Set(selectedIds.value)
+  if (newSet.has(id)) {
+    newSet.delete(id)
   } else {
-    selectedIds.value.add(id)
+    newSet.add(id)
   }
+  selectedIds.value = newSet
 }
 
 const queueJobs = async () => {
@@ -166,7 +172,7 @@ const queueJobs = async () => {
   try {
     const ids = Array.from(selectedIds.value)
     await queueEnrichmentJobs(ids)
-    selectedIds.value.clear()
+    selectedIds.value = new Set()
     await refreshData({ showLoading: false })
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Failed to queue jobs'
@@ -449,7 +455,7 @@ const getEnrichmentLabel = (status: string) => {
             >
               <Icon v-if="isQueuing" name="heroicons:arrow-path" class="size-4 mr-2 animate-spin" />
               <Icon v-else name="heroicons:sparkles" class="size-4 mr-2" />
-              Enrich {{ selectedIds.size > 0 ? `(${selectedIds.size})` : 'Selected' }}
+              Enrich {{ selectedCount > 0 ? `(${selectedCount})` : 'Selected' }}
             </UiButton>
           </div>
         </div>
@@ -500,9 +506,9 @@ const getEnrichmentLabel = (status: string) => {
             <thead class="border-b bg-muted/50">
               <tr>
                 <th class="w-12 px-4 py-3 text-left">
-                  <Checkbox
-                    :checked="allSelected"
-                    @update:checked="toggleSelectAll"
+                  <UiCheckbox
+                    :model-value="allSelected"
+                    @update:model-value="toggleSelectAll"
                   />
                 </th>
                 <th class="px-4 py-3 text-left font-medium">Company</th>
@@ -529,9 +535,9 @@ const getEnrichmentLabel = (status: string) => {
                 class="border-b last:border-0 hover:bg-muted/50"
               >
                 <td class="px-4 py-3">
-                  <Checkbox
-                    :checked="selectedIds.has(contractor.id)"
-                    @update:checked="toggleSelect(contractor.id)"
+                  <UiCheckbox
+                    :model-value="isSelected(contractor.id)"
+                    @update:model-value="() => toggleSelect(contractor.id)"
                   />
                 </td>
                 <td class="px-4 py-3">
