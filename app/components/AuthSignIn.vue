@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import consola from 'consola'
-import { Icon } from '#components'
 
 const router = useRouter()
 const supabase = useSupabaseClient()
@@ -14,6 +13,13 @@ const password = ref('')
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const isRedirecting = ref(false)
+
+// Forgot Password State (inline form swap)
+const showForgotPassword = ref(false)
+const forgotPasswordEmail = ref('')
+const isSendingResetEmail = ref(false)
+const resetEmailSent = ref(false)
+const resetEmailError = ref<string | null>(null)
 
 // Default redirect destination
 const defaultRedirect = '/admin'
@@ -40,6 +46,64 @@ watchEffect(() => {
     router.replace(destination)
   }
 })
+
+// Handle forgot password email submission
+async function onSendResetEmail() {
+  resetEmailError.value = null
+
+  const emailValue = forgotPasswordEmail.value?.trim()
+  if (!emailValue) {
+    resetEmailError.value = 'Please enter your email address.'
+    return
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(emailValue)) {
+    resetEmailError.value = 'Please enter a valid email address.'
+    return
+  }
+
+  try {
+    isSendingResetEmail.value = true
+
+    // Redirect to dedicated reset-password page
+    const redirectUrl = `${window.location.origin}/reset-password`
+
+    const { error } = await supabase.auth.resetPasswordForEmail(emailValue, {
+      redirectTo: redirectUrl,
+    })
+
+    if (error) {
+      if (import.meta.dev) {
+        consola.error('Reset email failed:', error.message)
+      }
+      resetEmailError.value = error.message || 'Failed to send reset email. Please try again.'
+      return
+    }
+
+    if (import.meta.dev) {
+      consola.success('Password reset email sent to:', emailValue)
+    }
+
+    resetEmailSent.value = true
+  } catch (err: any) {
+    if (import.meta.dev) {
+      consola.error('Unexpected reset email error:', err)
+    }
+    resetEmailError.value = 'An unexpected error occurred. Please try again.'
+  } finally {
+    isSendingResetEmail.value = false
+  }
+}
+
+// Reset forgot password state and go back to login
+function backToLogin() {
+  showForgotPassword.value = false
+  forgotPasswordEmail.value = ''
+  resetEmailSent.value = false
+  resetEmailError.value = null
+}
 
 async function onSubmit(event: Event) {
   event.preventDefault()
@@ -104,89 +168,158 @@ async function onSubmit(event: Event) {
 
 <template>
   <div class="grid gap-6">
-    <!-- Google Sign In Button (Placeholder) -->
-    <Button
-      text="Login with Google"
-      type="button"
-      size="md"
-      variant="secondary-outline"
-      :disabled="true"
-      icon="logos:google-icon"
-    />
-
-    <!-- Divider -->
-    <div class="relative">
-      <div class="absolute inset-0 flex items-center">
-        <span class="w-full border-t border-neutral-200 dark:border-neutral-700" />
-      </div>
-      <div class="relative flex justify-center text-xs uppercase">
-        <span class="bg-white dark:bg-zinc-900 px-2 text-neutral-500 dark:text-neutral-400">
-          Or continue with
-        </span>
-      </div>
-    </div>
-
-    <!-- Error Message -->
-    <div
-      v-if="errorMessage"
-      class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
-    >
-      {{ errorMessage }}
-    </div>
-
-    <!-- Email/Password Form -->
-    <form class="grid gap-4" @submit="onSubmit">
-      <TextInput
-        v-model="email"
-        type="email"
-        size="md"
-        label="Email"
-        placeholder="you@example.com"
-        :disabled="isLoading"
-        icon="heroicons:envelope"
-      />
-
-      <div class="grid gap-2">
-        <div class="flex items-center justify-between">
-          <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            Password
-          </label>
-          <NuxtLink
-            to="#"
-            class="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 underline"
-          >
-            Forgot your password?
-          </NuxtLink>
+    <!-- FORGOT PASSWORD MODE (inline form swap) -->
+    <template v-if="showForgotPassword">
+      <!-- Success State -->
+      <template v-if="resetEmailSent">
+        <div class="space-y-4 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+            <Icon name="heroicons:envelope-open" class="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+          <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">
+            Check your email
+          </h3>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">
+            We've sent a password reset link to <strong>{{ forgotPasswordEmail }}</strong>
+          </p>
         </div>
-        <PasswordInput
-          v-model="password"
+        <Button
+          text="Back to Sign In"
+          type="button"
           size="md"
-          placeholder="Enter your password"
-          :disabled="isLoading"
-          icon="heroicons:lock-closed"
+          variant="primary"
+          @click="backToLogin"
         />
+      </template>
+
+      <!-- Forgot Password Form -->
+      <template v-else>
+        <div class="space-y-2 text-center">
+          <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">
+            Reset Password
+          </h3>
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">
+            Enter your email address and we'll send you a link to reset your password.
+          </p>
+        </div>
+
+        <!-- Error Message -->
+        <div
+          v-if="resetEmailError"
+          class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
+        >
+          {{ resetEmailError }}
+        </div>
+
+        <form class="grid gap-4" @submit.prevent="onSendResetEmail">
+          <TextInput
+            v-model="forgotPasswordEmail"
+            type="email"
+            size="md"
+            label="Email"
+            placeholder="you@example.com"
+            :disabled="isSendingResetEmail"
+            icon="heroicons:envelope"
+          />
+
+          <Button
+            :text="isSendingResetEmail ? 'Sending...' : 'Send Reset Link'"
+            type="submit"
+            size="md"
+            variant="primary"
+            :disabled="isSendingResetEmail"
+            :loading="isSendingResetEmail"
+          />
+        </form>
+
+        <!-- Back to Login Link -->
+        <div class="text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <button
+            type="button"
+            class="font-medium text-blue-600 underline dark:text-blue-400"
+            @click="backToLogin"
+          >
+            Back to Sign In
+          </button>
+        </div>
+      </template>
+    </template>
+
+    <!-- NORMAL LOGIN MODE -->
+    <template v-else>
+      <!-- Header -->
+      <div class="grid gap-2 text-center">
+        <h1 class="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+          Welcome back
+        </h1>
+        <p class="text-balance text-sm text-neutral-600 dark:text-neutral-400">
+          Login with your account below
+        </p>
       </div>
 
-      <Button
-        :text="isLoading ? 'Signing in...' : 'Sign In'"
-        type="submit"
-        size="md"
-        variant="primary"
-        :disabled="isLoading"
-        :loading="isLoading"
-      />
-    </form>
-
-    <!-- Sign Up Link -->
-    <div class="text-center text-sm text-neutral-600 dark:text-neutral-400">
-      Don't have an account?
-      <NuxtLink
-        to="#"
-        class="text-blue-600 dark:text-blue-400 underline font-medium"
+      <!-- Error Message -->
+      <div
+        v-if="errorMessage"
+        class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
       >
-        Sign up
-      </NuxtLink>
-    </div>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Email/Password Form -->
+      <form class="grid gap-4" @submit="onSubmit">
+        <TextInput
+          v-model="email"
+          type="email"
+          size="md"
+          label="Email"
+          placeholder="you@example.com"
+          :disabled="isLoading"
+          icon="heroicons:envelope"
+        />
+
+        <div class="grid gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Password
+            </label>
+            <button
+              type="button"
+              class="text-sm text-neutral-600 underline hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              @click="showForgotPassword = true"
+            >
+              Forgot your password?
+            </button>
+          </div>
+          <PasswordInput
+            v-model="password"
+            size="md"
+            placeholder="Enter your password"
+            :disabled="isLoading"
+            icon="heroicons:lock-closed"
+          />
+        </div>
+
+        <Button
+          :text="isLoading ? 'Signing in...' : 'Sign In'"
+          type="submit"
+          size="md"
+          variant="primary"
+          :disabled="isLoading"
+          :loading="isLoading"
+        />
+      </form>
+
+      <!-- Sign Up Link -->
+      <div class="text-center text-sm text-neutral-600 dark:text-neutral-400">
+        Don't have an account?
+        <NuxtLink
+          to="#"
+          class="font-medium text-blue-600 underline dark:text-blue-400"
+        >
+          Sign up
+        </NuxtLink>
+      </div>
+    </template>
   </div>
 </template>
 
