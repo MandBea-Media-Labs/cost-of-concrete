@@ -460,7 +460,7 @@ onUnmounted(() => {
         </UiCardHeader>
         <UiCardContent class="text-sm text-muted-foreground">
           <ul class="list-inside list-disc space-y-1">
-            <li>Jobs run via pg_cron every 15 seconds</li>
+            <li>Jobs run every 15 seconds</li>
             <li>No need to keep browser tab open</li>
             <li>Cancel anytime to stop after current batch</li>
           </ul>

@@ -135,7 +135,7 @@ Rules:
 ${websiteContent.substring(0, 40000)}`
 
     try {
-      const completion = await this.client.beta.chat.completions.parse({
+      const completion = await this.client.chat.completions.parse({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
