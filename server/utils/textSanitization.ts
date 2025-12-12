@@ -92,22 +92,31 @@ export function normalizeCase(name: string | null | undefined): string {
 }
 
 /**
- * Remove query parameters and trailing slashes from a website URL.
+ * Sanitize a website URL:
+ * 1. Prepend https:// if no protocol exists
+ * 2. Remove query parameters
+ * 3. Remove trailing slashes
  *
  * @param url - The URL to sanitize
- * @returns The URL without query parameters or trailing slash
+ * @returns The sanitized URL with https:// protocol
  *
  * @example
- * sanitizeWebsiteUrl("www.example.com/?utm_campaign=gmb") // "www.example.com"
+ * sanitizeWebsiteUrl("www.example.com/?utm_campaign=gmb") // "https://www.example.com"
  * sanitizeWebsiteUrl("https://example.com/page?foo=bar") // "https://example.com/page"
- * sanitizeWebsiteUrl("www.masonryaugusta.com/") // "www.masonryaugusta.com"
- * sanitizeWebsiteUrl("example.com") // "example.com"
+ * sanitizeWebsiteUrl("www.masonryaugusta.com/") // "https://www.masonryaugusta.com"
+ * sanitizeWebsiteUrl("example.com") // "https://example.com"
+ * sanitizeWebsiteUrl("http://example.com") // "http://example.com" (preserves http)
  */
 export function sanitizeWebsiteUrl(url: string | null | undefined): string {
   if (!url) return ''
 
   let result = url.trim()
   if (result.length === 0) return ''
+
+  // Prepend https:// if no protocol exists
+  if (!result.startsWith('http://') && !result.startsWith('https://')) {
+    result = 'https://' + result
+  }
 
   // Remove query string and everything after it
   const queryIndex = result.indexOf('?')
@@ -117,7 +126,6 @@ export function sanitizeWebsiteUrl(url: string | null | undefined): string {
 
   // Remove trailing slash (but not if it's the only character after protocol)
   // e.g., "https://example.com/" → "https://example.com"
-  // but keep "https://example.com/page/" → "https://example.com/page"
   if (result.endsWith('/') && !result.endsWith('://')) {
     result = result.slice(0, -1)
   }
