@@ -13,14 +13,16 @@
 
 import { z } from 'zod'
 import { consola } from 'consola'
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
+import type { Database } from '~/app/types/supabase'
 
 const verifyRequestSchema = z.object({
   token: z.string().uuid('Invalid verification token'),
 })
 
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  // Use service role client to bypass RLS for public claim verification
+  const client = serverSupabaseServiceRole<Database>(event)
 
   // Parse and validate request body
   const body = await readBody(event)

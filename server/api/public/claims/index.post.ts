@@ -13,8 +13,9 @@
 
 import { z } from 'zod'
 import { consola } from 'consola'
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 import { EmailService } from '../../../services/EmailService'
+import type { Database } from '~/app/types/supabase'
 
 const claimRequestSchema = z.object({
   contractorId: z.string().uuid('Invalid contractor ID'),
@@ -27,7 +28,9 @@ const claimRequestSchema = z.object({
 const EMAIL_VERIFICATION_EXPIRY_HOURS = 24
 
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  // Use service role client to bypass RLS for public claim submission
+  // This is a public endpoint - validation is handled in code, not via RLS
+  const client = serverSupabaseServiceRole<Database>(event)
 
   // Parse and validate request body
   const body = await readBody(event)

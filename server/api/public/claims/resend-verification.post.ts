@@ -14,8 +14,9 @@
 
 import { z } from 'zod'
 import { consola } from 'consola'
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { EmailService } from '../../../services/EmailService'
+import type { Database } from '~/app/types/supabase'
 
 const resendRequestSchema = z.object({
   // Can resend by claimId (from expired token page)
@@ -32,7 +33,8 @@ const resendRequestSchema = z.object({
 const EMAIL_VERIFICATION_EXPIRY_HOURS = 24
 
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  // Use service role client to bypass RLS for public claim operations
+  const client = serverSupabaseServiceRole<Database>(event)
 
   // Parse and validate request body
   const body = await readBody(event)
