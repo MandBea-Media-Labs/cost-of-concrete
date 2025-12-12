@@ -160,6 +160,48 @@ export class ImportService {
   }
 
   /**
+   * Check if incoming data has meaningful changes compared to existing record
+   * Only compares fields that would actually be updated (not metadata, not auto-generated fields)
+   */
+  private hasChanges(
+    existing: Contractor,
+    incoming: ReturnType<typeof this.buildContractorData> extends Promise<infer T> ? T : never
+  ): boolean {
+    // Fields to compare (exclude metadata, id, timestamps, etc)
+    const fieldsToCompare = [
+      'company_name',
+      'description',
+      'street_address',
+      'postal_code',
+      'lat',
+      'lng',
+      'phone',
+      'website',
+      'email',
+      'rating',
+      'review_count',
+    ] as const
+
+    for (const field of fieldsToCompare) {
+      const existingValue = existing[field]
+      const incomingValue = incoming[field as keyof typeof incoming]
+
+      // Normalize nulls/undefined/empty strings for comparison
+      const normalizedExisting = existingValue === '' ? null : existingValue ?? null
+      const normalizedIncoming = incomingValue === '' ? null : incomingValue ?? null
+
+      if (normalizedExisting !== normalizedIncoming) {
+        if (import.meta.dev) {
+          consola.debug(`Change detected in ${field}: "${normalizedExisting}" → "${normalizedIncoming}"`)
+        }
+        return true
+      }
+    }
+
+    return false
+  }
+
+  /**
    * Extract error message from various error types
    */
   private extractErrorMessage(error: unknown): string {
@@ -279,6 +321,21 @@ export class ImportService {
 
     // Build contractor data with smart merge (preserves existing enriched data)
     const contractorData = await this.buildContractorData(row, cityId, existing)
+
+    // --- SKIP if existing record and no meaningful changes ---
+    if (existing && !this.hasChanges(existing, contractorData)) {
+      // Still process reviews even if contractor data unchanged
+      let reviewsImported = 0
+      if (row.reviews?.length) {
+        reviewsImported = await this.processReviews(existing.id, row.reviews)
+      }
+      if (import.meta.dev) {
+        const reviewNote = reviewsImported > 0 ? ` (but imported ${reviewsImported} reviews)` : ''
+        consola.info(`Row ${rowNumber}: Skipped "${row.title}" (no changes)${reviewNote}`)
+      }
+      counters.skipped++
+      return { isNew: false, isUpdated: false, pendingImageCount: 0, reviewsImported }
+    }
 
     // Upsert contractor
     const contractor = await this.contractorRepo.upsertByGooglePlaceId(contractorData)
