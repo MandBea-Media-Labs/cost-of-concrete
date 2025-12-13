@@ -22,6 +22,8 @@ const claimRequestSchema = z.object({
   claimantName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   claimantEmail: z.string().email('Invalid email address'),
   claimantPhone: z.string().optional(),
+  // Flag indicating user is authenticated (server will verify)
+  isAuthenticated: z.boolean().optional(),
 })
 
 // Token expiry durations
@@ -48,10 +50,33 @@ export default defineEventHandler(async (event) => {
 
   // Get current user if authenticated (optional)
   let userId: string | null = null
+  let userEmail: string | null = null
+  let isVerifiedUser = false
   try {
     const user = await serverSupabaseUser(event)
-    userId = user?.id || null
-  } catch {
+    if (user?.id) {
+      userId = user.id
+      userEmail = user.email || null
+
+      // Verify the authenticated user's email matches the claim email
+      // This prevents someone from claiming with a different email while logged in
+      if (userEmail && userEmail.toLowerCase() === claimantEmail.toLowerCase()) {
+        isVerifiedUser = true
+        consola.info(`Authenticated claim: user ${userId} matches claimant email ${claimantEmail}`)
+      } else if (userEmail) {
+        // User is logged in but trying to claim with different email - reject
+        consola.warn(`Authenticated user ${userId} (${userEmail}) tried to claim with different email: ${claimantEmail}`)
+        throw createError({
+          statusCode: 400,
+          message: 'Please use your account email address to claim this profile, or sign out to use a different email.',
+        })
+      }
+    }
+  } catch (err) {
+    // Re-throw our custom errors
+    if (err && typeof err === 'object' && 'statusCode' in err) {
+      throw err
+    }
     // Not authenticated, that's fine
   }
 
@@ -129,6 +154,48 @@ export default defineEventHandler(async (event) => {
   const emailMatch = contractor.email?.toLowerCase() === claimantEmail.toLowerCase()
   const verificationMethod = emailMatch ? 'email_match' : 'admin_approval'
 
+  // For authenticated users: skip email verification, go straight to pending
+  // For unauthenticated users: require email verification first
+  if (isVerifiedUser) {
+    // Authenticated user - create claim with 'pending' status (skip email verification)
+    const { data: claim, error: claimError } = await client
+      .from('business_claims')
+      .insert({
+        contractor_id: contractorId,
+        claimant_user_id: userId,
+        claimant_email: claimantEmail,
+        claimant_name: claimantName,
+        claimant_phone: claimantPhone || null,
+        verification_method: 'authenticated_user',
+        status: 'pending',
+        email_verified_at: now.toISOString(),
+        // No verification token needed - already verified via auth
+        email_verification_token: null,
+        email_verification_expires_at: null,
+      })
+      .select()
+      .single()
+
+    if (claimError) {
+      consola.error('Failed to create authenticated claim:', claimError)
+      throw createError({
+        statusCode: 500,
+        message: 'Failed to submit claim',
+      })
+    }
+
+    consola.success(`Claim submitted (pending - authenticated) for ${contractor.company_name} by ${claimantEmail}`)
+
+    return {
+      success: true,
+      message: 'Your claim has been submitted and is awaiting admin review.',
+      claimId: claim.id,
+      verificationMethod: 'authenticated_user',
+      skipVerification: true,
+    }
+  }
+
+  // Unauthenticated user - standard flow with email verification
   // Generate verification token and expiry
   const verificationToken = crypto.randomUUID()
   const verificationExpiresAt = new Date(now.getTime() + EMAIL_VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000)
@@ -186,6 +253,7 @@ export default defineEventHandler(async (event) => {
     message: 'Please check your email to verify your claim. The verification link expires in 24 hours.',
     claimId: claim.id,
     verificationMethod,
+    skipVerification: false,
   }
 })
 
