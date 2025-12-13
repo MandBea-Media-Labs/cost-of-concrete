@@ -132,6 +132,13 @@ const hiddenCategoriesCount = computed(() => {
   return Math.max(0, categories.value.length - maxVisibleCategories)
 })
 
+// Rating stars count
+const filledStars = computed(() => {
+  const rating = contractor.value?.rating
+  if (!rating) return 0
+  return Math.round(rating)
+})
+
 // Contact form state
 const fullName = ref<string | null>(null)
 const email = ref<string | null>(null)
@@ -319,7 +326,7 @@ const submitClaim = async () => {
             <div v-if="contractor?.rating" class="flex items-center text-yellow-500">
               <span class="mr-1 text-lg font-bold">{{ contractor.rating.toFixed(1) }}</span>
               <div class="flex">
-                <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" :class="['h-4 w-4', i <= Math.round(contractor.rating) ? 'text-yellow-500' : 'text-neutral-300 dark:text-neutral-600']" />
+                <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" :class="['h-4 w-4', i <= filledStars ? 'text-yellow-500' : 'text-neutral-300 dark:text-neutral-600']" />
               </div>
             </div>
             <span v-if="contractor?.reviewCount">({{ contractor.reviewCount }})</span>
@@ -441,26 +448,61 @@ const submitClaim = async () => {
 
       <!-- Main Content -->
       <div class="lg:col-span-8">
-        <!-- Tabs -->
-        <div class="mb-8 flex flex-wrap gap-2">
-          <button v-for="tab in tabs" :key="tab" type="button" :class="['rounded-full px-6 py-2 text-sm font-bold transition-colors', activeTab === tab ? 'bg-blue-500 text-white dark:bg-blue-500' : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700']" @click="activeTab = tab">
-            {{ tab }}
-          </button>
-        </div>
+        <Card padding="p-0" class="overflow-hidden" :background-colors="['#ffffff', '#171717']" border-width="thick" :border-color="['#e5e7eb', '#404040']">
+          <!-- Tabs -->
+          <div class="flex flex-wrap gap-2 px-8 pt-6">
+            <button v-for="tab in tabs" :key="tab" type="button" :class="['rounded-full px-6 py-2 text-sm font-bold transition-colors', activeTab === tab ? 'bg-[#edf2fc] text-[#0041d9] dark:bg-blue-900/30 dark:text-blue-400' : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700']" @click="activeTab = tab">
+              {{ tab }}
+            </button>
+          </div>
 
-        <Card padding="p-8" class="space-y-8" :background-colors="['#ffffff', '#171717']" border-width="thick" :border-color="['#e5e7eb', '#404040']">
+          <!-- Tab Panels -->
+          <div class="space-y-8 p-8">
           <!-- Overview Tab -->
           <div v-if="activeTab === 'Overview'" class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div class="space-y-6">
+            <div class="space-y-5">
+              <!-- About heading with location -->
               <div>
                 <h2 class="font-heading text-2xl font-bold text-neutral-900 dark:text-white">About {{ contractor?.companyName }}</h2>
-                <p class="text-sm text-neutral-500">{{ contractor?.cityName }}, {{ contractor?.stateCode }}</p>
+                <p class="mt-1 flex items-center gap-1 text-sm text-neutral-500">
+                  <span class="text-neutral-400">•</span>
+                  {{ contractor?.cityName }}, {{ contractor?.stateCode }}
+                </p>
               </div>
-              <div class="space-y-4 text-neutral-600 dark:text-neutral-300">
-                <p>{{ contractor?.description || 'No description available.' }}</p>
+
+              <!-- Description -->
+              <p class="!mt-2 text-sm text-neutral-600 dark:text-neutral-300">{{ contractor?.description || 'No description available.' }}</p>
+
+              <!-- Star rating -->
+              <div class="!mt-2 flex items-center gap-1.5">
+                <div class="flex items-center">
+                  <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="h-3 w-3" :class="i <= filledStars ? 'text-amber-400' : 'text-neutral-300 dark:text-neutral-600'" />
+                </div>
+                <span v-if="contractor?.reviewCount" class="text-xs text-neutral-600 dark:text-neutral-400">
+                  {{ contractor?.rating?.toFixed(1) }} ({{ contractor?.reviewCount }})
+                </span>
+                <span v-else class="text-sm text-neutral-500">No ratings yet</span>
+              </div>
+
+              <!-- Stats cards -->
+              <div class="!mt-10 flex gap-4">
+                <div class="flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-5 py-4 dark:border-neutral-700 dark:bg-neutral-800">
+                  <p class="text-xl font-bold text-neutral-900 dark:text-white">15+ yrs</p>
+                  <p class="text-sm text-neutral-500">Experience</p>
+                </div>
+                <div class="flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-5 py-4 dark:border-neutral-700 dark:bg-neutral-800">
+                  <div class="flex flex-row items-center text-xl font-bold text-neutral-900 dark:text-white">
+                    <template v-if="contractor?.rating && contractor.rating > 0">
+                      {{ contractor.rating.toFixed(1) }}
+                      <Icon name="heroicons:star-solid" class="h-3 w-3 pl-6 text-amber-400" />
+                    </template>
+                    <template v-else>N/A</template>
+                  </div>
+                  <p class="text-sm text-neutral-500">Average Rating</p>
+                </div>
               </div>
             </div>
-            <div v-if="heroImage" class="overflow-hidden rounded-2xl">
+            <div v-if="heroImage" class="max-h-72 overflow-hidden rounded-2xl">
               <NuxtImg :src="heroImage" :alt="contractor?.companyName" class="h-full w-full object-cover" />
             </div>
             <div v-else class="flex h-64 items-center justify-center overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800">
@@ -500,10 +542,11 @@ const submitClaim = async () => {
             <div v-if="contractor?.rating" class="flex flex-col items-center rounded-2xl border border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800/50">
               <span class="font-heading text-6xl font-bold text-neutral-900 dark:text-white">{{ overallRating }}</span>
               <div class="mt-2 flex items-center gap-0.5">
-                <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" :class="['h-6 w-6', i <= Math.round(contractor.rating) ? 'text-yellow-400' : 'text-neutral-300 dark:text-neutral-600']" />
+                <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" :class="['h-6 w-6', i <= filledStars ? 'text-yellow-400' : 'text-neutral-300 dark:text-neutral-600']" />
               </div>
               <span class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Based on {{ contractor?.reviewCount || 0 }} reviews</span>
             </div>
+          </div>
           </div>
         </Card>
       </div>
@@ -517,7 +560,7 @@ const submitClaim = async () => {
       <form class="mt-4 space-y-4" @submit.prevent="submitClaim">
         <!-- Authenticated user notice - 2-column layout -->
         <div v-if="isAuthenticated" class="flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-          <Icon name="heroicons:check-badge" class="h-4 w-4 shrink-0 mt-0.5" />
+          <Icon name="heroicons:check-badge" class="mt-0.5 h-4 w-4 shrink-0" />
           <span>You're signed in. Your claim will go directly to admin review.</span>
         </div>
 
@@ -526,12 +569,12 @@ const submitClaim = async () => {
         <!-- Email requires sign-in notice - 2-column layout -->
         <div v-if="emailRequiresSignIn" class="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
           <div class="flex gap-2 text-sm text-amber-700 dark:text-amber-300">
-            <Icon name="heroicons:exclamation-triangle" class="h-4 w-4 shrink-0 mt-0.5" />
+            <Icon name="heroicons:exclamation-triangle" class="mt-0.5 h-4 w-4 shrink-0" />
             <span>{{ emailCheckMessage }}</span>
           </div>
           <NuxtLink
             :to="`/login?redirect=${encodeURIComponent($route.fullPath)}`"
-            class="mt-2 ml-6 inline-flex items-center gap-1 text-sm font-medium text-site-blue hover:underline"
+            class="text-site-blue ml-6 mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
           >
             Sign in to your account
             <Icon name="heroicons:arrow-right" class="h-4 w-4" />
