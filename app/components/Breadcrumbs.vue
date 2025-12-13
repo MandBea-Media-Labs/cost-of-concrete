@@ -49,7 +49,7 @@ const breadcrumbList = computed(() => {
   // Add Home link if enabled
   if (props.showHome) {
     list.push({
-      title: siteName,
+      title: 'Home',
       path: '/',
       isHome: true
     })
@@ -102,7 +102,7 @@ useHead({
 <template>
   <nav
     aria-label="Breadcrumb"
-    class="flex flex-wrap items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
+    class="flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400"
   >
     <template v-for="(crumb, index) in breadcrumbList" :key="index">
       <!-- Breadcrumb Item -->
@@ -129,7 +129,7 @@ useHead({
         <!-- Separator (chevron) -->
         <svg
           v-if="index < breadcrumbList.length - 1"
-          class="h-4 w-4 flex-shrink-0 text-neutral-400 dark:text-neutral-600"
+          class="h-3 w-3 flex-shrink-0 text-neutral-400 dark:text-neutral-600"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

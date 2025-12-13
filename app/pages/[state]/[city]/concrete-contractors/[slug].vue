@@ -60,9 +60,8 @@ useContractorSeo({
   categories: contractor.value.categories || []
 })
 
-// Breadcrumbs with SEO-optimized URLs
+// Breadcrumbs with SEO-optimized URLs (Home is added automatically by Breadcrumbs component)
 const breadcrumbs = computed(() => [
-  { id: 'home', title: 'Home', full_path: '/' },
   { id: 'state', title: stateData.value?.name || '', full_path: `/${stateSlug.value}` },
   { id: 'city', title: `${contractor.value?.cityName} Contractors`, full_path: `/${stateSlug.value}/${citySlug.value}/concrete-contractors` },
   { id: 'contractor', title: contractor.value?.companyName || '', full_path: `/${stateSlug.value}/${citySlug.value}/concrete-contractors/${contractorSlug.value}` }
@@ -312,13 +311,13 @@ const submitClaim = async () => {
   <div class="pb-20">
     <!-- Hero Section -->
     <section class="mb-8 rounded-3xl bg-[#F2F6FA] px-4 py-12 dark:bg-blue-900/20 sm:px-6 md:px-8 lg:px-12 xl:px-20">
-      <div class="mb-6 px-0 sm:px-2 md:px-4 lg:px-8 xl:px-20">
+      <div class="mb-6 w-fit px-0 sm:px-2 md:px-4 lg:px-8 xl:px-20">
         <Breadcrumbs :items="breadcrumbs" />
       </div>
 
-      <div class="flex flex-col justify-between gap-8 px-0 sm:px-2 md:px-4 lg:flex-row lg:items-start lg:px-8 xl:px-20">
+      <div class="flex flex-col justify-between gap-14 px-0 sm:px-2 md:px-4 lg:flex-row lg:items-start lg:px-8 xl:px-20">
         <div class="space-y-4">
-          <h1 class="font-heading text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 class="font-heading text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl md:text-5xl">
             {{ contractor?.companyName }}
           </h1>
 
@@ -339,10 +338,11 @@ const submitClaim = async () => {
           </p>
         </div>
 
-        <div class="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-col">
-          <Button v-if="contractor?.phone" :text="`Call ${contractor.phone}`" variant="primary-outline" class="whitespace-nowrap bg-white hover:bg-blue-50 dark:bg-transparent" />
+        <div class="flex flex-col gap-3 sm:flex-row lg:-mt-6 lg:flex-col xl:flex-col">
+          <VerifiedBadge v-if="contractor?.isClaimed" />
+          <Button v-if="contractor?.phone" :text="`Call ${contractor.phone}`" variant="primary-outline" class="!mt-3 whitespace-nowrap bg-white hover:bg-blue-50 dark:bg-transparent" />
           <Button text="Request a Quote" variant="primary" class="whitespace-nowrap" />
-          <Button v-if="!contractor?.isClaimed && !claimSubmitted" text="Claim this Business" variant="ghost" icon="heroicons:check-badge" class="whitespace-nowrap text-sm font-normal text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400" @click="openClaimDialog" />
+          <Button v-if="!contractor?.isClaimed && !claimSubmitted" text="Claim this Business" variant="ghost" icon="heroicons:arrows-right-left-solid" class="whitespace-nowrap text-sm font-normal text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400" @click="openClaimDialog" />
           <span v-else-if="claimSubmitted" class="text-center text-sm text-green-600 dark:text-green-400">✓ Claim submitted</span>
         </div>
       </div>
