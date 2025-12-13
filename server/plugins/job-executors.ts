@@ -11,14 +11,14 @@ import { consola } from 'consola'
 import { JobExecutorRegistry } from '../services/JobExecutorRegistry'
 import { ImageEnrichmentJobExecutor } from '../services/executors/ImageEnrichmentJobExecutor'
 import { ContractorEnrichmentJobExecutor } from '../services/executors/ContractorEnrichmentJobExecutor'
+import { ReviewEnrichmentJobExecutor } from '../services/executors/ReviewEnrichmentJobExecutor'
 
 export default defineNitroPlugin(() => {
   // Register all job executors
   const executors = [
     { type: 'image_enrichment', executor: new ImageEnrichmentJobExecutor() },
     { type: 'contractor_enrichment', executor: new ContractorEnrichmentJobExecutor() },
-    // Add more executors here as they are created
-    // { type: 'review_enrichment', executor: new ReviewEnrichmentJobExecutor() },
+    { type: 'review_enrichment', executor: new ReviewEnrichmentJobExecutor() },
   ] as const
 
   let registeredCount = 0

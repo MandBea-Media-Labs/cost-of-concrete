@@ -2,7 +2,9 @@
  * Review Repository
  *
  * Data access layer for reviews table.
- * Handles bulk upsert operations for importing Google reviews from Apify JSON.
+ * Handles bulk upsert operations for importing Google reviews from:
+ * - Apify JSON exports
+ * - DataForSEO API enrichment
  */
 
 import { consola } from 'consola'
@@ -10,6 +12,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/supabase'
 import type { ApifyReview, Review, ReviewInsert } from '../schemas/review.schemas'
 import { transformApifyReview } from '../schemas/review.schemas'
+import type { TransformedReview } from '../schemas/dataforseo.schemas'
 
 export class ReviewRepository {
   private client: SupabaseClient<Database>
@@ -146,6 +149,161 @@ export class ReviewRepository {
     }
 
     return data
+  }
+
+  // =====================================================
+  // DATAFORSEO ENRICHMENT METHODS
+  // =====================================================
+
+  /**
+   * Bulk upsert reviews from DataForSEO API
+   * Uses ON CONFLICT DO UPDATE to refresh existing reviews with new data
+   * Returns count of upserted reviews
+   */
+  async upsertManyFromDataForSeo(reviews: TransformedReview[]): Promise<number> {
+    if (!reviews.length) return 0
+
+    // Validate all reviews have required fields
+    const validReviews = reviews.filter((r) => {
+      if (!r.google_review_id || !r.reviewer_name || !r.stars) {
+        consola.warn(`[ReviewRepository] Skipping invalid review: missing required fields`)
+        return false
+      }
+      if (r.stars < 1 || r.stars > 5) {
+        consola.warn(`[ReviewRepository] Skipping review with invalid stars: ${r.stars}`)
+        return false
+      }
+      return true
+    })
+
+    if (!validReviews.length) {
+      consola.debug(`[ReviewRepository] No valid reviews to upsert`)
+      return 0
+    }
+
+    // Use upsert with ON CONFLICT DO UPDATE
+    const { data, error } = await this.client
+      .from('reviews')
+      .upsert(validReviews as ReviewInsert[], {
+        onConflict: 'contractor_id,google_review_id',
+        ignoreDuplicates: false, // Update existing
+      })
+      .select('id')
+
+    if (error) {
+      consola.error(`[ReviewRepository] Error upserting DataForSEO reviews:`, error)
+      throw error
+    }
+
+    const upsertedCount = data?.length ?? 0
+    consola.debug(`[ReviewRepository] Upserted ${upsertedCount} reviews from DataForSEO`)
+
+    return upsertedCount
+  }
+
+  /**
+   * Get the last review enrichment date for a contractor
+   * Used to enforce the 30-day cooldown period
+   */
+  async getLastEnrichmentDate(contractorId: string): Promise<Date | null> {
+    // Check contractor metadata for enrichment timestamp
+    const { data, error } = await this.client
+      .from('contractors')
+      .select('metadata')
+      .eq('id', contractorId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null // Contractor not found
+      consola.error(`[ReviewRepository] Error fetching contractor metadata:`, error)
+      throw error
+    }
+
+    const metadata = data?.metadata as Record<string, unknown> | null
+    const reviewsEnrichment = metadata?.reviews_enrichment as Record<string, unknown> | undefined
+
+    if (!reviewsEnrichment?.last_attempt_at) {
+      return null
+    }
+
+    const lastAttempt = new Date(reviewsEnrichment.last_attempt_at as string)
+    return isNaN(lastAttempt.getTime()) ? null : lastAttempt
+  }
+
+  /**
+   * Check if a contractor is eligible for review enrichment
+   * Returns false if enriched within the cooldown period
+   */
+  async isEligibleForEnrichment(contractorId: string, cooldownDays: number): Promise<boolean> {
+    const lastEnrichment = await this.getLastEnrichmentDate(contractorId)
+
+    if (!lastEnrichment) {
+      return true // Never enriched
+    }
+
+    const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000
+    const now = new Date()
+    const timeSinceEnrichment = now.getTime() - lastEnrichment.getTime()
+
+    return timeSinceEnrichment >= cooldownMs
+  }
+
+  /**
+   * Update contractor metadata with review enrichment status
+   */
+  async updateEnrichmentStatus(
+    contractorId: string,
+    status: 'pending' | 'success' | 'failed' | 'not_applicable',
+    reviewsFetched?: number,
+    errorMessage?: string
+  ): Promise<void> {
+    // Get current metadata
+    const { data, error: fetchError } = await this.client
+      .from('contractors')
+      .select('metadata')
+      .eq('id', contractorId)
+      .single()
+
+    if (fetchError) {
+      consola.error(`[ReviewRepository] Error fetching contractor for status update:`, fetchError)
+      throw fetchError
+    }
+
+    const existingMetadata = (data?.metadata || {}) as Record<string, unknown>
+
+    // Build enrichment status object
+    const reviewsEnrichment: Record<string, unknown> = {
+      status,
+      last_attempt_at: new Date().toISOString(),
+    }
+
+    if (reviewsFetched !== undefined) {
+      reviewsEnrichment.reviews_fetched = reviewsFetched
+    }
+
+    if (errorMessage) {
+      reviewsEnrichment.error_message = errorMessage
+    }
+
+    // Update metadata
+    const updatedMetadata = {
+      ...existingMetadata,
+      reviews_enrichment: reviewsEnrichment,
+    }
+
+    const { error: updateError } = await this.client
+      .from('contractors')
+      .update({
+        metadata: updatedMetadata as unknown as Database['public']['Tables']['contractors']['Update']['metadata'],
+      })
+      .eq('id', contractorId)
+
+    if (updateError) {
+      consola.error(`[ReviewRepository] Error updating enrichment status:`, updateError)
+      throw updateError
+    }
+
+    consola.debug(`[ReviewRepository] Updated enrichment status for ${contractorId}: ${status}`)
   }
 }
 

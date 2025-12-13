@@ -162,6 +162,12 @@ export const enrichmentStatusSchema = z.enum(['not_started', 'completed', 'faile
 export type EnrichmentStatus = z.infer<typeof enrichmentStatusSchema>
 
 /**
+ * Review enrichment status values for filtering
+ */
+export const reviewEnrichmentStatusSchema = z.enum(['success', 'failed'])
+export type ReviewEnrichmentStatus = z.infer<typeof reviewEnrichmentStatusSchema>
+
+/**
  * List contractors query parameters
  */
 export const listContractorsQuerySchema = z.object({
@@ -172,6 +178,10 @@ export const listContractorsQuerySchema = z.object({
   imagesProcessed: z.coerce.boolean().optional(),
   enrichmentStatus: enrichmentStatusSchema.optional(),
   hasWebsite: z.coerce.boolean().optional(),
+  // Review enrichment filters
+  hasReviews: z.coerce.boolean().optional(),
+  hasGoogleCid: z.coerce.boolean().optional(),
+  reviewEnrichmentStatus: reviewEnrichmentStatusSchema.optional(),
   includeDeleted: z.coerce.boolean().optional().default(false),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),

@@ -39,11 +39,15 @@ You will organize the work using a strict **Parent-Child** relationship:
         **Comment Message**:
         ```markdown
         - When checking out and beginning work on an issue:
-        -   You must mark the issue as 'In Progress'
+        -   You must mark the root issue and sub-issue as 'In Progress'
+        -   Build the appropriate unit tests to match the logic. For anyting UI based we will manually test this in the browser.
+            - API endpoints are critical for unit testing.
         - When completing an issue always:
             - Ensure a detailed work summary comment was left within the issue
             - Update the markdown Task List in the description truthfully
             - Mark the issue as 'Done'
+        - After completing the issue:
+            - Complete all unit tests
         ```
 
 ### 3. Execution & Completion Protocol

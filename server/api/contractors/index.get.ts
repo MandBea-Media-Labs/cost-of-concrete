@@ -98,6 +98,29 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // Has Google CID filter (for review enrichment)
+    if (validatedQuery.hasGoogleCid !== undefined) {
+      if (validatedQuery.hasGoogleCid) {
+        dbQuery = dbQuery.not('google_cid', 'is', null)
+      } else {
+        dbQuery = dbQuery.is('google_cid', null)
+      }
+    }
+
+    // Has reviews filter
+    if (validatedQuery.hasReviews !== undefined) {
+      if (validatedQuery.hasReviews) {
+        dbQuery = dbQuery.gt('review_count', 0)
+      } else {
+        dbQuery = dbQuery.or('review_count.is.null,review_count.eq.0')
+      }
+    }
+
+    // Review enrichment status filter
+    if (validatedQuery.reviewEnrichmentStatus) {
+      dbQuery = dbQuery.eq('metadata->reviews_enrichment->>status', validatedQuery.reviewEnrichmentStatus)
+    }
+
     // Search by company name (case-insensitive)
     if (validatedQuery.search) {
       dbQuery = dbQuery.ilike('company_name', `%${validatedQuery.search}%`)

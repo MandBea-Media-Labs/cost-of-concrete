@@ -26,7 +26,7 @@ export type SystemLogInsert = Database['public']['Tables']['system_logs']['Inser
 export const JOB_STATUSES = ['pending', 'processing', 'completed', 'failed', 'cancelled'] as const
 export type JobStatus = typeof JOB_STATUSES[number]
 
-export const JOB_TYPES = ['image_enrichment', 'contractor_enrichment'] as const
+export const JOB_TYPES = ['image_enrichment', 'contractor_enrichment', 'review_enrichment'] as const
 export type JobType = typeof JOB_TYPES[number]
 
 // =====================================================
@@ -55,9 +55,21 @@ export const contractorEnrichmentPayloadSchema = z.object({
 export type ContractorEnrichmentPayload = z.infer<typeof contractorEnrichmentPayloadSchema>
 
 /**
+ * Review Enrichment Job Payload
+ * Fetches Google reviews via DataForSEO API
+ */
+export const reviewEnrichmentPayloadSchema = z.object({
+  contractorIds: z.array(z.string().uuid()).min(1).max(10),
+  maxDepth: z.number().int().min(1).max(1500).default(50), // Max reviews per contractor
+  continuous: z.boolean().default(false), // Auto-queue next batch on completion
+})
+
+export type ReviewEnrichmentPayload = z.infer<typeof reviewEnrichmentPayloadSchema>
+
+/**
  * Union of all job payloads
  */
-export type JobPayload = ImageEnrichmentPayload | ContractorEnrichmentPayload
+export type JobPayload = ImageEnrichmentPayload | ContractorEnrichmentPayload | ReviewEnrichmentPayload
 
 // =====================================================
 // JOB RESULT TYPES (per job type)
@@ -93,7 +105,27 @@ export interface ContractorEnrichmentResult {
   }>
 }
 
-export type JobResult = ImageEnrichmentResult | ContractorEnrichmentResult
+export interface ReviewEnrichmentResult {
+  processed: number
+  successful: number
+  skipped: number
+  failed: number
+  totalReviewsFetched: number
+  totalReviewsSaved: number
+  apiCost: number
+  results: Array<{
+    contractorId: string
+    companyName: string
+    status: 'success' | 'skipped' | 'failed'
+    reason?: string
+    reviewsFetched: number
+    reviewsSaved: number
+  }>
+  /** Flag indicating if continuous mode should queue next batch */
+  shouldContinue?: boolean
+}
+
+export type JobResult = ImageEnrichmentResult | ContractorEnrichmentResult | ReviewEnrichmentResult
 
 // =====================================================
 // API REQUEST SCHEMAS
@@ -188,4 +220,16 @@ export const DEFAULT_IMAGE_BATCH_SIZE = 10
 
 /** Default batch size for contractor enrichment (max contractors per job) */
 export const DEFAULT_CONTRACTOR_BATCH_SIZE = 10
+
+/** Default batch size for review enrichment (max contractors per job) */
+export const DEFAULT_REVIEW_BATCH_SIZE = 10
+
+/** Default max reviews to fetch per contractor */
+export const DEFAULT_REVIEW_MAX_DEPTH = 50
+
+/** Maximum reviews per contractor (cost control) */
+export const MAX_REVIEW_DEPTH = 1500
+
+/** Re-enrichment cooldown in days */
+export const REVIEW_ENRICHMENT_COOLDOWN_DAYS = 30
 
