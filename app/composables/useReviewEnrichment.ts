@@ -52,7 +52,7 @@ export function useReviewEnrichment() {
   const pagination = ref({
     total: 0,
     page: 1,
-    limit: 50,
+    limit: 10,
     offset: 0,
     totalPages: 0,
   })
@@ -117,7 +117,7 @@ export function useReviewEnrichment() {
       }
 
       const page = filters.page || 1
-      const limit = filters.limit || 50
+      const limit = filters.limit || 10
       query.limit = limit
       query.offset = (page - 1) * limit
 

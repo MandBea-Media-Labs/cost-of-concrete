@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import type { ContractorWithCity } from '~/composables/useAdminContractors'
 
 interface Props {
@@ -76,77 +77,74 @@ const handleDelete = (id: string) => emit('delete', id)
 
 <template>
   <div class="w-full">
-    <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="flex flex-col items-center gap-3">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading contractors...</p>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="contractors.length === 0" class="flex flex-col items-center justify-center py-12 px-4">
-      <Icon name="heroicons:building-office-2" class="h-16 w-16 text-neutral-300 dark:text-neutral-600 mb-4" />
-      <h3 class="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-2">No contractors found</h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-md">
-        No contractors match your current filters. Try adjusting your search or filters, or import new contractors.
-      </p>
-    </div>
-
     <!-- Table -->
-    <div v-else class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
-      <table class="w-full">
+    <div class="overflow-x-auto rounded-md border">
+      <table class="w-full text-sm">
         <!-- Table Header -->
-        <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+        <thead class="border-b bg-muted/50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Company</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden md:table-cell">City</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden lg:table-cell">Rating</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider hidden xl:table-cell">Updated</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3 text-left font-medium">Company</th>
+            <th class="hidden px-4 py-3 text-left font-medium md:table-cell">City</th>
+            <th class="hidden px-4 py-3 text-left font-medium lg:table-cell">Rating</th>
+            <th class="px-4 py-3 text-left font-medium">Status</th>
+            <th class="hidden px-4 py-3 text-left font-medium xl:table-cell">Updated</th>
+            <th class="px-4 py-3 text-right font-medium">Actions</th>
           </tr>
         </thead>
 
         <!-- Table Body -->
-        <tbody class="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
-          <tr v-for="contractor in contractors" :key="contractor.id" class="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors group">
+        <tbody v-auto-animate>
+          <!-- Loading State -->
+          <tr v-if="loading && contractors.length === 0">
+            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
+              Loading contractors...
+            </td>
+          </tr>
+          <!-- Empty State -->
+          <tr v-else-if="contractors.length === 0">
+            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+              No contractors found matching the filters.
+            </td>
+          </tr>
+          <!-- Data Rows -->
+          <tr v-for="contractor in contractors" :key="contractor.id" class="border-b last:border-0 hover:bg-muted/50">
             <!-- Company Name -->
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3">
               <div class="flex flex-col">
-                <span class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate max-w-xs">{{ contractor.company_name }}</span>
-                <span v-if="contractor.phone" class="text-xs text-neutral-500 dark:text-neutral-400">{{ contractor.phone }}</span>
+                <span class="max-w-xs truncate font-medium">{{ contractor.company_name }}</span>
+                <span v-if="contractor.phone" class="text-xs text-muted-foreground">{{ contractor.phone }}</span>
               </div>
             </td>
 
             <!-- City -->
-            <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-              <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ getCityDisplay(contractor) }}</span>
+            <td class="hidden px-4 py-3 md:table-cell">
+              <span class="text-muted-foreground">{{ getCityDisplay(contractor) }}</span>
             </td>
 
             <!-- Rating -->
-            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+            <td class="hidden px-4 py-3 lg:table-cell">
               <div class="flex items-center gap-1">
-                <Icon v-if="contractor.rating" name="heroicons:star-solid" class="h-4 w-4 text-yellow-500" />
-                <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ formatRating(contractor.rating) }}</span>
-                <span v-if="contractor.review_count" class="text-xs text-neutral-400 dark:text-neutral-500">({{ formatReviewCount(contractor.review_count) }})</span>
+                <Icon v-if="contractor.rating" name="heroicons:star-solid" class="size-4 text-yellow-500" />
+                <span class="text-muted-foreground">{{ formatRating(contractor.rating) }}</span>
+                <span v-if="contractor.review_count" class="text-xs text-muted-foreground">({{ formatReviewCount(contractor.review_count) }})</span>
               </div>
             </td>
 
             <!-- Status -->
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3">
               <UiBadge :variant="getStatusVariant(contractor.status)">
                 {{ contractor.status }}
               </UiBadge>
             </td>
 
             <!-- Updated -->
-            <td class="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
-              <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ formatDate(contractor.updated_at) }}</span>
+            <td class="hidden px-4 py-3 xl:table-cell">
+              <span class="text-muted-foreground">{{ formatDate(contractor.updated_at) }}</span>
             </td>
 
             <!-- Actions -->
-            <td class="px-6 py-4">
+            <td class="px-4 py-3 text-right">
               <TableActionsMenu
                 :actions="[
                   { label: 'View', icon: 'heroicons:eye', onClick: () => handleView(contractor.id) },

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import { toast } from 'vue-sonner'
 import type { ContractorAccountsFilters, AccountStatus } from '~/types/accounts'
 
@@ -19,10 +20,14 @@ const filters = ref<ContractorAccountsFilters>({
   status: 'all',
   search: null,
   page: 1,
-  limit: 20,
+  limit: 10,
   orderBy: 'created_at',
   orderDirection: 'desc',
 })
+
+// Rows per page options
+const rowsPerPageOptions = [10, 25, 50, 100]
+const rowsPerPage = ref<string>('10')
 
 // Selected filter values
 const selectedStatus = ref<string>('all')
@@ -53,6 +58,13 @@ const handlePageChange = async (page: number) => {
   filters.value.page = page
   await fetchAccounts(filters.value)
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleRowsPerPageChange = async (value: string) => {
+  rowsPerPage.value = value
+  filters.value.limit = parseInt(value, 10)
+  filters.value.page = 1
+  await fetchAccounts(filters.value)
 }
 
 // Dialog state
@@ -156,40 +168,53 @@ const getStatusVariant = (status: string) => {
       </UiPopover>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="pending" class="flex items-center justify-center py-12">
-      <Icon name="heroicons:arrow-path" class="size-8 animate-spin text-muted-foreground" />
-    </div>
-
     <!-- Table -->
-    <div v-else-if="accounts.length > 0" class="rounded-md border">
-      <UiTable>
-        <UiTableHeader>
-          <UiTableRow>
-            <UiTableHead>Email</UiTableHead>
-            <UiTableHead>Claimed Profiles</UiTableHead>
-            <UiTableHead>Status</UiTableHead>
-            <UiTableHead>Last Sign In</UiTableHead>
-            <UiTableHead>Created</UiTableHead>
-            <UiTableHead class="w-[100px]">Actions</UiTableHead>
-          </UiTableRow>
-        </UiTableHeader>
-        <UiTableBody>
-          <UiTableRow v-for="account in accounts" :key="account.id">
-            <UiTableCell class="font-medium">{{ account.email }}</UiTableCell>
-            <UiTableCell>
+    <div class="overflow-x-auto rounded-md border">
+      <table class="w-full text-sm">
+        <thead class="border-b bg-muted/50">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium">Email</th>
+            <th class="hidden px-4 py-3 text-left font-medium md:table-cell">Claimed Profiles</th>
+            <th class="px-4 py-3 text-left font-medium">Status</th>
+            <th class="hidden px-4 py-3 text-left font-medium lg:table-cell">Last Sign In</th>
+            <th class="hidden px-4 py-3 text-left font-medium xl:table-cell">Created</th>
+            <th class="px-4 py-3 text-right font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody v-auto-animate>
+          <!-- Loading State -->
+          <tr v-if="pending && accounts.length === 0">
+            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
+              Loading accounts...
+            </td>
+          </tr>
+          <!-- Empty State -->
+          <tr v-else-if="accounts.length === 0">
+            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+              No contractor accounts found.
+            </td>
+          </tr>
+          <!-- Data Rows -->
+          <tr v-for="account in accounts" :key="account.id" class="border-b last:border-0 hover:bg-muted/50">
+            <td class="px-4 py-3 font-medium">{{ account.email }}</td>
+            <td class="hidden px-4 py-3 md:table-cell">
               <UiBadge variant="outline">
                 {{ account.claimedProfileCount }} profile{{ account.claimedProfileCount !== 1 ? 's' : '' }}
               </UiBadge>
-            </UiTableCell>
-            <UiTableCell>
+            </td>
+            <td class="px-4 py-3">
               <UiBadge :variant="getStatusVariant(account.status)">
                 {{ account.status }}
               </UiBadge>
-            </UiTableCell>
-            <UiTableCell>{{ formatDate(account.lastSignInAt || null) }}</UiTableCell>
-            <UiTableCell>{{ formatDate(account.created_at) }}</UiTableCell>
-            <UiTableCell>
+            </td>
+            <td class="hidden px-4 py-3 lg:table-cell">
+              <span class="text-muted-foreground">{{ formatDate(account.lastSignInAt || null) }}</span>
+            </td>
+            <td class="hidden px-4 py-3 xl:table-cell">
+              <span class="text-muted-foreground">{{ formatDate(account.created_at) }}</span>
+            </td>
+            <td class="px-4 py-3 text-right">
               <UiDropdownMenu>
                 <UiDropdownMenuTrigger as-child>
                   <UiButton variant="ghost" size="icon" class="size-8">
@@ -210,43 +235,81 @@ const getStatusVariant = (status: string) => {
                   </UiDropdownMenuItem>
                 </UiDropdownMenuContent>
               </UiDropdownMenu>
-            </UiTableCell>
-          </UiTableRow>
-        </UiTableBody>
-      </UiTable>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
-      <Icon name="heroicons:building-office" class="size-12 text-muted-foreground" />
-      <h3 class="mt-4 text-lg font-semibold">No contractor accounts found</h3>
-      <p class="mt-1 text-sm text-muted-foreground">
-        {{ searchQuery ? 'Try adjusting your search.' : 'Contractor accounts are created when business owners claim profiles.' }}
-      </p>
-    </div>
+    <!-- Pagination Footer -->
+    <div v-if="!pending && accounts.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-4">
+      <!-- Results Summary -->
+      <div class="text-sm text-muted-foreground">
+        Showing {{ pagination.offset + 1 }} to
+        {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} of
+        {{ pagination.total }} accounts
+      </div>
 
-    <!-- Pagination -->
-    <div v-if="pagination.totalPages > 1" class="mt-4 flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">
-        Showing {{ pagination.offset + 1 }} to {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} of {{ pagination.total }}
-      </p>
-      <div class="flex gap-2">
-        <UiButton
-          variant="outline"
-          size="sm"
-          :disabled="pagination.page <= 1"
-          @click="handlePageChange(pagination.page - 1)"
-        >
-          Previous
-        </UiButton>
-        <UiButton
-          variant="outline"
-          size="sm"
-          :disabled="pagination.page >= pagination.totalPages"
-          @click="handlePageChange(pagination.page + 1)"
-        >
-          Next
-        </UiButton>
+      <!-- Rows per page + Pagination -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">Rows per page</span>
+          <UiSelect v-model="rowsPerPage" @update:model-value="handleRowsPerPageChange">
+            <UiSelectTrigger class="h-8 w-16">
+              <UiSelectValue />
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem v-for="opt in rowsPerPageOptions" :key="opt" :value="opt.toString()">
+                {{ opt }}
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-muted-foreground">
+            Page {{ pagination.page }} of {{ pagination.totalPages }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page <= 1"
+            @click="handlePageChange(1)"
+          >
+            <Icon name="heroicons:chevron-double-left" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page <= 1"
+            @click="handlePageChange(pagination.page - 1)"
+          >
+            <Icon name="heroicons:chevron-left" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page >= pagination.totalPages"
+            @click="handlePageChange(pagination.page + 1)"
+          >
+            <Icon name="heroicons:chevron-right" class="size-4" />
+          </UiButton>
+          <UiButton
+            variant="outline"
+            size="icon"
+            class="size-8"
+            :disabled="pagination.page >= pagination.totalPages"
+            @click="handlePageChange(pagination.totalPages)"
+          >
+            <Icon name="heroicons:chevron-double-right" class="size-4" />
+          </UiButton>
+        </div>
       </div>
     </div>
 

@@ -76,12 +76,16 @@ const cityOptions = computed(() => [
 ])
 
 const enrichmentStatusOptions = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'not_applicable', label: 'No Website' },
+  { value: 'all', label: 'All Statuses', icon: 'heroicons:funnel' },
+  { value: 'not_started', label: 'Not Started', icon: 'heroicons:clock' },
+  { value: 'completed', label: 'Completed', icon: 'heroicons:check-circle' },
+  { value: 'failed', label: 'Failed', icon: 'heroicons:x-circle' },
+  { value: 'not_applicable', label: 'No Website', icon: 'heroicons:globe-alt' },
 ]
+
+// Rows per page options
+const rowsPerPageOptions = [10, 25, 50, 100]
+const rowsPerPage = ref<string>('10')
 
 const selectedCount = computed(() => selectedIds.value.size)
 
@@ -141,6 +145,13 @@ const handleFilterChange = async () => {
 
 const handlePageChange = async (newPage: number) => {
   pagination.value.page = newPage
+  selectedIds.value = new Set()
+  await fetchContractors(buildFilters())
+}
+
+const handleRowsPerPageChange = async (value: string) => {
+  pagination.value.limit = Number.parseInt(value, 10)
+  pagination.value.page = 1
   selectedIds.value = new Set()
   await fetchContractors(buildFilters())
 }
@@ -462,42 +473,77 @@ const getEnrichmentLabel = (status: string) => {
       </UiCardHeader>
       <UiCardContent>
         <!-- Filters -->
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <UiSelect v-model="selectedEnrichmentStatus" class="w-full sm:w-48">
-            <UiSelectTrigger>
-              <UiSelectValue placeholder="Status" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem
-                v-for="option in enrichmentStatusOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+          <!-- Status Filter -->
+          <UiPopover>
+            <UiPopoverTrigger as-child>
+              <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+                <Icon name="heroicons:funnel" class="size-4" />
+                Status
+                <UiBadge v-if="selectedEnrichmentStatus !== 'all'" variant="secondary" class="ml-1 h-5 px-1.5">
+                  {{ enrichmentStatusOptions.find(o => o.value === selectedEnrichmentStatus)?.label }}
+                </UiBadge>
+                <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+              </UiButton>
+            </UiPopoverTrigger>
+            <UiPopoverContent class="w-48 p-1" align="start">
+              <div class="flex flex-col">
+                <button
+                  v-for="option in enrichmentStatusOptions"
+                  :key="option.value"
+                  class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                  :class="{ 'bg-accent': selectedEnrichmentStatus === option.value }"
+                  @click="selectedEnrichmentStatus = option.value"
+                >
+                  <div class="flex items-center gap-2">
+                    <Icon :name="option.icon" class="size-4 text-muted-foreground" />
+                    {{ option.label }}
+                  </div>
+                  <Icon v-if="selectedEnrichmentStatus === option.value" name="heroicons:check" class="size-4" />
+                </button>
+              </div>
+            </UiPopoverContent>
+          </UiPopover>
 
-          <UiSelect v-model="selectedCity" class="w-full sm:w-48">
-            <UiSelectTrigger>
-              <UiSelectValue placeholder="City" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem
-                v-for="option in cityOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
+          <!-- City Filter -->
+          <UiPopover>
+            <UiPopoverTrigger as-child>
+              <UiButton variant="outline" size="sm" class="h-9 gap-1.5 border-dashed">
+                <Icon name="heroicons:map-pin" class="size-4" />
+                City
+                <UiBadge v-if="selectedCity !== 'all'" variant="secondary" class="max-w-24 ml-1 h-5 truncate px-1.5">
+                  {{ cityOptions.find(o => o.value === selectedCity)?.label }}
+                </UiBadge>
+                <Icon name="heroicons:chevron-down" class="size-3.5 opacity-50" />
+              </UiButton>
+            </UiPopoverTrigger>
+            <UiPopoverContent class="w-64 p-1" align="start">
+              <div class="max-h-64 overflow-y-auto">
+                <div class="flex flex-col">
+                  <button
+                    v-for="option in cityOptions"
+                    :key="option.value"
+                    class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                    :class="{ 'bg-accent': selectedCity === option.value }"
+                    @click="selectedCity = option.value"
+                  >
+                    <span class="truncate">{{ option.label }}</span>
+                    <Icon v-if="selectedCity === option.value" name="heroicons:check" class="size-4 flex-shrink-0" />
+                  </button>
+                </div>
+              </div>
+            </UiPopoverContent>
+          </UiPopover>
 
-          <UiInput
-            v-model="searchQuery"
-            placeholder="Search by company name..."
-            class="w-full sm:w-64"
-          />
+          <!-- Search Input -->
+          <div class="relative w-64">
+            <Icon name="heroicons:magnifying-glass" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <UiInput
+              v-model="searchQuery"
+              placeholder="Search contractors..."
+              class="h-9 pl-9"
+            />
+          </div>
         </div>
 
         <!-- Table -->
@@ -570,29 +616,73 @@ const getEnrichmentLabel = (status: string) => {
           </table>
         </div>
 
-        <!-- Pagination -->
-        <div v-if="pagination.totalPages > 1" class="mt-4 flex items-center justify-between">
-          <p class="text-sm text-muted-foreground">
-            Showing {{ (pagination.page - 1) * pagination.limit + 1 }} -
-            {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of {{ pagination.total }}
-          </p>
-          <div class="flex gap-1">
-            <UiButton
-              variant="outline"
-              size="sm"
-              :disabled="pagination.page <= 1"
-              @click="handlePageChange(pagination.page - 1)"
-            >
-              <Icon name="heroicons:chevron-left" class="size-4" />
-            </UiButton>
-            <UiButton
-              variant="outline"
-              size="sm"
-              :disabled="pagination.page >= pagination.totalPages"
-              @click="handlePageChange(pagination.page + 1)"
-            >
-              <Icon name="heroicons:chevron-right" class="size-4" />
-            </UiButton>
+        <!-- Pagination Footer -->
+        <div v-if="!pending && contractors.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <!-- Results Summary -->
+          <div class="text-sm text-muted-foreground">
+            Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to
+            {{ Math.min(pagination.page * pagination.limit, pagination.total) }} of
+            {{ pagination.total }} contractors
+          </div>
+
+          <!-- Rows per page + Pagination -->
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-muted-foreground">Rows per page</span>
+              <UiSelect v-model="rowsPerPage" @update:model-value="handleRowsPerPageChange">
+                <UiSelectTrigger class="h-8 w-16">
+                  <UiSelectValue />
+                </UiSelectTrigger>
+                <UiSelectContent>
+                  <UiSelectItem v-for="opt in rowsPerPageOptions" :key="opt" :value="opt.toString()">
+                    {{ opt }}
+                  </UiSelectItem>
+                </UiSelectContent>
+              </UiSelect>
+            </div>
+
+            <div class="flex items-center gap-1 text-sm text-muted-foreground">
+              Page {{ pagination.page }} of {{ pagination.totalPages }}
+            </div>
+
+            <div class="flex items-center gap-1">
+              <UiButton
+                variant="outline"
+                size="icon"
+                class="size-8"
+                :disabled="pagination.page <= 1"
+                @click="handlePageChange(1)"
+              >
+                <Icon name="heroicons:chevron-double-left" class="size-4" />
+              </UiButton>
+              <UiButton
+                variant="outline"
+                size="icon"
+                class="size-8"
+                :disabled="pagination.page <= 1"
+                @click="handlePageChange(pagination.page - 1)"
+              >
+                <Icon name="heroicons:chevron-left" class="size-4" />
+              </UiButton>
+              <UiButton
+                variant="outline"
+                size="icon"
+                class="size-8"
+                :disabled="pagination.page >= pagination.totalPages"
+                @click="handlePageChange(pagination.page + 1)"
+              >
+                <Icon name="heroicons:chevron-right" class="size-4" />
+              </UiButton>
+              <UiButton
+                variant="outline"
+                size="icon"
+                class="size-8"
+                :disabled="pagination.page >= pagination.totalPages"
+                @click="handlePageChange(pagination.totalPages)"
+              >
+                <Icon name="heroicons:chevron-double-right" class="size-4" />
+              </UiButton>
+            </div>
           </div>
         </div>
       </UiCardContent>

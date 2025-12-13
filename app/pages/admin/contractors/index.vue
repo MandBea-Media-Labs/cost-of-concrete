@@ -55,7 +55,7 @@ const quickFilterOptions = [
 
 // Rows per page options
 const rowsPerPageOptions = [10, 25, 50, 100]
-const rowsPerPage = ref<string>('50')
+const rowsPerPage = ref<string>('10')
 
 // City filter options (computed from fetched cities)
 const cityOptions = computed(() => [
@@ -109,7 +109,7 @@ const filters = ref<AdminContractorsFilters>({
   status: selectedStatus.value === 'all' ? null : selectedStatus.value as 'pending' | 'active' | 'suspended',
   search: searchQuery.value.trim().length > 0 ? searchQuery.value : null,
   page: 1,
-  limit: 50,
+  limit: 10,
   orderBy: 'company_name',
   orderDirection: 'asc',
 })

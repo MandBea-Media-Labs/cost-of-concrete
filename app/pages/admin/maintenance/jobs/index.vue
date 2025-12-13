@@ -54,7 +54,7 @@ const router = useRouter()
 
 const isLoading = ref(true)
 const jobs = ref<Job[]>([])
-const pagination = ref({ total: 0, page: 1, limit: 25, totalPages: 1 })
+const pagination = ref({ total: 0, page: 1, limit: 10, totalPages: 1 })
 const errorMessage = ref<string | null>(null)
 const eventSource = ref<EventSource | null>(null)
 
@@ -64,7 +64,7 @@ const POLL_INTERVAL_MS = 3000
 
 // Rows per page options
 const rowsPerPageOptions = [10, 25, 50, 100]
-const rowsPerPage = ref<string>('25')
+const rowsPerPage = ref<string>('10')
 
 // =====================================================
 // FILTER OPTIONS
@@ -480,49 +480,46 @@ onUnmounted(() => {
       <UiAlertDescription>{{ errorMessage }}</UiAlertDescription>
     </UiAlert>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-12">
-      <div class="flex flex-col items-center gap-3">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600 dark:border-neutral-700 dark:border-t-blue-400" />
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">Loading jobs...</p>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center px-4 py-12">
-      <Icon name="heroicons:queue-list" class="mb-4 h-16 w-16 text-neutral-300 dark:text-neutral-600" />
-      <h3 class="mb-2 text-lg font-semibold text-neutral-700 dark:text-neutral-300">No jobs found</h3>
-      <p class="max-w-md text-center text-sm text-neutral-600 dark:text-neutral-400">
-        No jobs match your current filters. Try adjusting your search or filters, or queue a new job from the maintenance pages.
-      </p>
-    </div>
-
     <!-- Jobs Table -->
-    <div v-else class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
-      <table class="w-full">
+    <div class="overflow-x-auto rounded-md border">
+      <table class="w-full text-sm">
         <!-- Table Header -->
-        <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800">
+        <thead class="border-b bg-muted/50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Type</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Status</th>
-            <th class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400 md:table-cell">Progress</th>
-            <th class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400 lg:table-cell">Created</th>
-            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Actions</th>
+            <th class="px-4 py-3 text-left font-medium">Type</th>
+            <th class="px-4 py-3 text-left font-medium">Status</th>
+            <th class="hidden px-4 py-3 text-left font-medium md:table-cell">Progress</th>
+            <th class="hidden px-4 py-3 text-left font-medium lg:table-cell">Created</th>
+            <th class="px-4 py-3 text-right font-medium">Actions</th>
           </tr>
         </thead>
 
         <!-- Table Body -->
-        <tbody v-auto-animate class="divide-y divide-neutral-200 bg-white dark:divide-neutral-700 dark:bg-neutral-900">
-          <tr v-for="job in jobs" :key="job.id" class="group transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800">
+        <tbody v-auto-animate>
+          <!-- Loading State -->
+          <tr v-if="isLoading && jobs.length === 0">
+            <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
+              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
+              Loading jobs...
+            </td>
+          </tr>
+          <!-- Empty State -->
+          <tr v-else-if="jobs.length === 0">
+            <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
+              No jobs found matching the filters.
+            </td>
+          </tr>
+          <!-- Data Rows -->
+          <tr v-for="job in jobs" :key="job.id" class="border-b last:border-0 hover:bg-muted/50">
             <!-- Type -->
-            <td class="whitespace-nowrap px-6 py-4">
-              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100">
+            <td class="px-4 py-3">
+              <NuxtLink :to="`/admin/maintenance/jobs/${job.id}`" class="font-medium text-primary hover:underline">
                 {{ formatJobType(job.jobType) }}
               </NuxtLink>
             </td>
 
             <!-- Status -->
-            <td class="whitespace-nowrap px-6 py-4">
+            <td class="px-4 py-3">
               <UiBadge :variant="getStatusVariant(job.status)">
                 <Icon v-if="job.status === 'processing'" name="heroicons:arrow-path" class="size-3 mr-1 animate-spin" />
                 {{ job.status }}
@@ -530,27 +527,27 @@ onUnmounted(() => {
             </td>
 
             <!-- Progress -->
-            <td class="hidden whitespace-nowrap px-6 py-4 md:table-cell">
+            <td class="hidden px-4 py-3 md:table-cell">
               <div v-if="job.status === 'processing' && job.totalItems" class="w-32">
-                <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div class="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{{ job.processedItems }}/{{ job.totalItems }}</span>
                   <span v-if="job.failedItems > 0" class="text-red-500">({{ job.failedItems }} failed)</span>
                 </div>
                 <UiProgress :model-value="getProgressPercent(job)" class="mt-1 h-1.5" />
               </div>
-              <span v-else-if="job.status === 'completed'" class="text-sm text-neutral-600 dark:text-neutral-400">
+              <span v-else-if="job.status === 'completed'" class="text-muted-foreground">
                 {{ job.processedItems }} items
               </span>
-              <span v-else class="text-sm text-neutral-500 dark:text-neutral-500">-</span>
+              <span v-else class="text-muted-foreground">-</span>
             </td>
 
             <!-- Created -->
-            <td class="hidden whitespace-nowrap px-6 py-4 lg:table-cell">
-              <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ formatDate(job.createdAt) }}</span>
+            <td class="hidden px-4 py-3 lg:table-cell">
+              <span class="text-muted-foreground">{{ formatDate(job.createdAt) }}</span>
             </td>
 
             <!-- Actions -->
-            <td class="px-6 py-4">
+            <td class="px-4 py-3 text-right">
               <TableActionsMenu
                 :actions="getJobActions(job)"
               />
