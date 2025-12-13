@@ -342,7 +342,7 @@ const submitClaim = async () => {
         <div class="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-col">
           <Button v-if="contractor?.phone" :text="`Call ${contractor.phone}`" variant="primary-outline" class="whitespace-nowrap bg-white hover:bg-blue-50 dark:bg-transparent" />
           <Button text="Request a Quote" variant="primary" class="whitespace-nowrap" />
-          <Button v-if="!contractor?.isClaimed && !claimSubmitted" text="Claim this Business" variant="ghost" class="whitespace-nowrap text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400" @click="openClaimDialog" />
+          <Button v-if="!contractor?.isClaimed && !claimSubmitted" text="Claim this Business" variant="ghost" icon="heroicons:check-badge" class="whitespace-nowrap text-sm font-normal text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400" @click="openClaimDialog" />
           <span v-else-if="claimSubmitted" class="text-center text-sm text-green-600 dark:text-green-400">✓ Claim submitted</span>
         </div>
       </div>
@@ -389,8 +389,8 @@ const submitClaim = async () => {
               </a>
             </div>
           </div>
-          <div v-if="categories.length" class="mt-4 flex flex-wrap items-center gap-2">
-            <Badge v-for="cat in visibleCategories" :key="cat" :text="cat" variant="primary-outline" size="sm" class="rounded-full" />
+          <div v-if="categories.length" class="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-gray-200 pt-4">
+            <MiniBadge v-for="cat in visibleCategories" :key="cat" :text="cat" variant="primary-outline" size="sm" class="rounded-full" />
             <button
               v-if="hiddenCategoriesCount > 0 && !categoriesExpanded"
               type="button"
@@ -464,14 +464,14 @@ const submitClaim = async () => {
               <!-- About heading with location -->
               <div>
                 <h2 class="font-heading text-2xl font-bold text-neutral-900 dark:text-white">About {{ contractor?.companyName }}</h2>
-                <p class="mt-1 flex items-center gap-1 text-sm text-neutral-500">
+                <p class="mt-1 flex items-center gap-1 text-xs text-neutral-500">
                   <span class="text-neutral-400">•</span>
                   {{ contractor?.cityName }}, {{ contractor?.stateCode }}
                 </p>
               </div>
 
               <!-- Description -->
-              <p class="!mt-2 text-sm text-neutral-600 dark:text-neutral-300">{{ contractor?.description || 'No description available.' }}</p>
+              <p class="text-sm text-neutral-600 dark:text-neutral-300">{{ contractor?.description || 'No description available.' }}</p>
 
               <!-- Star rating -->
               <div class="!mt-2 flex items-center gap-1.5">
