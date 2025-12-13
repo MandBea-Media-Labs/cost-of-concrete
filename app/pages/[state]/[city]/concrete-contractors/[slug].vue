@@ -176,13 +176,101 @@ const openLightbox = (index: number) => {
   isLightboxOpen.value = true
 }
 
-// Reviews placeholder
-const allReviews = ref<{ id: string; authorName: string; authorInitials: string; rating: number; date: string; title: string; content: string; verified: boolean; serviceType: string; helpful: number }[]>([])
-const overallRating = computed(() => {
-  if (allReviews.value.length === 0) return contractor.value?.rating?.toFixed(1) || '0.0'
-  const sum = allReviews.value.reduce((acc, r) => acc + r.rating, 0)
-  return (sum / allReviews.value.length).toFixed(1)
+// ============================================
+// Reviews Tab State & Logic
+// ============================================
+import type { PublicReview } from '~/components/ui/pages/listing/ReviewCard.vue'
+
+// Reviews from embedded contractor response (SSR)
+const embeddedReviews = computed(() => contractor.value?.reviews || { items: [], total: 0, hasMore: false, ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } })
+
+// All reviews (starts with embedded, can grow with pagination)
+const allReviews = ref<PublicReview[]>([])
+
+// Initialize with embedded reviews when contractor loads
+watch(() => contractor.value?.reviews?.items, (items) => {
+  if (items && allReviews.value.length === 0) {
+    allReviews.value = items as unknown as PublicReview[]
+  }
+}, { immediate: true })
+
+// Sorting state
+type ReviewSortOption = 'recent' | 'highest' | 'lowest'
+const reviewSortBy = ref<ReviewSortOption>('recent')
+const sortOptions: { value: ReviewSortOption; label: string }[] = [
+  { value: 'recent', label: 'Most Recent' },
+  { value: 'highest', label: 'Highest Rated' },
+  { value: 'lowest', label: 'Lowest Rated' }
+]
+
+// Pagination
+const reviewsPerPage = 5
+const currentReviewPage = ref(1)
+const isLoadingReviews = ref(false)
+
+// Total from backend
+const totalReviews = computed(() => embeddedReviews.value.total)
+const totalReviewPages = computed(() => Math.ceil(totalReviews.value / reviewsPerPage))
+
+// Currently displayed reviews
+const paginatedReviews = computed(() => {
+  const start = (currentReviewPage.value - 1) * reviewsPerPage
+  return allReviews.value.slice(start, start + reviewsPerPage)
 })
+
+// Overall rating from contractor data
+const overallRating = computed(() => contractor.value?.rating?.toFixed(1) || '0.0')
+
+// Rating distribution from backend
+const ratingDistribution = computed(() => {
+  const dist = embeddedReviews.value.ratingDistribution
+  const total = totalReviews.value || 1 // Avoid division by zero
+  return [5, 4, 3, 2, 1].map(rating => ({
+    rating,
+    count: dist[rating as 1 | 2 | 3 | 4 | 5] || 0,
+    percentage: Math.round(((dist[rating as 1 | 2 | 3 | 4 | 5] || 0) / total) * 100)
+  }))
+})
+
+// Fetch reviews from API (for sorting changes or pagination beyond embedded)
+async function fetchReviews(sort: ReviewSortOption, offset: number = 0) {
+  if (!contractor.value) return
+
+  isLoadingReviews.value = true
+  try {
+    const { data } = await useFetch(`/api/public/contractors/${contractor.value.citySlug}/${contractor.value.slug}/reviews`, {
+      query: { sort, limit: reviewsPerPage, offset }
+    })
+
+    if (data.value?.reviews) {
+      if (offset === 0) {
+        // Replace all reviews (sorting changed)
+        allReviews.value = data.value.reviews
+      } else {
+        // Append reviews (pagination)
+        allReviews.value = [...allReviews.value, ...data.value.reviews]
+      }
+    }
+  } finally {
+    isLoadingReviews.value = false
+  }
+}
+
+// Handle sort change
+watch(reviewSortBy, async (newSort) => {
+  currentReviewPage.value = 1
+  await fetchReviews(newSort, 0)
+})
+
+// Handle page change
+async function handleReviewPageChange(page: number) {
+  const neededReviews = page * reviewsPerPage
+  // Check if we need to fetch more reviews
+  if (neededReviews > allReviews.value.length && embeddedReviews.value.hasMore) {
+    await fetchReviews(reviewSortBy.value, allReviews.value.length)
+  }
+  currentReviewPage.value = page
+}
 
 // Auth state for claim flow - using centralized composable
 const { isAuthenticated, email: authenticatedEmail, displayName: authenticatedName, ensureProfile } = useAuthUser()
@@ -539,12 +627,107 @@ const submitClaim = async () => {
 
           <!-- Reviews Tab -->
           <div v-else-if="activeTab === 'Reviews'" class="space-y-8">
-            <div v-if="contractor?.rating" class="flex flex-col items-center rounded-2xl border border-neutral-200 bg-neutral-50 p-8 dark:border-neutral-700 dark:bg-neutral-800/50">
-              <span class="font-heading text-6xl font-bold text-neutral-900 dark:text-white">{{ overallRating }}</span>
-              <div class="mt-2 flex items-center gap-0.5">
-                <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" :class="['h-6 w-6', i <= filledStars ? 'text-yellow-400' : 'text-neutral-300 dark:text-neutral-600']" />
+            <!-- Summary Header -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <!-- Overall Rating -->
+              <div class="flex items-center gap-4">
+                <div class="flex flex-col items-center rounded-2xl border border-neutral-200 p-6 dark:border-neutral-700">
+                  <span class="font-heading text-5xl font-bold text-neutral-900 dark:text-white">
+                    {{ overallRating }}
+                  </span>
+                  <div class="mt-2 flex items-center gap-0.5">
+                    <Icon
+                      v-for="i in 5"
+                      :key="i"
+                      name="heroicons:star-solid"
+                      :class="['h-5 w-5', i <= filledStars ? 'text-yellow-400' : 'text-neutral-300 dark:text-neutral-600']"
+                    />
+                  </div>
+                  <span class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ totalReviews }} reviews
+                  </span>
+                </div>
               </div>
-              <span class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Based on {{ contractor?.reviewCount || 0 }} reviews</span>
+
+              <!-- Rating Distribution -->
+              <div class="space-y-2">
+                <div
+                  v-for="item in ratingDistribution"
+                  :key="item.rating"
+                  class="flex items-center gap-3"
+                >
+                  <span class="w-16 text-sm text-neutral-600 dark:text-neutral-400">
+                    {{ item.rating }} stars
+                  </span>
+                  <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                    <div
+                      class="h-full rounded-full bg-yellow-400 transition-all duration-300"
+                      :style="{ width: `${item.percentage}%` }"
+                    />
+                  </div>
+                  <span class="w-12 text-right text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ item.count }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sorting Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 pb-4 dark:border-neutral-700">
+              <span class="text-sm text-neutral-500 dark:text-neutral-400">
+                Showing {{ paginatedReviews.length }} of {{ totalReviews }} reviews
+              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-neutral-600 dark:text-neutral-400">Sort by:</span>
+                <div class="flex gap-1">
+                  <button
+                    v-for="option in sortOptions"
+                    :key="option.value"
+                    type="button"
+                    :disabled="isLoadingReviews"
+                    :class="[
+                      'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                      reviewSortBy === option.value
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700',
+                      isLoadingReviews && 'cursor-not-allowed opacity-50'
+                    ]"
+                    @click="reviewSortBy = option.value"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading indicator -->
+            <div v-if="isLoadingReviews" class="flex items-center justify-center py-8">
+              <Icon name="heroicons:arrow-path" class="h-6 w-6 animate-spin text-blue-500" />
+              <span class="ml-2 text-neutral-500">Loading reviews...</span>
+            </div>
+
+            <!-- Review List -->
+            <div v-else-if="paginatedReviews.length > 0" class="space-y-6">
+              <ReviewCard
+                v-for="review in paginatedReviews"
+                :key="review.id"
+                :review="review"
+              />
+            </div>
+
+            <!-- No reviews message -->
+            <div v-else class="py-8 text-center text-neutral-500 dark:text-neutral-400">
+              No reviews yet. Be the first to leave a review!
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="totalReviewPages > 1 && !isLoadingReviews" class="pt-4">
+              <Pagination
+                :current-page="currentReviewPage"
+                :total-pages="totalReviewPages"
+                size="md"
+                @update:current-page="handleReviewPageChange"
+              />
             </div>
           </div>
           </div>

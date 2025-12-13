@@ -112,6 +112,56 @@ export default defineEventHandler(async (event) => {
     const legacyCategories = metadata.categories || []
     const allCategories = [...new Set([...serviceTypeNames, ...legacyCategories])]
 
+    // Fetch first 5 reviews for SSR (hybrid approach)
+    const REVIEWS_INITIAL_LIMIT = 5
+    const { data: reviewsData, count: reviewsTotal } = await client
+      .from('reviews')
+      .select('*', { count: 'exact' })
+      .eq('contractor_id', contractor.id)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(REVIEWS_INITIAL_LIMIT)
+
+    // Calculate rating distribution (fetch all stars for counting)
+    const { data: ratingData } = await client
+      .from('reviews')
+      .select('stars')
+      .eq('contractor_id', contractor.id)
+
+    const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    if (ratingData) {
+      for (const review of ratingData) {
+        const stars = review.stars as 1 | 2 | 3 | 4 | 5
+        if (stars >= 1 && stars <= 5) {
+          ratingDistribution[stars]++
+        }
+      }
+    }
+
+    // Transform reviews to public format
+    const reviewItems = (reviewsData || []).map((review) => {
+      // Generate initials from reviewer name
+      const nameParts = (review.reviewer_name || 'Anonymous').split(' ')
+      const initials = nameParts.length >= 2
+        ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+        : (nameParts[0]?.substring(0, 2) || 'AN').toUpperCase()
+
+      return {
+        id: review.id,
+        authorName: review.reviewer_name || 'Anonymous',
+        authorInitials: initials,
+        authorPhotoUrl: review.reviewer_photo_url || null,
+        rating: review.stars,
+        date: review.published_at || review.created_at,
+        content: review.review_text || '',
+        isLocalGuide: review.is_local_guide || false,
+        likesCount: review.likes_count || 0,
+        ownerResponse: review.owner_response_text ? {
+          text: review.owner_response_text,
+          date: review.owner_response_date || null
+        } : null
+      }
+    })
+
     // Transform for public response
     return {
       id: contractor.id,
@@ -136,7 +186,14 @@ export default defineEventHandler(async (event) => {
       images: metadata.images || [],
       categories: allCategories,
       socialLinks: mergedSocialLinks,
-      openingHours: openingHours
+      openingHours: openingHours,
+      // Reviews (hybrid approach: embed first page for SSR/SEO)
+      reviews: {
+        items: reviewItems,
+        total: reviewsTotal || 0,
+        hasMore: (reviewsTotal || 0) > REVIEWS_INITIAL_LIMIT,
+        ratingDistribution
+      }
     }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) {

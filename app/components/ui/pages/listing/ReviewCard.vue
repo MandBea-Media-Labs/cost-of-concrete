@@ -1,9 +1,26 @@
 <script setup lang="ts">
-import type { Review } from '~/composables/useSearchFilters'
+/**
+ * PublicReview interface - matches real Google review data from API
+ */
+export interface PublicReview {
+  id: string
+  authorName: string
+  authorInitials: string
+  authorPhotoUrl: string | null
+  rating: number
+  date: string
+  content: string
+  isLocalGuide: boolean
+  likesCount: number
+  ownerResponse: {
+    text: string
+    date: string | null
+  } | null
+}
 
 interface Props {
   /** The review data to display */
-  review: Review
+  review: PublicReview
   /** Maximum characters before showing "Read more" */
   truncateAt?: number
 }
@@ -14,6 +31,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Expand/collapse state for long reviews
 const isExpanded = ref(false)
+
+// Expand/collapse state for owner response
+const isResponseExpanded = ref(false)
 
 // Check if content needs truncation
 const needsTruncation = computed(() => props.review.content.length > props.truncateAt)
@@ -27,10 +47,11 @@ const displayedContent = computed(() => {
 })
 
 // Format date as relative time (e.g., "2 months ago")
-const relativeDate = computed(() => {
+const formatRelativeDate = (dateStr: string | null) => {
+  if (!dateStr) return ''
   const now = new Date()
-  const reviewDate = new Date(props.review.date)
-  const diffMs = now.getTime() - reviewDate.getTime()
+  const date = new Date(dateStr)
+  const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) return 'Today'
@@ -46,7 +67,12 @@ const relativeDate = computed(() => {
   }
   const years = Math.floor(diffDays / 365)
   return `${years} ${years === 1 ? 'year' : 'years'} ago`
-})
+}
+
+const relativeDate = computed(() => formatRelativeDate(props.review.date))
+const responseRelativeDate = computed(() =>
+  props.review.ownerResponse ? formatRelativeDate(props.review.ownerResponse.date) : ''
+)
 
 // Generate avatar background color based on initials
 const avatarColor = computed(() => {
@@ -71,38 +97,55 @@ const starRating = computed(() => {
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
 }
+
+// Toggle owner response
+const toggleResponse = () => {
+  isResponseExpanded.value = !isResponseExpanded.value
+}
 </script>
 
 <template>
   <article class="border-b border-neutral-200 pb-6 last:border-b-0 dark:border-neutral-700">
-    <!-- Header: Avatar, Name, Verified, Date -->
+    <!-- Header: Avatar, Name, Local Guide, Date, Stars -->
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="flex items-center gap-3">
-        <!-- Avatar -->
+        <!-- Avatar: Real photo or initials fallback -->
         <div
+          v-if="review.authorPhotoUrl"
+          class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full"
+        >
+          <img
+            :src="review.authorPhotoUrl"
+            :alt="review.authorName"
+            class="h-full w-full object-cover"
+          />
+        </div>
+        <div
+          v-else
           :class="[avatarColor, 'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full']"
         >
           <span class="text-sm font-bold text-white">{{ review.authorInitials }}</span>
         </div>
 
-        <!-- Name & Verified -->
+        <!-- Name & Local Guide Badge -->
         <div>
           <div class="flex items-center gap-2">
             <span class="font-semibold text-neutral-900 dark:text-white">
               {{ review.authorName }}
             </span>
-            <span
-              v-if="review.verified"
-              class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
-            >
-              <Icon name="heroicons:check-badge-solid" class="h-4 w-4" />
-              Verified
-            </span>
           </div>
-          <!-- Date -->
-          <span class="text-sm text-neutral-500 dark:text-neutral-400">
-            {{ relativeDate }}
-          </span>
+          <!-- Local Guide & Date -->
+          <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+            <span
+              v-if="review.isLocalGuide"
+              class="flex items-center gap-1 text-blue-600 dark:text-blue-400"
+            >
+              <Icon name="heroicons:map-pin" class="h-3.5 w-3.5" />
+              Local Guide
+            </span>
+            <span v-if="review.isLocalGuide">·</span>
+            <span>{{ relativeDate }}</span>
+          </div>
         </div>
       </div>
 
@@ -123,11 +166,6 @@ const toggleExpand = () => {
       </div>
     </div>
 
-    <!-- Review Title -->
-    <h4 class="mb-2 font-bold text-neutral-900 dark:text-white">
-      {{ review.title }}
-    </h4>
-
     <!-- Review Content -->
     <p class="mb-3 text-neutral-600 dark:text-neutral-300">
       {{ displayedContent }}
@@ -141,17 +179,42 @@ const toggleExpand = () => {
       </button>
     </p>
 
-    <!-- Footer: Service Type & Helpful -->
-    <div class="flex flex-wrap items-center gap-3">
-      <Badge :text="review.serviceType" variant="blue-blue" size="sm" />
+    <!-- Footer: Helpful count -->
+    <div
+      v-if="review.likesCount > 0"
+      class="mb-3 flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400"
+    >
+      <Icon name="heroicons:hand-thumb-up" class="h-4 w-4" />
+      {{ review.likesCount }} found helpful
+    </div>
 
-      <span
-        v-if="review.helpful > 0"
-        class="flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400"
+    <!-- Owner Response (Collapsible) -->
+    <div v-if="review.ownerResponse" class="mt-3">
+      <button
+        type="button"
+        class="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+        @click="toggleResponse"
       >
-        <Icon name="heroicons:hand-thumb-up" class="h-4 w-4" />
-        {{ review.helpful }} found helpful
-      </span>
+        <Icon
+          :name="isResponseExpanded ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+          class="h-4 w-4"
+        />
+        <Icon name="heroicons:chat-bubble-left-ellipsis" class="h-4 w-4" />
+        Owner response
+        <span v-if="responseRelativeDate" class="font-normal text-neutral-400">
+          · {{ responseRelativeDate }}
+        </span>
+      </button>
+
+      <!-- Response Content -->
+      <div
+        v-if="isResponseExpanded"
+        class="mt-2 rounded-lg border-l-4 border-blue-500 bg-neutral-50 py-3 pl-4 pr-3 dark:bg-neutral-800/50"
+      >
+        <p class="text-sm text-neutral-600 dark:text-neutral-300">
+          {{ review.ownerResponse.text }}
+        </p>
+      </div>
     </div>
   </article>
 </template>
