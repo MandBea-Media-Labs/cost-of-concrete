@@ -247,13 +247,6 @@ export class PageService {
   // =====================================================
 
   /**
-   * Generate canonical URL (defaults to full_path)
-   */
-  generateCanonicalUrl(fullPath: string): string {
-    return fullPath
-  }
-
-  /**
    * Validate meta robots directives
    */
   validateMetaRobots(robots: string[]): ValidationResult {
@@ -481,7 +474,8 @@ export class PageService {
 
     // Generate SEO defaults
     const sitemapPriority = data.sitemapPriority ?? this.generateSitemapPriority(depth)
-    const canonicalUrl = this.generateCanonicalUrl(fullPath)
+    // Note: canonicalUrl is intentionally left null if not explicitly provided
+    // The frontend SEO composable (usePageSeo) handles self-referencing canonicals via full_path fallback
 
     // Validate meta robots if provided
     if (data.metaRobots) {
@@ -509,7 +503,7 @@ export class PageService {
       meta_robots: data.metaRobots || ['index', 'follow'],
       sitemap_priority: sitemapPriority,
       sitemap_changefreq: data.sitemapChangefreq || 'weekly',
-      canonical_url: data.canonicalUrl || canonicalUrl,
+      canonical_url: data.canonicalUrl || null,
       redirect_url: data.redirectUrl || null,
       redirect_type: data.redirectType || null,
       metadata,
@@ -545,7 +539,8 @@ export class PageService {
 
       updateData.slug = data.slug
       updateData.full_path = await this.generateFullPath(data.slug, existingPage.parent_id)
-      updateData.canonical_url = this.generateCanonicalUrl(updateData.full_path)
+      // Note: Don't auto-set canonical_url on slug change - let it remain as user set it
+      // If user wants canonical to match new URL, they can update it explicitly
     }
 
     // Handle template change

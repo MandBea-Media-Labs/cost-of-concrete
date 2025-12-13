@@ -34,9 +34,22 @@ export function usePageSeo(page: Page) {
   const schemaMetadata = seoMetadata.schema
 
   // Generate full URL for canonical and OG
+  // If canonical_url is already an absolute URL, use it as-is
+  // Otherwise, prepend siteUrl to make it absolute
+  const isAbsoluteUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://')
   const fullUrl = page.canonical_url
-    ? `${siteUrl}${page.canonical_url}`
+    ? (isAbsoluteUrl(page.canonical_url) ? page.canonical_url : `${siteUrl}${page.canonical_url}`)
     : `${siteUrl}${page.full_path}`
+
+  // Debug: log canonical URL resolution in dev
+  if (import.meta.dev) {
+    console.log('[usePageSeo] Canonical URL resolution:', {
+      'page.canonical_url': page.canonical_url,
+      'page.full_path': page.full_path,
+      'isAbsolute': page.canonical_url ? isAbsoluteUrl(page.canonical_url) : 'N/A',
+      'fullUrl': fullUrl
+    })
+  }
 
   // Set basic SEO meta tags
   useSeoMeta({
@@ -46,8 +59,7 @@ export function usePageSeo(page: Page) {
     keywords: page.meta_keywords?.join(', ') || undefined,
     robots: page.meta_robots?.join(', ') || undefined,
 
-    // Canonical URL
-    canonicalUrl: fullUrl,
+    // Note: Canonical URL is set via useHead() below, not useSeoMeta
 
     // Open Graph tags
     ogTitle: ogMetadata.title || page.meta_title || page.title,
@@ -78,6 +90,16 @@ export function usePageSeo(page: Page) {
       articleSection: ogMetadata.article?.section || undefined,
       articleTag: ogMetadata.article?.tags || undefined,
     } : {})
+  })
+
+  // Set canonical URL via useHead (useSeoMeta's canonicalUrl doesn't create <link rel="canonical">)
+  useHead({
+    link: [
+      {
+        rel: 'canonical',
+        href: fullUrl
+      }
+    ]
   })
 
   // Add Schema.org JSON-LD if present in metadata
