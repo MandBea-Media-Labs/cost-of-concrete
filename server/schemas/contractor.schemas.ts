@@ -11,6 +11,18 @@ import { z } from 'zod'
 // =====================================================
 
 /**
+ * String-to-boolean schema that properly handles "false" string values
+ * z.coerce.boolean() uses Boolean() which converts "false" string to true
+ * This schema correctly parses "true"/"false" strings and boolean values
+ */
+const stringBooleanSchema = z
+  .union([z.boolean(), z.string()])
+  .transform((val) => {
+    if (typeof val === 'boolean') return val
+    return val.toLowerCase() === 'true'
+  })
+
+/**
  * Contractor status enum
  */
 export const contractorStatusSchema = z.enum(['pending', 'active', 'suspended'])
@@ -164,7 +176,7 @@ export type EnrichmentStatus = z.infer<typeof enrichmentStatusSchema>
 /**
  * Review enrichment status values for filtering
  */
-export const reviewEnrichmentStatusSchema = z.enum(['success', 'failed'])
+export const reviewEnrichmentStatusSchema = z.enum(['success', 'failed', 'not_started'])
 export type ReviewEnrichmentStatus = z.infer<typeof reviewEnrichmentStatusSchema>
 
 /**
@@ -175,14 +187,14 @@ export const listContractorsQuerySchema = z.object({
   category: z.string().optional(),
   status: contractorStatusSchema.optional(),
   search: z.string().optional(),
-  imagesProcessed: z.coerce.boolean().optional(),
+  imagesProcessed: stringBooleanSchema.optional(),
   enrichmentStatus: enrichmentStatusSchema.optional(),
-  hasWebsite: z.coerce.boolean().optional(),
+  hasWebsite: stringBooleanSchema.optional(),
   // Review enrichment filters
-  hasReviews: z.coerce.boolean().optional(),
-  hasGoogleCid: z.coerce.boolean().optional(),
+  hasReviews: stringBooleanSchema.optional(),
+  hasGoogleCid: stringBooleanSchema.optional(),
   reviewEnrichmentStatus: reviewEnrichmentStatusSchema.optional(),
-  includeDeleted: z.coerce.boolean().optional().default(false),
+  includeDeleted: stringBooleanSchema.optional().default(false),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
   orderBy: z.enum(['company_name', 'rating', 'review_count', 'created_at', 'updated_at']).optional().default('company_name'),

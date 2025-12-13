@@ -118,7 +118,12 @@ export default defineEventHandler(async (event) => {
 
     // Review enrichment status filter
     if (validatedQuery.reviewEnrichmentStatus) {
-      dbQuery = dbQuery.eq('metadata->reviews_enrichment->>status', validatedQuery.reviewEnrichmentStatus)
+      if (validatedQuery.reviewEnrichmentStatus === 'not_started') {
+        // Not started = no reviews_enrichment in metadata OR status is null
+        dbQuery = dbQuery.or('metadata->reviews_enrichment.is.null,metadata->reviews_enrichment->>status.is.null')
+      } else {
+        dbQuery = dbQuery.eq('metadata->reviews_enrichment->>status', validatedQuery.reviewEnrichmentStatus)
+      }
     }
 
     // Search by company name (case-insensitive)

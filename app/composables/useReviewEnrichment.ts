@@ -19,11 +19,10 @@ type Contractor = Database['public']['Tables']['contractors']['Row'] & {
   } | null
 }
 
-export type ReviewEnrichmentStatus = 'all' | 'no_reviews' | 'has_reviews' | 'recently_enriched' | 'failed' | 'no_cid'
+export type ReviewEnrichmentStatus = 'all' | 'not_enriched' | 'enriched' | 'failed' | 'no_reviews' | 'no_cid'
 
 export interface ReviewEnrichmentFilters {
   enrichmentStatus?: ReviewEnrichmentStatus | null
-  cityId?: string | null
   search?: string | null
   hasGoogleCid?: boolean | null
   page?: number
@@ -32,9 +31,9 @@ export interface ReviewEnrichmentFilters {
 
 export interface ReviewEnrichmentStats {
   total: number
+  notEnriched: number
+  enriched: number
   noReviews: number
-  hasReviews: number
-  recentlyEnriched: number
   noCid: number
   failed: number
 }
@@ -59,9 +58,8 @@ export function useReviewEnrichment() {
   })
   const stats = ref<ReviewEnrichmentStats>({
     total: 0,
-    noReviews: 0,
-    hasReviews: 0,
-    recentlyEnriched: 0,
+    notEnriched: 0,
+    enriched: 0,
     noCid: 0,
     failed: 0,
   })
@@ -87,12 +85,19 @@ export function useReviewEnrichment() {
       // Filter by enrichment status
       if (filters.enrichmentStatus && filters.enrichmentStatus !== 'all') {
         switch (filters.enrichmentStatus) {
-          case 'no_reviews':
-            query.hasReviews = false
+          case 'not_enriched':
+            // Has Google CID, has reviews (review_count > 0), but no enrichment done yet
             query.hasGoogleCid = true
-            break
-          case 'has_reviews':
             query.hasReviews = true
+            query.reviewEnrichmentStatus = 'not_started'
+            break
+          case 'enriched':
+            query.reviewEnrichmentStatus = 'success'
+            break
+          case 'no_reviews':
+            // Has Google CID but no reviews on Google (review_count = 0)
+            query.hasGoogleCid = true
+            query.hasReviews = false
             break
           case 'no_cid':
             query.hasGoogleCid = false
@@ -100,14 +105,7 @@ export function useReviewEnrichment() {
           case 'failed':
             query.reviewEnrichmentStatus = 'failed'
             break
-          case 'recently_enriched':
-            query.reviewEnrichmentStatus = 'success'
-            break
         }
-      }
-
-      if (filters.cityId) {
-        query.cityId = filters.cityId
       }
 
       if (filters.search) {

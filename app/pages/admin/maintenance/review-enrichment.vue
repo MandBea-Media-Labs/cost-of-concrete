@@ -7,6 +7,7 @@
  */
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import NumberFlow from '@number-flow/vue'
+import { getStateSlugFromCode } from '~/utils/usStates'
 import type { ReviewEnrichmentStatus, ReviewEnrichmentFilters } from '~/composables/useReviewEnrichment'
 
 definePageMeta({
@@ -42,17 +43,8 @@ const errorMessage = ref<string | null>(null)
 const selectedIds = ref<Set<string>>(new Set())
 
 // Filters
-const selectedEnrichmentStatus = ref<string>('no_reviews')
-const selectedCity = ref<string>('all')
+const selectedEnrichmentStatus = ref<string>('not_enriched')
 const searchQuery = ref<string>('')
-
-// Cities for dropdown
-interface City {
-  id: string
-  name: string
-  state_code: string
-}
-const cities = ref<City[]>([])
 
 // Polling
 let pollInterval: ReturnType<typeof setInterval> | null = null
@@ -67,20 +59,12 @@ let disconnectTimeout: ReturnType<typeof setTimeout> | null = null
 // COMPUTED
 // =====================================================
 
-const cityOptions = computed(() => [
-  { value: 'all', label: 'All Cities' },
-  ...cities.value.map(city => ({
-    value: city.id,
-    label: `${city.name}, ${city.state_code}`,
-  })),
-])
-
 const enrichmentStatusOptions = [
   { value: 'all', label: 'All Statuses' },
-  { value: 'no_reviews', label: 'No Reviews' },
-  { value: 'has_reviews', label: 'Has Reviews' },
-  { value: 'recently_enriched', label: 'Recently Enriched' },
+  { value: 'not_enriched', label: 'Not Enriched' },
+  { value: 'enriched', label: 'Enriched' },
   { value: 'failed', label: 'Failed' },
+  { value: 'no_reviews', label: 'Has No Reviews' },
   { value: 'no_cid', label: 'No Google CID' },
 ]
 
@@ -104,24 +88,10 @@ const buildFilters = (): ReviewEnrichmentFilters => ({
   enrichmentStatus: selectedEnrichmentStatus.value === 'all'
     ? null
     : selectedEnrichmentStatus.value as ReviewEnrichmentStatus,
-  cityId: selectedCity.value === 'all' ? null : selectedCity.value,
   search: searchQuery.value.trim() || null,
   page: pagination.value.page,
   limit: pagination.value.limit,
 })
-
-const fetchCities = async () => {
-  try {
-    const response = await $fetch<{ success: boolean; data: City[] }>('/api/cities', {
-      query: { limit: 500 },
-    })
-    if (response.success) {
-      cities.value = response.data
-    }
-  } catch {
-    // Silently fail
-  }
-}
 
 const refreshData = async (options: { showLoading?: boolean } = {}) => {
   const { showLoading = true } = options
@@ -307,14 +277,13 @@ watch(
 )
 
 // Watch filters
-watch([selectedEnrichmentStatus, selectedCity, searchQuery], handleFilterChange)
+watch([selectedEnrichmentStatus, searchQuery], handleFilterChange)
 
 // =====================================================
 // LIFECYCLE
 // =====================================================
 
 onMounted(async () => {
-  await fetchCities()
   await refreshData()
   if (hasActiveJob.value) {
     connectSSE()
@@ -331,29 +300,42 @@ onUnmounted(() => {
 // Helper to get review enrichment status from contractor metadata
 const getReviewEnrichmentStatus = (contractor: (typeof contractors.value)[0]): string => {
   if (!contractor.google_cid) return 'no_cid'
-  if ((contractor.review_count ?? 0) > 0) return 'has_reviews'
   const meta = contractor.metadata as Record<string, unknown> | null
   const reviewsEnrichment = meta?.reviews_enrichment as Record<string, unknown> | null
   if (reviewsEnrichment?.status === 'failed') return 'failed'
-  return 'no_reviews'
+  if (reviewsEnrichment?.status === 'success') return 'enriched'
+  if (!contractor.review_count || contractor.review_count === 0) return 'no_reviews'
+  return 'not_enriched'
 }
 
 const getReviewBadgeVariant = (status: string) => {
   switch (status) {
-    case 'has_reviews': return 'default'
+    case 'enriched': return 'default'
     case 'failed': return 'destructive'
     case 'no_cid': return 'secondary'
+    case 'no_reviews': return 'secondary'
     default: return 'outline'
   }
 }
 
 const getReviewLabel = (status: string) => {
   switch (status) {
-    case 'has_reviews': return 'Has Reviews'
+    case 'enriched': return 'Enriched'
     case 'failed': return 'Failed'
     case 'no_cid': return 'No CID'
-    default: return 'No Reviews'
+    case 'no_reviews': return 'No Reviews'
+    case 'not_enriched': return 'Not Enriched'
+    default: return 'Not Enriched'
   }
+}
+
+// Build public profile URL for contractor
+const getProfileUrl = (contractor: (typeof contractors.value)[0]): string | null => {
+  if (!contractor.city?.state_code || !contractor.city?.slug || !contractor.slug) {
+    return null
+  }
+  const stateSlug = getStateSlugFromCode(contractor.city.state_code)
+  return `/${stateSlug}/${contractor.city.slug}/concrete-contractors/${contractor.slug}`
 }
 </script>
 
@@ -386,27 +368,27 @@ const getReviewLabel = (status: string) => {
     <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5" v-auto-animate>
       <div class="rounded-lg border bg-muted/50 p-4 text-center">
         <div class="text-2xl font-bold tabular-nums text-foreground">
-          <NumberFlow :value="stats.noReviews" />
+          <NumberFlow :value="stats.notEnriched" />
         </div>
-        <div class="text-xs text-muted-foreground">No Reviews</div>
+        <div class="text-xs text-muted-foreground">Not Enriched</div>
       </div>
       <div class="rounded-lg border bg-muted/50 p-4 text-center">
         <div class="text-2xl font-bold tabular-nums text-green-600 dark:text-green-400">
-          <NumberFlow :value="stats.hasReviews" />
+          <NumberFlow :value="stats.enriched" />
         </div>
-        <div class="text-xs text-muted-foreground">Has Reviews</div>
-      </div>
-      <div class="rounded-lg border bg-muted/50 p-4 text-center">
-        <div class="text-2xl font-bold tabular-nums text-blue-600 dark:text-blue-400">
-          <NumberFlow :value="stats.recentlyEnriched" />
-        </div>
-        <div class="text-xs text-muted-foreground">Recently Enriched</div>
+        <div class="text-xs text-muted-foreground">Enriched</div>
       </div>
       <div class="rounded-lg border bg-muted/50 p-4 text-center">
         <div class="text-2xl font-bold tabular-nums text-red-600 dark:text-red-400">
           <NumberFlow :value="stats.failed" />
         </div>
         <div class="text-xs text-muted-foreground">Failed</div>
+      </div>
+      <div class="rounded-lg border bg-muted/50 p-4 text-center">
+        <div class="text-2xl font-bold tabular-nums text-muted-foreground">
+          <NumberFlow :value="stats.noReviews" />
+        </div>
+        <div class="text-xs text-muted-foreground">No Reviews</div>
       </div>
       <div class="rounded-lg border bg-muted/50 p-4 text-center">
         <div class="text-2xl font-bold tabular-nums text-muted-foreground">
@@ -488,21 +470,6 @@ const getReviewLabel = (status: string) => {
             </UiSelectContent>
           </UiSelect>
 
-          <UiSelect v-model="selectedCity" class="w-full sm:w-48">
-            <UiSelectTrigger>
-              <UiSelectValue placeholder="City" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem
-                v-for="option in cityOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
-
           <UiInput
             v-model="searchQuery"
             placeholder="Search by company name..."
@@ -552,7 +519,15 @@ const getReviewLabel = (status: string) => {
                   />
                 </td>
                 <td class="px-4 py-3">
-                  <div class="font-medium">{{ contractor.company_name }}</div>
+                  <NuxtLink
+                    v-if="getProfileUrl(contractor)"
+                    :to="getProfileUrl(contractor)!"
+                    target="_blank"
+                    class="font-medium text-primary hover:underline"
+                  >
+                    {{ contractor.company_name }}
+                  </NuxtLink>
+                  <div v-else class="font-medium">{{ contractor.company_name }}</div>
                   <div v-if="contractor.google_cid" class="text-xs text-muted-foreground">
                     CID: {{ contractor.google_cid }}
                   </div>

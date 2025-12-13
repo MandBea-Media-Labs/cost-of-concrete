@@ -5,12 +5,9 @@
  * Used by the admin UI to display counts of enriched/unenriched contractors.
  *
  * Review enrichment status is determined by metadata.reviews_enrichment.status:
- * - null/undefined: Not started (no reviews)
+ * - null/undefined: Not Enriched (eligible for enrichment)
  * - 'success': Successfully enriched
  * - 'failed': Enrichment failed
- * - 'not_applicable': Missing Google CID
- *
- * Also checks for 30-day cooldown period.
  *
  * @returns {Object} Review enrichment statistics
  */
@@ -18,15 +15,14 @@
 import { consola } from 'consola'
 import { serverSupabaseClient } from '#supabase/server'
 import { requireAdmin } from '../../utils/auth'
-import { REVIEW_ENRICHMENT_COOLDOWN_DAYS } from '../../schemas/job.schemas'
 
 interface ReviewEnrichmentStatsResponse {
   success: boolean
   stats: {
     total: number
+    notEnriched: number
+    enriched: number
     noReviews: number
-    hasReviews: number
-    recentlyEnriched: number
     noCid: number
     failed: number
   }
@@ -56,29 +52,26 @@ export default defineEventHandler(async (event): Promise<ReviewEnrichmentStatsRe
 
     if (noCidError) throw noCidError
 
-    // Get count with reviews (has been enriched or imported)
-    const { count: hasReviews, error: hasReviewsError } = await client
+    // Get count not enriched: has CID, has reviews (review_count > 0), but no enrichment done
+    const { count: notEnriched, error: notEnrichedError } = await client
       .from('contractors')
       .select('*', { count: 'exact', head: true })
       .is('deleted_at', null)
+      .not('google_cid', 'is', null)
       .gt('review_count', 0)
+      .or('metadata->reviews_enrichment.is.null,metadata->reviews_enrichment->>status.is.null')
 
-    if (hasReviewsError) throw hasReviewsError
+    if (notEnrichedError) throw notEnrichedError
 
-    // Get count recently enriched (within cooldown period)
-    const cooldownDate = new Date()
-    cooldownDate.setDate(cooldownDate.getDate() - REVIEW_ENRICHMENT_COOLDOWN_DAYS)
-    const cooldownDateStr = cooldownDate.toISOString()
-
-    const { count: recentlyEnriched, error: recentlyError } = await client
+    // Get count successfully enriched
+    const { count: enriched, error: enrichedError } = await client
       .from('contractors')
       .select('*', { count: 'exact', head: true })
       .is('deleted_at', null)
       .not('google_cid', 'is', null)
       .eq('metadata->reviews_enrichment->>status', 'success')
-      .gte('metadata->reviews_enrichment->>last_attempt_at', cooldownDateStr)
 
-    if (recentlyError) throw recentlyError
+    if (enrichedError) throw enrichedError
 
     // Get count with failed enrichment
     const { count: failed, error: failedError } = await client
@@ -89,23 +82,30 @@ export default defineEventHandler(async (event): Promise<ReviewEnrichmentStatsRe
 
     if (failedError) throw failedError
 
-    // Calculate no reviews (eligible for enrichment)
+    // Get count with no reviews (review_count = 0 or null, has CID)
+    const { count: noReviews, error: noReviewsError } = await client
+      .from('contractors')
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null)
+      .not('google_cid', 'is', null)
+      .or('review_count.is.null,review_count.eq.0')
+
+    if (noReviewsError) throw noReviewsError
+
+    // Calculate stats
     const totalCount = total ?? 0
     const noCidCount = noCid ?? 0
-    const hasReviewsCount = hasReviews ?? 0
-    const recentlyEnrichedCount = recentlyEnriched ?? 0
+    const notEnrichedCount = notEnriched ?? 0
+    const enrichedCount = enriched ?? 0
+    const noReviewsCount = noReviews ?? 0
     const failedCount = failed ?? 0
-
-    // No reviews = total - noCid - hasReviews (doesn't have reviews yet and has CID)
-    // Note: some overlap may exist, but this gives a rough estimate
-    const noReviewsCount = Math.max(0, totalCount - noCidCount - hasReviewsCount)
 
     if (import.meta.dev) {
       consola.info('GET /api/contractors/review-enrichment-stats', {
         total: totalCount,
+        notEnriched: notEnrichedCount,
+        enriched: enrichedCount,
         noReviews: noReviewsCount,
-        hasReviews: hasReviewsCount,
-        recentlyEnriched: recentlyEnrichedCount,
         noCid: noCidCount,
         failed: failedCount,
       })
@@ -115,9 +115,9 @@ export default defineEventHandler(async (event): Promise<ReviewEnrichmentStatsRe
       success: true,
       stats: {
         total: totalCount,
+        notEnriched: notEnrichedCount,
+        enriched: enrichedCount,
         noReviews: noReviewsCount,
-        hasReviews: hasReviewsCount,
-        recentlyEnriched: recentlyEnrichedCount,
         noCid: noCidCount,
         failed: failedCount,
       },
