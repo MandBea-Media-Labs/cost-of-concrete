@@ -160,7 +160,7 @@ const getStatusVariant = (status: string) => {
           </p>
         </div>
         <UiButton @click="handleInvite">
-          <Icon name="heroicons:user-plus" class="mr-2 size-4" />
+          <Icon name="heroicons:user-plus" class="size-4 mr-2" />
           Invite User
         </UiButton>
       </div>
@@ -170,7 +170,7 @@ const getStatusVariant = (status: string) => {
     <div class="mb-6 flex flex-wrap items-center gap-3">
       <!-- Search -->
       <div class="relative w-64">
-        <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Icon name="heroicons:magnifying-glass" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <UiInput v-model="searchQuery" placeholder="Search by email..." class="pl-9" />
       </div>
 
@@ -201,7 +201,7 @@ const getStatusVariant = (status: string) => {
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto rounded-md border">
+    <div class="no-scrollbar overflow-x-auto rounded-md border">
       <table class="w-full text-sm">
         <thead class="border-b bg-muted/50">
           <tr>
@@ -216,9 +216,8 @@ const getStatusVariant = (status: string) => {
         <tbody v-auto-animate>
           <!-- Loading State -->
           <tr v-if="pending && accounts.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
-              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
-              Loading accounts...
+            <td colspan="6" class="px-4 py-8 text-center">
+              <UiSpinner />
             </td>
           </tr>
           <!-- Empty State -->
@@ -253,14 +252,14 @@ const getStatusVariant = (status: string) => {
                 </UiDropdownMenuTrigger>
                 <UiDropdownMenuContent align="end">
                   <UiDropdownMenuItem @click="handleEdit(account.id)">
-                    <Icon name="heroicons:pencil" class="mr-2 size-4" />
+                    <Icon name="heroicons:pencil" class="size-4 mr-2" />
                     Edit
                   </UiDropdownMenuItem>
                   <UiDropdownMenuItem
                     v-if="account.status !== 'deleted'"
                     @click="handleSuspend(account.id, account.email, account.status as AccountStatus)"
                   >
-                    <Icon :name="account.status === 'suspended' ? 'heroicons:play' : 'heroicons:pause'" class="mr-2 size-4" />
+                    <Icon :name="account.status === 'suspended' ? 'heroicons:play' : 'heroicons:pause'" class="size-4 mr-2" />
                     {{ account.status === 'suspended' ? 'Reactivate' : 'Suspend' }}
                   </UiDropdownMenuItem>
                   <UiDropdownMenuSeparator v-if="account.status !== 'deleted'" />
@@ -269,7 +268,7 @@ const getStatusVariant = (status: string) => {
                     class="text-destructive focus:text-destructive"
                     @click="handleDelete(account.id, account.email)"
                   >
-                    <Icon name="heroicons:trash" class="mr-2 size-4" />
+                    <Icon name="heroicons:trash" class="size-4 mr-2" />
                     Delete
                   </UiDropdownMenuItem>
                 </UiDropdownMenuContent>

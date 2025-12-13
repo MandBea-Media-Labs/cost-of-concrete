@@ -78,7 +78,7 @@ const handleDelete = (id: string) => emit('delete', id)
 <template>
   <div class="w-full">
     <!-- Table -->
-    <div class="overflow-x-auto rounded-md border">
+    <div class="no-scrollbar overflow-x-auto rounded-md border">
       <table class="w-full text-sm">
         <!-- Table Header -->
         <thead class="border-b bg-muted/50">
@@ -96,9 +96,8 @@ const handleDelete = (id: string) => emit('delete', id)
         <tbody v-auto-animate>
           <!-- Loading State -->
           <tr v-if="loading && contractors.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
-              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
-              Loading contractors...
+            <td colspan="6" class="px-4 py-8 text-center">
+              <UiSpinner />
             </td>
           </tr>
           <!-- Empty State -->

@@ -481,7 +481,7 @@ onUnmounted(() => {
     </UiAlert>
 
     <!-- Jobs Table -->
-    <div class="overflow-x-auto rounded-md border">
+    <div class="no-scrollbar overflow-x-auto rounded-md border">
       <table class="w-full text-sm">
         <!-- Table Header -->
         <thead class="border-b bg-muted/50">
@@ -498,9 +498,8 @@ onUnmounted(() => {
         <tbody v-auto-animate>
           <!-- Loading State -->
           <tr v-if="isLoading && jobs.length === 0">
-            <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
-              <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
-              Loading jobs...
+            <td colspan="6" class="px-4 py-8 text-center">
+              <UiSpinner />
             </td>
           </tr>
           <!-- Empty State -->

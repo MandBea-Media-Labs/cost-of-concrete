@@ -547,7 +547,7 @@ const getEnrichmentLabel = (status: string) => {
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto rounded-md border">
+        <div class="no-scrollbar overflow-x-auto rounded-md border">
           <table class="w-full text-sm">
             <thead class="border-b bg-muted/50">
               <tr>
@@ -565,9 +565,8 @@ const getEnrichmentLabel = (status: string) => {
             </thead>
             <tbody v-auto-animate>
               <tr v-if="pending && contractors.length === 0">
-                <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">
-                  <Icon name="heroicons:arrow-path" class="size-5 mx-auto mb-2 animate-spin" />
-                  Loading contractors...
+                <td colspan="6" class="px-4 py-8 text-center">
+                  <UiSpinner />
                 </td>
               </tr>
               <tr v-else-if="contractors.length === 0">
