@@ -90,7 +90,17 @@ export default defineEventHandler(async (event) => {
       canonicalUrl: validatedData.canonicalUrl,
       redirectUrl: validatedData.redirectUrl,
       redirectType: validatedData.redirectType,
-      metadata: validatedData.metadata
+      metadata: validatedData.metadata,
+      // SEO metadata fields (stored in metadata.seo)
+      metaDescription: validatedData.metaDescription,
+      ogTitle: validatedData.ogTitle,
+      ogDescription: validatedData.ogDescription,
+      ogType: validatedData.ogType,
+      twitterCard: validatedData.twitterCard,
+      twitterTitle: validatedData.twitterTitle,
+      twitterDescription: validatedData.twitterDescription,
+      twitterImage: validatedData.twitterImage,
+      schemaType: validatedData.schemaType
     })
 
     if (import.meta.dev) {

@@ -222,7 +222,8 @@ function mapFormDataToApiInput(formData: PageFormData) {
     metaRobots: formData.metaRobots || undefined,
     sitemapPriority: formData.sitemapPriority || undefined,
     sitemapChangefreq: formData.sitemapChangefreq || undefined,
-    canonicalUrl: formData.canonicalUrl || undefined,
+    // Use null (not undefined) for canonicalUrl so empty value is saved to DB
+    canonicalUrl: formData.canonicalUrl || null,
     redirectUrl: formData.redirectUrl || undefined,
     redirectType: formData.redirectType || undefined,
 

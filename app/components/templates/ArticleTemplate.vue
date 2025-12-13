@@ -31,9 +31,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Parse metadata for Article-specific configuration
+// Template settings are stored in metadata.template
 const metadata = computed(() => {
-  if (!props.page.metadata) return null
-  return props.page.metadata as {
+  const pageMetadata = props.page.metadata as any
+  if (!pageMetadata?.template) return null
+  return pageMetadata.template as {
     category?: string
     showTableOfContents?: boolean
     showReadingTime?: boolean
@@ -62,7 +64,7 @@ const tableOfContents = computed(() => {
   return Array.from(headings).map((heading, index) => {
     const id = `heading-${index}`
     heading.id = id // Add ID to heading for anchor links
-    
+
     return {
       id,
       text: heading.textContent || '',
@@ -77,7 +79,7 @@ const readingTime = computed(() => {
 
   const words = props.page.content.split(/\s+/).length
   const minutes = Math.ceil(words / 200)
-  
+
   return minutes === 1 ? '1 min read' : `${minutes} min read`
 })
 

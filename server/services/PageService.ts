@@ -84,11 +84,22 @@ export interface UpdatePageData {
   metaRobots?: string[]
   sitemapPriority?: number
   sitemapChangefreq?: string
-  canonicalUrl?: string
+  canonicalUrl?: string | null  // null = clear the field
   redirectUrl?: string
   redirectType?: number
   metadata?: any
   publishedAt?: string | null
+
+  // SEO metadata fields (stored in metadata.seo)
+  metaDescription?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogType?: string
+  twitterCard?: string
+  twitterTitle?: string
+  twitterDescription?: string
+  twitterImage?: string
+  schemaType?: string
 }
 
 export class PageService {
@@ -584,9 +595,65 @@ export class PageService {
       updateData.meta_robots = data.metaRobots
     }
 
-    // Handle metadata update
-    if (data.metadata !== undefined) {
-      updateData.metadata = data.metadata
+    // Handle metadata update - merge with existing structure
+    // Metadata structure: { template: {...}, seo: {...} }
+    const existingMetadata = (existingPage.metadata as any) || {}
+    const existingSeo = existingMetadata.seo || {}
+    const existingTemplate = existingMetadata.template || {}
+
+    // Build updated SEO metadata
+    const seoMetadata: any = { ...existingSeo }
+
+    // Update metaDescription if provided
+    if (data.metaDescription !== undefined) {
+      seoMetadata.metaDescription = data.metaDescription || undefined
+    }
+
+    // Update Open Graph data if any OG fields provided
+    if (data.ogTitle !== undefined || data.ogDescription !== undefined || data.ogImage !== undefined || data.ogType !== undefined) {
+      seoMetadata.og = {
+        ...(seoMetadata.og || {}),
+        ...(data.ogTitle !== undefined && { title: data.ogTitle || undefined }),
+        ...(data.ogDescription !== undefined && { description: data.ogDescription || undefined }),
+        ...(data.ogImage !== undefined && { image: data.ogImage || undefined }),
+        ...(data.ogType !== undefined && { type: data.ogType || undefined })
+      }
+    }
+
+    // Update Twitter Card data if any Twitter fields provided
+    if (data.twitterCard !== undefined || data.twitterTitle !== undefined || data.twitterDescription !== undefined || data.twitterImage !== undefined) {
+      seoMetadata.twitter = {
+        ...(seoMetadata.twitter || {}),
+        ...(data.twitterCard !== undefined && { card: data.twitterCard || undefined }),
+        ...(data.twitterTitle !== undefined && { title: data.twitterTitle || undefined }),
+        ...(data.twitterDescription !== undefined && { description: data.twitterDescription || undefined }),
+        ...(data.twitterImage !== undefined && { image: data.twitterImage || undefined })
+      }
+    }
+
+    // Update Schema.org data if schemaType provided
+    if (data.schemaType !== undefined) {
+      if (data.schemaType) {
+        seoMetadata.schema = {
+          ...(seoMetadata.schema || {}),
+          '@context': 'https://schema.org',
+          '@type': data.schemaType
+        }
+      } else {
+        // Clear schema if empty
+        delete seoMetadata.schema
+      }
+    }
+
+    // Build updated template metadata
+    const templateMetadata = data.metadata !== undefined
+      ? { ...existingTemplate, ...data.metadata }
+      : existingTemplate
+
+    // Set the complete merged metadata
+    updateData.metadata = {
+      template: templateMetadata,
+      seo: seoMetadata
     }
 
     return await this.repository.update(id, updateData)

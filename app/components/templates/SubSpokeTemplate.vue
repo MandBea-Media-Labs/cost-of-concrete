@@ -31,9 +31,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Parse metadata for Sub-Spoke-specific configuration
+// Template settings are stored in metadata.template
 const metadata = computed(() => {
-  if (!props.page.metadata) return null
-  return props.page.metadata as {
+  const pageMetadata = props.page.metadata as any
+  if (!pageMetadata?.template) return null
+  return pageMetadata.template as {
     category?: string
     showTableOfContents?: boolean
     showChildList?: boolean

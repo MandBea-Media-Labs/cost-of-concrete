@@ -31,20 +31,70 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Parse metadata for Hub-specific configuration
+// Template settings are stored in metadata.template
 const metadata = computed(() => {
-  if (!props.page.metadata) return null
-  return props.page.metadata as {
+  const pageMetadata = props.page.metadata as any
+  if (!pageMetadata?.template) return null
+  return pageMetadata.template as {
     category?: string
     layout?: 'grid' | 'list' | 'featured'
     columns?: 2 | 3 | 4
     showChildGrid?: boolean
     heroImage?: string
+    featuredPages?: string[] // Array of page UUIDs
     callToAction?: {
       text: string
       url: string
       style?: 'primary' | 'secondary' | 'outline'
     }
   }
+})
+
+// Fetch featured pages from Supabase
+const supabase = useSupabaseClient<Database>()
+const featuredPages = ref<Page[]>([])
+
+// Watch for metadata changes and fetch featured pages
+watch(() => metadata.value?.featuredPages, async (pageIds) => {
+  console.log('[HubTemplate] featuredPages watcher triggered:', {
+    pageIds,
+    metadata: metadata.value
+  })
+
+  if (!pageIds || pageIds.length === 0) {
+    console.log('[HubTemplate] No featured page IDs, clearing')
+    featuredPages.value = []
+    return
+  }
+
+  console.log('[HubTemplate] Fetching pages with IDs:', pageIds)
+
+  const { data, error } = await supabase
+    .from('pages')
+    .select('*')
+    .in('id', pageIds)
+    .eq('status', 'published')
+
+  console.log('[HubTemplate] Supabase response:', { data, error })
+
+  if (data) {
+    // Sort by the order in featuredPages array
+    featuredPages.value = pageIds
+      .map(id => data.find(p => p.id === id))
+      .filter((p): p is Page => p !== undefined)
+
+    console.log('[HubTemplate] Featured pages set:', featuredPages.value)
+  }
+}, { immediate: true })
+
+// Convert featured pages to card format
+const featuredCards = computed(() => {
+  return featuredPages.value.map((page): { image: string; title: string; description: string; to: string } => ({
+    image: page.og_image || 'https://placehold.co/800x450',
+    title: page.title,
+    description: page.description || 'Learn more about this topic',
+    to: page.full_path
+  }))
 })
 
 // Grid columns configuration
@@ -80,7 +130,7 @@ const topicCards = computed(() => {
   if (!props.children || props.children.length === 0) return []
 
   return props.children.map(child => ({
-    image: child.og_image || '/images/placeholder-topic.jpg',
+    image: child.og_image || 'https://placehold.co/800x450',
     title: child.title,
     description: child.description || 'Learn more about this topic',
     to: child.full_path
@@ -105,7 +155,7 @@ const { html: renderedContent } = useMarkdown(computed(() => props.page.content 
 
 <template>
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <div class="mx-auto max-w-8xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <!-- Main Grid: Sidebar (1/4) + Content (3/4) -->
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-4 lg:gap-12">
         <!-- Sidebar Navigation (1/4) -->
@@ -135,34 +185,39 @@ const { html: renderedContent } = useMarkdown(computed(() => props.page.content 
               />
             </div>
 
-            <!-- Title -->
-            <h1 class="mb-4 font-heading text-4xl font-bold leading-tight text-neutral-900 dark:text-neutral-50 md:text-5xl lg:text-6xl">
-              {{ page.title }}
-            </h1>
-
-            <!-- Subtitle / Description -->
-            <p v-if="page.description" class="mb-6 text-lg text-neutral-600 dark:text-neutral-300 md:text-xl">
-              {{ page.description }}
-            </p>
-
-            <!-- Date -->
-            <p v-if="formattedDate" class="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
-              Updated {{ formattedDate }}
-            </p>
-
             <!-- Featured Image -->
             <div v-if="page.og_image || metadata?.heroImage" class="relative overflow-hidden rounded-lg">
               <img
                 :src="page.og_image || metadata?.heroImage"
                 :alt="page.title"
-                class="h-auto w-full object-contain"
+                class="h-auto w-[800px] object-contain"
               />
             </div>
           </section>
 
           <!-- Introduction / Content -->
           <section v-if="renderedContent" class="mb-12">
-            <div class="prose prose-lg dark:prose-invert max-w-none" v-html="renderedContent" />
+            <div class="prose prose-lg max-w-none dark:prose-invert" v-html="renderedContent" />
+          </section>
+
+          <!-- Featured Pages Section -->
+          <section v-if="featuredCards.length > 0" class="mb-16">
+            <!-- Section Heading -->
+            <h2 class="mb-8 font-heading text-3xl font-bold text-neutral-900 dark:text-neutral-50 md:text-4xl">
+              Featured
+            </h2>
+
+            <!-- Featured Cards Grid (3 columns on large displays) -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <HubTopicCard
+                v-for="card in featuredCards"
+                :key="card.to"
+                :image="card.image"
+                :title="card.title"
+                :description="card.description"
+                :to="card.to"
+              />
+            </div>
           </section>
 
           <!-- Topic Cards Grid Section -->

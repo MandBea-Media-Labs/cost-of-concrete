@@ -31,9 +31,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Parse metadata for Spoke-specific configuration
+// Template settings are stored in metadata.template
 const metadata = computed(() => {
-  if (!props.page.metadata) return null
-  return props.page.metadata as {
+  const pageMetadata = props.page.metadata as any
+  if (!pageMetadata?.template) return null
+  return pageMetadata.template as {
     category?: string
     showSidebar?: boolean
     sidebarPosition?: 'left' | 'right'
@@ -61,7 +63,7 @@ const gridColumns = computed(() => {
 // Generate navigation sections from children for sidebar
 const navigationSections = computed(() => {
   if (!props.children || props.children.length === 0) return []
-  
+
   return [
     {
       title: 'Topics',
