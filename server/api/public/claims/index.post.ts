@@ -272,7 +272,7 @@ export default defineEventHandler(async (event) => {
   if (config.resendApiKey) {
     const emailService = new EmailService({
       apiKey: config.resendApiKey,
-      fromEmail: 'claims@mail.costofconcrete.com',
+      fromEmail: 'noreply@mail.costofconcrete.com',
       siteName: config.public.siteName || 'Cost of Concrete',
       siteUrl: config.public.siteUrl || 'https://costofconcrete.com',
     })

@@ -190,7 +190,7 @@ host = "smtp.resend.com"
 port = 465
 user = "resend"
 pass = "env(RESEND_API_KEY)"
-admin_email = "accounts@mail.costofconcrete.com"
+admin_email = "noreply@mail.costofconcrete.com"
 sender_name = "Cost of Concrete"
 
 # Uncomment to customize email template
