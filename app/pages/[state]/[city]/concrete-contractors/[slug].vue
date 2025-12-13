@@ -176,9 +176,16 @@ const claimEmail = ref('')
 const claimPhone = ref('')
 const claimError = ref<string | null>(null)
 
+// Email check state (for unauthenticated users)
+const isCheckingEmail = ref(false)
+const emailRequiresSignIn = ref(false)
+const emailCheckMessage = ref<string | null>(null)
+
 const openClaimDialog = () => {
   showClaimDialog.value = true
   claimError.value = null
+  emailRequiresSignIn.value = false
+  emailCheckMessage.value = null
   // Pre-fill for authenticated users
   if (isAuthenticated.value) {
     claimEmail.value = authenticatedEmail.value
@@ -192,12 +199,50 @@ const closeClaimDialog = () => {
   claimEmail.value = ''
   claimPhone.value = ''
   claimError.value = null
+  emailRequiresSignIn.value = false
+  emailCheckMessage.value = null
+}
+
+// Check if email has existing account (for unauthenticated users only)
+const checkEmail = async () => {
+  // Skip check for authenticated users - they're using their own email
+  if (isAuthenticated.value) return
+  // Skip if email is empty or invalid format
+  const email = claimEmail.value.trim()
+  if (!email || !email.includes('@')) return
+
+  isCheckingEmail.value = true
+  emailRequiresSignIn.value = false
+  emailCheckMessage.value = null
+
+  try {
+    const response = await $fetch('/api/public/claims/check-email', {
+      method: 'POST',
+      body: { email },
+    })
+
+    if (response.requiresSignIn) {
+      emailRequiresSignIn.value = true
+      emailCheckMessage.value = response.message || 'Please sign in to claim this profile.'
+    } else if (!response.canClaim) {
+      claimError.value = response.message || 'Unable to process claim with this email.'
+    }
+  } catch {
+    // Silently fail - don't block the user, server-side validation will catch issues
+  } finally {
+    isCheckingEmail.value = false
+  }
 }
 
 const submitClaim = async () => {
   if (!contractor.value?.id) return
   if (!claimName.value.trim() || !claimEmail.value.trim()) {
     claimError.value = 'Name and email are required'
+    return
+  }
+  // Block submission if email requires sign in
+  if (emailRequiresSignIn.value) {
+    claimError.value = 'Please sign in to claim this profile with your existing account.'
     return
   }
   isSubmittingClaim.value = true
@@ -416,6 +461,21 @@ const submitClaim = async () => {
 
         <div v-if="claimError" class="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">{{ claimError }}</div>
 
+        <!-- Email requires sign-in notice -->
+        <div v-if="emailRequiresSignIn" class="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+          <p class="text-sm text-amber-700 dark:text-amber-300">
+            <Icon name="heroicons:exclamation-triangle" class="mr-1.5 inline-block h-4 w-4" />
+            {{ emailCheckMessage }}
+          </p>
+          <NuxtLink
+            :to="`/login?redirect=${encodeURIComponent($route.fullPath)}`"
+            class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-site-blue hover:underline"
+          >
+            Sign in to your account
+            <Icon name="heroicons:arrow-right" class="h-4 w-4" />
+          </NuxtLink>
+        </div>
+
         <TextInput v-model="claimName" type="text" placeholder="Your Full Name *" size="md" :disabled="isSubmittingClaim" />
 
         <!-- Email: read-only for authenticated users -->
@@ -429,13 +489,28 @@ const submitClaim = async () => {
           >
           <p class="text-xs text-neutral-500 dark:text-neutral-400">Using your account email</p>
         </div>
-        <TextInput v-else v-model="claimEmail" type="email" placeholder="Your Email Address *" size="md" :disabled="isSubmittingClaim" />
+        <!-- Email with blur check for unauthenticated users -->
+        <div v-else class="space-y-1">
+          <div class="relative">
+            <TextInput
+              v-model="claimEmail"
+              type="email"
+              placeholder="Your Email Address *"
+              size="md"
+              :disabled="isSubmittingClaim"
+              @blur="checkEmail"
+            />
+            <div v-if="isCheckingEmail" class="absolute right-3 top-1/2 -translate-y-1/2">
+              <Icon name="heroicons:arrow-path" class="h-4 w-4 animate-spin text-neutral-400" />
+            </div>
+          </div>
+        </div>
 
         <TextInput v-model="claimPhone" type="tel" placeholder="Phone Number (optional)" size="md" :disabled="isSubmittingClaim" />
       </form>
       <template #actions>
         <Button text="Cancel" variant="ghost" :disabled="isSubmittingClaim" @click="closeClaimDialog" />
-        <Button text="Submit Claim" variant="primary" :disabled="isSubmittingClaim || !claimName.trim() || !claimEmail.trim()" @click="submitClaim" />
+        <Button text="Submit Claim" variant="primary" :disabled="isSubmittingClaim || emailRequiresSignIn || !claimName.trim() || !claimEmail.trim()" @click="submitClaim" />
       </template>
     </Dialog>
   </div>
