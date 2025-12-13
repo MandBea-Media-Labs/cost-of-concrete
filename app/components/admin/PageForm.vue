@@ -314,6 +314,11 @@ const onSubmit = handleSubmit(
 function onCancel() {
   emit('cancel')
 }
+
+// Expose submit function for external triggering
+defineExpose({
+  submit: onSubmit
+})
 </script>
 
 <template>
@@ -592,26 +597,6 @@ function onCancel() {
           </UiCardContent>
         </UiCard>
       </div>
-    </div>
-
-
-    <!-- Form Actions -->
-    <div class="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-border">
-      <UiButton
-        type="button"
-        variant="outline"
-        @click="onCancel"
-        :disabled="isSubmitting"
-      >
-        Cancel
-      </UiButton>
-      <UiButton
-        type="submit"
-        :disabled="isSubmitting"
-      >
-        <Icon v-if="isSubmitting" name="heroicons:arrow-path" class="size-4 animate-spin mr-2" />
-        {{ isEditMode ? 'Update Page' : 'Create Page' }}
-      </UiButton>
     </div>
   </form>
 </template>

@@ -26,6 +26,9 @@ const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
 
+// Form ref for triggering submit from sticky header
+const pageFormRef = ref<{ submit: () => void } | null>(null)
+
 // =====================================================
 // FORM SUBMISSION
 // =====================================================
@@ -172,23 +175,30 @@ function handleCancel() {
 
 <template>
   <div>
-    <!-- Page Header -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between">
+    <!-- Sticky Header with Controls -->
+    <div class="sticky top-0 z-10 -mx-4 px-4 py-4 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
+      <div class="flex items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold">
-            Create New Page
-          </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Add a new page to your website
-          </p>
+          <h1 class="text-2xl font-bold">Create New Page</h1>
+          <p class="text-muted-foreground text-sm">Add a new page to your website</p>
         </div>
-        <UiButton variant="ghost" as-child>
-          <NuxtLink to="/admin/pages">
-            <Icon name="heroicons:arrow-left" class="size-4" />
-            Back to Pages
-          </NuxtLink>
-        </UiButton>
+        <div class="flex items-center gap-3">
+          <UiButton
+            type="button"
+            variant="outline"
+            @click="handleCancel"
+            :disabled="isSubmitting"
+          >
+            Cancel
+          </UiButton>
+          <UiButton
+            @click="pageFormRef?.submit()"
+            :disabled="isSubmitting"
+          >
+            <Icon v-if="isSubmitting" name="heroicons:arrow-path" class="size-4 animate-spin mr-2" />
+            Create Page
+          </UiButton>
+        </div>
       </div>
     </div>
 
@@ -226,6 +236,7 @@ function handleCancel() {
       </UiCardHeader>
       <UiCardContent>
         <PageForm
+          ref="pageFormRef"
           :is-submitting="isSubmitting"
           @submit="handleSubmit"
           @cancel="handleCancel"

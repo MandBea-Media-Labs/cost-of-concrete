@@ -38,6 +38,12 @@ const showUnarchiveDialog = ref(false)
 const isArchiving = ref(false)
 const isDeleting = ref(false)
 
+// Form ref for triggering submit from sticky header
+const pageFormRef = ref<{ submit: () => void } | null>(null)
+
+// Save button state: 'idle' | 'saving' | 'saved'
+const saveButtonState = ref<'idle' | 'saving' | 'saved'>('idle')
+
 // Smart button logic
 const hasChildren = computed(() => childrenCount.value > 0)
 const isArchived = computed(() => currentPageStatus.value === 'archived')
@@ -238,6 +244,7 @@ function mapFormDataToApiInput(formData: PageFormData) {
 async function handleSubmit(formData: PageFormData) {
   try {
     isSubmitting.value = true
+    saveButtonState.value = 'saving'
     errorMessage.value = null
     fieldErrors.value = {}
 
@@ -302,14 +309,20 @@ async function handleSubmit(formData: PageFormData) {
       consola.success('✅ Page updated successfully!')
     }
 
-    // Show success toast and redirect
+    // Show success toast (stay on page, no redirect)
     toast.success('Page updated successfully!')
-    router.push('/admin/pages')
+
+    // Show "Saved!" state for 1 second, then revert to idle
+    saveButtonState.value = 'saved'
+    setTimeout(() => {
+      saveButtonState.value = 'idle'
+    }, 1000)
   } catch (err) {
     if (import.meta.dev) {
       consola.error('❌ Unexpected error:', err)
     }
     errorMessage.value = 'An unexpected error occurred. Please try again.'
+    saveButtonState.value = 'idle'
   } finally {
     isSubmitting.value = false
   }
@@ -527,7 +540,7 @@ async function handleUnarchive() {
     <!-- Error State (when loading fails) -->
     <UiCard v-else-if="errorMessage && !initialFormData" class="border-destructive bg-destructive/10">
       <UiCardContent class="pt-6">
-        <h2 class="text-lg font-semibold text-destructive mb-2">Error Loading Page</h2>
+        <h2 class="mb-2 text-lg font-semibold text-destructive">Error Loading Page</h2>
         <p class="text-destructive/80">{{ errorMessage }}</p>
         <UiButton @click="router.push('/admin/pages')" class="mt-4">
           Back to Pages
@@ -537,9 +550,39 @@ async function handleUnarchive() {
 
     <!-- Edit Form -->
     <div v-else-if="initialFormData">
-      <div class="mb-6">
-        <h1 class="text-3xl font-bold">Edit Page</h1>
-        <p class="text-muted-foreground mt-2">Update page content, SEO settings, and metadata</p>
+      <!-- Sticky Header with Controls -->
+      <div class="sticky top-0 z-10 -mx-4 mb-6 border-b border-border bg-background/95 pb-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div class="flex items-center justify-between gap-4 px-4">
+          <div>
+            <h1 class="text-2xl font-bold">Edit Page</h1>
+            <p class="text-sm text-muted-foreground">Update page content, SEO settings, and metadata</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <UiButton
+              type="button"
+              variant="outline"
+              @click="handleCancel"
+              :disabled="isSubmitting"
+            >
+              Cancel
+            </UiButton>
+            <UiButton
+              @click="pageFormRef?.submit()"
+              :disabled="saveButtonState !== 'idle'"
+              class="min-w-[80px]"
+            >
+              <template v-if="saveButtonState === 'saving'">
+                <Icon name="heroicons:arrow-path" class="size-4 animate-spin" />
+              </template>
+              <template v-else-if="saveButtonState === 'saved'">
+                Saved!
+              </template>
+              <template v-else>
+                Save
+              </template>
+            </UiButton>
+          </div>
+        </div>
       </div>
 
       <!-- Error Message (form errors) -->
@@ -547,7 +590,7 @@ async function handleUnarchive() {
         <UiCardContent class="pt-6">
           <div class="flex items-start justify-between">
             <div class="flex items-start gap-3">
-              <Icon name="heroicons:exclamation-circle" class="size-5 text-destructive mt-0.5" />
+              <Icon name="heroicons:exclamation-circle" class="size-5 mt-0.5 text-destructive" />
               <p class="text-sm text-destructive">{{ errorMessage }}</p>
             </div>
             <UiButton
@@ -564,6 +607,7 @@ async function handleUnarchive() {
       <UiCard>
         <UiCardContent class="pt-6">
           <PageForm
+            ref="pageFormRef"
             :initial-data="initialFormData"
             :is-edit-mode="true"
             :is-submitting="isSubmitting"
@@ -584,7 +628,7 @@ async function handleUnarchive() {
           <div v-if="showArchiveButton" class="flex items-start justify-between">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">Archive this page</h3>
-              <p class="text-sm text-muted-foreground mt-1">
+              <p class="mt-1 text-sm text-muted-foreground">
                 This page has {{ childrenCount }} child page(s). Archiving will also archive all descendants.
               </p>
             </div>
@@ -597,7 +641,7 @@ async function handleUnarchive() {
           <div v-if="showDeleteButton" class="flex items-start justify-between">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">Delete this page</h3>
-              <p class="text-sm text-muted-foreground mt-1">
+              <p class="mt-1 text-sm text-muted-foreground">
                 Permanently delete this page. This action cannot be undone.
               </p>
             </div>
@@ -610,7 +654,7 @@ async function handleUnarchive() {
           <div v-if="showUnarchiveButton" class="flex items-start justify-between">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">Unarchive this page</h3>
-              <p class="text-sm text-muted-foreground mt-1">
+              <p class="mt-1 text-sm text-muted-foreground">
                 Restore this page from the archive and set it back to draft status.
               </p>
             </div>
