@@ -98,7 +98,13 @@ const hasSocialLinks = computed(() => {
 // Get opening hours (stored as array of {day, hours} objects)
 const openingHours = computed(() => contractor.value?.openingHours || [])
 
-// Format opening hours for display
+// Check if we have valid hours to display
+const hasHours = computed(() => {
+  const hours = openingHours.value
+  return Array.isArray(hours) && hours.length > 0
+})
+
+// Format opening hours for display (shows first day as preview)
 const formattedHours = computed(() => {
   const hours = openingHours.value
   // Handle array format: [{day: "Monday", hours: "7 AM to 7 PM"}, ...]
@@ -113,6 +119,17 @@ const formattedHours = computed(() => {
     return 'Hours not available'
   }
   return 'Hours vary'
+})
+
+// Categories display state
+const categoriesExpanded = ref(false)
+const maxVisibleCategories = 6
+const visibleCategories = computed(() => {
+  if (categoriesExpanded.value) return categories.value
+  return categories.value.slice(0, maxVisibleCategories)
+})
+const hiddenCategoriesCount = computed(() => {
+  return Math.max(0, categories.value.length - maxVisibleCategories)
 })
 
 // Contact form state
@@ -336,7 +353,27 @@ const submitClaim = async () => {
             </div>
             <div class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Hours:</span>
-              <span class="text-neutral-600 dark:text-neutral-400">{{ formattedHours }}</span>
+              <template v-if="hasHours">
+                <Popover side="bottom" align="start" width="300px">
+                  <template #trigger>
+                    <button type="button" class="inline-flex items-center gap-1 text-left text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400">
+                      {{ formattedHours }}
+                      <Icon name="heroicons:chevron-down" class="h-4 w-4" />
+                    </button>
+                  </template>
+                  <div class="space-y-1.5">
+                    <div
+                      v-for="entry in openingHours"
+                      :key="entry.day"
+                      class="flex justify-between text-sm"
+                    >
+                      <span class="font-medium text-neutral-700 dark:text-neutral-300">{{ entry.day }}</span>
+                      <span class="text-neutral-600 dark:text-neutral-400">{{ entry.hours }}</span>
+                    </div>
+                  </div>
+                </Popover>
+              </template>
+              <span v-else class="text-neutral-600 dark:text-neutral-400">{{ formattedHours }}</span>
             </div>
             <div v-if="contractor?.website" class="grid grid-cols-[90px_1fr] gap-2 sm:grid-cols-[100px_1fr]">
               <span class="font-bold text-neutral-900 dark:text-white">Website:</span>
@@ -345,8 +382,24 @@ const submitClaim = async () => {
               </a>
             </div>
           </div>
-          <div v-if="categories.length" class="mt-4 flex flex-wrap gap-2">
-            <Badge v-for="cat in categories.slice(0, 4)" :key="cat" :text="cat" variant="primary-outline" size="sm" class="rounded-full" />
+          <div v-if="categories.length" class="mt-4 flex flex-wrap items-center gap-2">
+            <Badge v-for="cat in visibleCategories" :key="cat" :text="cat" variant="primary-outline" size="sm" class="rounded-full" />
+            <button
+              v-if="hiddenCategoriesCount > 0 && !categoriesExpanded"
+              type="button"
+              class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              @click="categoriesExpanded = true"
+            >
+              +{{ hiddenCategoriesCount }} more
+            </button>
+            <button
+              v-if="categoriesExpanded && categories.length > maxVisibleCategories"
+              type="button"
+              class="text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
+              @click="categoriesExpanded = false"
+            >
+              Show less
+            </button>
           </div>
           <!-- Social Links -->
           <div v-if="hasSocialLinks" class="mt-4 flex flex-wrap gap-3">
