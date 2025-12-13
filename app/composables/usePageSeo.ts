@@ -41,16 +41,6 @@ export function usePageSeo(page: Page) {
     ? (isAbsoluteUrl(page.canonical_url) ? page.canonical_url : `${siteUrl}${page.canonical_url}`)
     : `${siteUrl}${page.full_path}`
 
-  // Debug: log canonical URL resolution in dev
-  if (import.meta.dev) {
-    console.log('[usePageSeo] Canonical URL resolution:', {
-      'page.canonical_url': page.canonical_url,
-      'page.full_path': page.full_path,
-      'isAbsolute': page.canonical_url ? isAbsoluteUrl(page.canonical_url) : 'N/A',
-      'fullUrl': fullUrl
-    })
-  }
-
   // Set basic SEO meta tags
   useSeoMeta({
     // Basic meta tags

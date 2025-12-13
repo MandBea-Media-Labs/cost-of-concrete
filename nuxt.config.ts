@@ -1,7 +1,55 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// US State slugs for route matching - must match app/utils/usStates.ts
+const US_STATE_SLUGS = [
+  'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut',
+  'delaware', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa',
+  'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan',
+  'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new-hampshire',
+  'new-jersey', 'new-mexico', 'new-york', 'north-carolina', 'north-dakota', 'ohio',
+  'oklahoma', 'oregon', 'pennsylvania', 'rhode-island', 'south-carolina', 'south-dakota',
+  'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west-virginia',
+  'wisconsin', 'wyoming',
+]
+
+// Generate regex pattern for matching state slugs in routes
+const STATE_REGEX = `(${US_STATE_SLUGS.join('|')})`
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+
+  // Custom route ordering to prevent [state] routes from intercepting CMS pages
+  // See: https://nuxt.com/docs/guide/recipes/custom-routing
+  hooks: {
+    'pages:extend'(pages) {
+      // Recursively find and modify all routes that have :state param
+      // Nuxt generates paths like ":state()" with empty parentheses
+      function modifyStateRoutes(routes: typeof pages) {
+        for (const route of routes) {
+          if (route.path.includes(':state')) {
+            route.path = route.path.replace(':state()', `:state${STATE_REGEX}`)
+          }
+          if (route.children) {
+            modifyStateRoutes(route.children)
+          }
+        }
+      }
+
+      modifyStateRoutes(pages)
+
+      // Reorder routes: move catch-all to the END so state routes match first
+      const catchAllIndex = pages.findIndex(p => p.path === '/:slug(.*)*')
+      if (catchAllIndex > -1) {
+        const catchAll = pages.splice(catchAllIndex, 1)[0]
+        if (catchAll) {
+          pages.push(catchAll)
+        }
+      }
+
+      console.log('[Nuxt] Custom route ordering applied: state routes prioritized over catch-all')
+    },
+  },
 
   modules: [
     '@nuxtjs/tailwindcss',

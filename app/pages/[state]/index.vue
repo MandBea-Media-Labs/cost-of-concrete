@@ -42,15 +42,8 @@ const serviceTypeOptions = computed<FilterOption[]>(() => {
 // Distance filter composable
 const distanceFilter = useDistanceFilter()
 
-// Validate that the state param is a valid US state slug
-// This prevents the route from matching non-state paths like /owner, /admin, etc.
-definePageMeta({
-  validate: async (route) => {
-    const stateSlug = route.params.state as string
-    const state = getStateBySlug(stateSlug)
-    return !!state
-  }
-})
+// Note: State validation is handled at route level via regex pattern in nuxt.config.ts
+// See pages:extend hook - route only matches valid US state slugs
 
 // Get the state slug from route params
 const route = useRoute()

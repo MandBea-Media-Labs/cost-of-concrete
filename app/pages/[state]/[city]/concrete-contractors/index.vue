@@ -8,13 +8,9 @@ import { getStateBySlug } from '~/utils/usStates'
  * SEO-optimized URL structure for concrete contractor directory
  */
 
+// Note: State validation is handled at route level via regex pattern in nuxt.config.ts
 definePageMeta({
   layout: 'default',
-  validate: async (route) => {
-    const stateSlug = route.params.state as string
-    const state = getStateBySlug(stateSlug)
-    return !!state
-  }
 })
 
 const route = useRoute()
