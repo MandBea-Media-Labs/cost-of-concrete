@@ -96,16 +96,49 @@ export default defineEventHandler(async (event) => {
       updated_at: now.toISOString(),
     }
 
-    // If approving, generate activation token with 7-day expiry
+    // If approving, check if user is already authenticated (has claimant_user_id)
+    // For authenticated users: mark contractor as claimed immediately, set status to 'completed'
+    // For unauthenticated users: generate activation token and send email
     let activationToken: string | null = null
-    if (validatedData.status === 'approved') {
-      activationToken = crypto.randomUUID()
-      const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
-      updatePayload.account_activation_token = activationToken
-      updatePayload.account_activation_expires_at = expiresAt.toISOString()
+    const isAuthenticatedClaim = existingClaim.verification_method === 'authenticated_user' && existingClaim.claimant_user_id
 
-      if (import.meta.dev) {
-        consola.info(`PATCH /api/claims/${id} - Generated activation token, expires:`, expiresAt.toISOString())
+    if (validatedData.status === 'approved') {
+      if (isAuthenticatedClaim) {
+        // Authenticated user - mark as completed immediately
+        updatePayload.status = 'completed'
+
+        // Update contractor to mark as claimed
+        const { error: contractorError } = await client
+          .from('contractors')
+          .update({
+            is_claimed: true,
+            claimed_by: existingClaim.claimant_user_id,
+            claimed_at: now.toISOString(),
+          })
+          .eq('id', existingClaim.contractor_id)
+
+        if (contractorError) {
+          consola.error(`PATCH /api/claims/${id} - Failed to update contractor:`, contractorError)
+          throw createError({
+            statusCode: 500,
+            statusMessage: 'Internal Server Error',
+            message: 'Failed to link contractor to user',
+          })
+        }
+
+        if (import.meta.dev) {
+          consola.success(`PATCH /api/claims/${id} - Contractor linked to existing user ${existingClaim.claimant_user_id}`)
+        }
+      } else {
+        // Unauthenticated user - generate activation token
+        activationToken = crypto.randomUUID()
+        const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        updatePayload.account_activation_token = activationToken
+        updatePayload.account_activation_expires_at = expiresAt.toISOString()
+
+        if (import.meta.dev) {
+          consola.info(`PATCH /api/claims/${id} - Generated activation token, expires:`, expiresAt.toISOString())
+        }
       }
     }
 
@@ -151,13 +184,23 @@ export default defineEventHandler(async (event) => {
       }
 
       // Fire and forget - don't block the response
-      if (validatedData.status === 'approved' && activationToken) {
-        emailService.sendClaimApprovedEmail({
-          ...emailData,
-          activationToken,
-        }).catch((err) => {
-          consola.error('Failed to send claim approved email:', err)
-        })
+      if (validatedData.status === 'approved') {
+        if (isAuthenticatedClaim) {
+          // Authenticated user - send simple approval notification (no activation needed)
+          emailService.sendClaimApprovedAuthenticatedEmail({
+            ...emailData,
+          }).catch((err) => {
+            consola.error('Failed to send claim approved (authenticated) email:', err)
+          })
+        } else if (activationToken) {
+          // Unauthenticated user - send activation email
+          emailService.sendClaimApprovedEmail({
+            ...emailData,
+            activationToken,
+          }).catch((err) => {
+            consola.error('Failed to send claim approved email:', err)
+          })
+        }
       } else if (validatedData.status === 'rejected') {
         emailService.sendClaimRejectedEmail({
           ...emailData,

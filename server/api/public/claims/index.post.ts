@@ -54,9 +54,12 @@ export default defineEventHandler(async (event) => {
   let isVerifiedUser = false
   try {
     const user = await serverSupabaseUser(event)
-    if (user?.id) {
-      userId = user.id
-      userEmail = user.email || null
+    // Supabase JWT uses 'sub' for user ID, not 'id'
+    const resolvedUserId = user?.id || user?.sub
+    consola.info('[claim] serverSupabaseUser result:', { id: resolvedUserId, email: user?.email })
+    if (resolvedUserId) {
+      userId = resolvedUserId
+      userEmail = user?.email || null
 
       // Verify the authenticated user's email matches the claim email
       // This prevents someone from claiming with a different email while logged in
@@ -71,13 +74,50 @@ export default defineEventHandler(async (event) => {
           message: 'Please use your account email address to claim this profile, or sign out to use a different email.',
         })
       }
+    } else {
+      consola.info('[claim] No user returned from serverSupabaseUser')
     }
   } catch (err) {
     // Re-throw our custom errors
     if (err && typeof err === 'object' && 'statusCode' in err) {
       throw err
     }
-    // Not authenticated, that's fine
+    // Not authenticated - log for debugging
+    consola.warn('[claim] serverSupabaseUser failed:', err instanceof Error ? err.message : String(err))
+  }
+
+  // For unauthenticated users, check if email already has an account
+  // (Authenticated users are already verified above)
+  if (!isVerifiedUser) {
+    const { data: listData } = await client.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    })
+    const existingAuthUser = listData?.users?.find(
+      u => u.email?.toLowerCase() === claimantEmail.toLowerCase()
+    )
+    if (existingAuthUser) {
+      // Check if account is active
+      const { data: profile } = await client
+        .from('account_profiles')
+        .select('status')
+        .eq('id', existingAuthUser.id)
+        .maybeSingle()
+
+      const status = profile?.status || 'active'
+      if (status === 'suspended' || status === 'deleted') {
+        throw createError({
+          statusCode: 400,
+          message: 'Unable to process claim with this email address.',
+        })
+      }
+      // Active account exists - must sign in
+      consola.info(`[claim] Blocking unauthenticated claim - account exists for ${claimantEmail}`)
+      throw createError({
+        statusCode: 400,
+        message: 'An account with this email already exists. Please sign in to claim this profile.',
+      })
+    }
   }
 
   // Check contractor exists and is not already claimed

@@ -163,6 +163,62 @@ export class EmailService {
   }
 
   /**
+   * Send claim approved notification for authenticated users (no activation needed)
+   * This is sent when an admin approves a claim from a user who is already logged in
+   */
+  async sendClaimApprovedAuthenticatedEmail(data: BaseClaimEmailData): Promise<boolean> {
+    const { claimantEmail, claimantName, businessName } = data
+    const displayName = claimantName || 'there'
+    const dashboardUrl = `${this.siteUrl}/owner`
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: `${this.siteName} <${this.fromEmail}>`,
+        to: claimantEmail,
+        subject: `Your claim for ${businessName} has been approved!`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #16a34a;">Claim Approved!</h1>
+            <p>Hi ${displayName},</p>
+            <p>Great news! Your claim for <strong>${businessName}</strong> has been approved.</p>
+            <p>You can now manage your business profile from your dashboard:</p>
+            <p style="margin: 24px 0;">
+              <a href="${dashboardUrl}"
+                 style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Go to Dashboard
+              </a>
+            </p>
+            <p>From your dashboard, you'll be able to:</p>
+            <ul>
+              <li>Update your business information</li>
+              <li>Edit your company description</li>
+              <li>Manage contact details</li>
+            </ul>
+            <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;" />
+            <p style="color: #666; font-size: 14px;">
+              Best regards,<br />
+              The ${this.siteName} Team
+            </p>
+          </div>
+        `,
+      })
+
+      if (error) {
+        consola.error('EmailService.sendClaimApprovedAuthenticatedEmail - Failed:', error)
+        return false
+      }
+
+      if (import.meta.dev) {
+        consola.success(`EmailService - Claim approved (authenticated) email sent to ${claimantEmail}`)
+      }
+      return true
+    } catch (err) {
+      consola.error('EmailService.sendClaimApprovedAuthenticatedEmail - Error:', err)
+      return false
+    }
+  }
+
+  /**
    * Send claim rejected notification to the claimant
    */
   async sendClaimRejectedEmail(data: RejectionEmailData): Promise<boolean> {

@@ -161,11 +161,8 @@ const overallRating = computed(() => {
   return (sum / allReviews.value.length).toFixed(1)
 })
 
-// Auth state for claim flow
-const user = useSupabaseUser()
-const isAuthenticated = computed(() => !!user.value?.id)
-const authenticatedEmail = computed(() => user.value?.email || '')
-const authenticatedName = computed(() => user.value?.user_metadata?.display_name || user.value?.user_metadata?.full_name || '')
+// Auth state for claim flow - using centralized composable
+const { isAuthenticated, email: authenticatedEmail, displayName: authenticatedName, ensureProfile } = useAuthUser()
 
 // Claim business state
 const showClaimDialog = ref(false)
@@ -181,7 +178,10 @@ const isCheckingEmail = ref(false)
 const emailRequiresSignIn = ref(false)
 const emailCheckMessage = ref<string | null>(null)
 
-const openClaimDialog = () => {
+const openClaimDialog = async () => {
+  // Ensure profile is loaded before checking auth state
+  await ensureProfile()
+
   showClaimDialog.value = true
   claimError.value = null
   emailRequiresSignIn.value = false
@@ -204,12 +204,13 @@ const closeClaimDialog = () => {
 }
 
 // Check if email has existing account (for unauthenticated users only)
-const checkEmail = async () => {
+// Check if email has existing account - returns true if blocked
+const checkEmail = async (): Promise<boolean> => {
   // Skip check for authenticated users - they're using their own email
-  if (isAuthenticated.value) return
+  if (isAuthenticated.value) return false
   // Skip if email is empty or invalid format
   const email = claimEmail.value.trim()
-  if (!email || !email.includes('@')) return
+  if (!email || !email.includes('@')) return false
 
   isCheckingEmail.value = true
   emailRequiresSignIn.value = false
@@ -224,11 +225,15 @@ const checkEmail = async () => {
     if (response.requiresSignIn) {
       emailRequiresSignIn.value = true
       emailCheckMessage.value = response.message || 'Please sign in to claim this profile.'
+      return true // Blocked
     } else if (!response.canClaim) {
       claimError.value = response.message || 'Unable to process claim with this email.'
+      return true // Blocked
     }
+    return false // Can proceed
   } catch {
-    // Silently fail - don't block the user, server-side validation will catch issues
+    // Silently fail - server-side validation will catch issues
+    return false
   } finally {
     isCheckingEmail.value = false
   }
@@ -240,13 +245,17 @@ const submitClaim = async () => {
     claimError.value = 'Name and email are required'
     return
   }
-  // Block submission if email requires sign in
-  if (emailRequiresSignIn.value) {
-    claimError.value = 'Please sign in to claim this profile with your existing account.'
-    return
-  }
+
   isSubmittingClaim.value = true
   claimError.value = null
+
+  // Check email on submit (not just on blur)
+  const isBlocked = await checkEmail()
+  if (isBlocked) {
+    isSubmittingClaim.value = false
+    return
+  }
+
   try {
     const response = await $fetch('/api/public/claims', {
       method: 'POST',
@@ -453,23 +462,23 @@ const submitClaim = async () => {
     <!-- Claim Business Dialog -->
     <Dialog v-model:open="showClaimDialog" title="Claim this Business" description="Submit a claim to manage this business profile." size="md" :close-on-overlay-click="false" @close="closeClaimDialog">
       <form class="mt-4 space-y-4" @submit.prevent="submitClaim">
-        <!-- Authenticated user notice -->
-        <div v-if="isAuthenticated" class="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-          <Icon name="heroicons:check-badge" class="mr-1.5 inline-block h-4 w-4" />
-          You're signed in. Your claim will go directly to admin review.
+        <!-- Authenticated user notice - 2-column layout -->
+        <div v-if="isAuthenticated" class="flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+          <Icon name="heroicons:check-badge" class="h-4 w-4 shrink-0 mt-0.5" />
+          <span>You're signed in. Your claim will go directly to admin review.</span>
         </div>
 
         <div v-if="claimError" class="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">{{ claimError }}</div>
 
-        <!-- Email requires sign-in notice -->
+        <!-- Email requires sign-in notice - 2-column layout -->
         <div v-if="emailRequiresSignIn" class="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
-          <p class="text-sm text-amber-700 dark:text-amber-300">
-            <Icon name="heroicons:exclamation-triangle" class="mr-1.5 inline-block h-4 w-4" />
-            {{ emailCheckMessage }}
-          </p>
+          <div class="flex gap-2 text-sm text-amber-700 dark:text-amber-300">
+            <Icon name="heroicons:exclamation-triangle" class="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{{ emailCheckMessage }}</span>
+          </div>
           <NuxtLink
             :to="`/login?redirect=${encodeURIComponent($route.fullPath)}`"
-            class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-site-blue hover:underline"
+            class="mt-2 ml-6 inline-flex items-center gap-1 text-sm font-medium text-site-blue hover:underline"
           >
             Sign in to your account
             <Icon name="heroicons:arrow-right" class="h-4 w-4" />
@@ -478,33 +487,26 @@ const submitClaim = async () => {
 
         <TextInput v-model="claimName" type="text" placeholder="Your Full Name *" size="md" :disabled="isSubmittingClaim" />
 
-        <!-- Email: read-only for authenticated users -->
-        <div v-if="isAuthenticated" class="space-y-1">
-          <label class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email Address</label>
-          <input
+        <!-- Email: read-only for authenticated users - use TextInput for consistency -->
+        <div v-if="isAuthenticated">
+          <TextInput
+            v-model="claimEmail"
             type="email"
-            :value="claimEmail"
+            placeholder="Your Email Address *"
+            size="md"
             disabled
-            class="w-full rounded-md border border-neutral-300 bg-neutral-100 px-3 py-2 text-neutral-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
-          >
-          <p class="text-xs text-neutral-500 dark:text-neutral-400">Using your account email</p>
+          />
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Using your account email</p>
         </div>
-        <!-- Email with blur check for unauthenticated users -->
-        <div v-else class="space-y-1">
-          <div class="relative">
-            <TextInput
-              v-model="claimEmail"
-              type="email"
-              placeholder="Your Email Address *"
-              size="md"
-              :disabled="isSubmittingClaim"
-              @blur="checkEmail"
-            />
-            <div v-if="isCheckingEmail" class="absolute right-3 top-1/2 -translate-y-1/2">
-              <Icon name="heroicons:arrow-path" class="h-4 w-4 animate-spin text-neutral-400" />
-            </div>
-          </div>
-        </div>
+        <!-- Email for unauthenticated users - validated on submit -->
+        <TextInput
+          v-else
+          v-model="claimEmail"
+          type="email"
+          placeholder="Your Email Address *"
+          size="md"
+          :disabled="isSubmittingClaim"
+        />
 
         <TextInput v-model="claimPhone" type="tel" placeholder="Phone Number (optional)" size="md" :disabled="isSubmittingClaim" />
       </form>
