@@ -202,10 +202,11 @@ export class ReviewRepository {
   }
 
   /**
-   * Get the last review enrichment date for a contractor
+   * Get the last SUCCESSFUL review enrichment date for a contractor
    * Used to enforce the 30-day cooldown period
+   * Only returns a date if status is 'completed' - pending/failed attempts don't count
    */
-  async getLastEnrichmentDate(contractorId: string): Promise<Date | null> {
+  async getLastSuccessfulEnrichmentDate(contractorId: string): Promise<Date | null> {
     // Check contractor metadata for enrichment timestamp
     const { data, error } = await this.client
       .from('contractors')
@@ -222,7 +223,9 @@ export class ReviewRepository {
     const metadata = data?.metadata as Record<string, unknown> | null
     const reviewsEnrichment = metadata?.reviews_enrichment as Record<string, unknown> | undefined
 
-    if (!reviewsEnrichment?.last_attempt_at) {
+    // Only apply cooldown if enrichment was successful (completed)
+    // Pending or failed attempts should NOT block re-enrichment
+    if (!reviewsEnrichment?.last_attempt_at || reviewsEnrichment?.status !== 'completed') {
       return null
     }
 
@@ -232,13 +235,14 @@ export class ReviewRepository {
 
   /**
    * Check if a contractor is eligible for review enrichment
-   * Returns false if enriched within the cooldown period
+   * Returns false only if SUCCESSFULLY enriched within the cooldown period
+   * Pending/failed attempts do not block re-enrichment
    */
   async isEligibleForEnrichment(contractorId: string, cooldownDays: number): Promise<boolean> {
-    const lastEnrichment = await this.getLastEnrichmentDate(contractorId)
+    const lastEnrichment = await this.getLastSuccessfulEnrichmentDate(contractorId)
 
     if (!lastEnrichment) {
-      return true // Never enriched
+      return true // Never successfully enriched
     }
 
     const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000

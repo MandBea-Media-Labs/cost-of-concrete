@@ -63,8 +63,8 @@ export class DataForSeoService {
     }
     this.apiKey = key
     // DataForSEO uses Basic Auth with "login:password" base64 encoded
-    // The API key IS the "login:password" string
-    this.authHeader = `Basic ${Buffer.from(this.apiKey).toString('base64')}`
+    // The API key in the environment is already the Base64-encoded "login:password"
+    this.authHeader = `Basic ${this.apiKey}`
   }
 
   // =====================================================
