@@ -38,3 +38,8 @@ type: "always_apply"
 
 # 5. COGNITIVE PROCESS
 - **"Ultra-Think" Mode:** On every task, internally simulate the execution path and side effects before outputting the solution. Prioritize correctness over speed.
+
+# 6. SUPABASE
+- When the project uses Supabase, we will constantly need to generate the types file. YOU MUST USE THIS COMMAND:
+`pnpm dlx supabase gen types typescript --local > app/types/supabase.ts`
+  - The file path is relative to the root folder where we are running supabase, which will likely always be the root.

@@ -51,8 +51,13 @@ export class JobRepository {
     payload?: JobPayload
     totalItems?: number
     createdBy?: string
+    scheduledFor?: Date | string
   }): Promise<BackgroundJobRow> {
-    consola.debug(`Creating background job: ${data.jobType}`)
+    const scheduledForStr = data.scheduledFor
+      ? (data.scheduledFor instanceof Date ? data.scheduledFor.toISOString() : data.scheduledFor)
+      : null
+
+    consola.debug(`Creating background job: ${data.jobType}${scheduledForStr ? ` (scheduled for ${scheduledForStr})` : ''}`)
 
     // Use atomic RPC function for transactional job + log creation
     const { data: rpcResult, error: rpcError } = await this.client
@@ -60,6 +65,7 @@ export class JobRepository {
         p_job_type: data.jobType,
         p_payload: data.payload || {},
         p_created_by: data.createdBy || null,
+        p_scheduled_for: scheduledForStr,
       })
 
     if (rpcError) {

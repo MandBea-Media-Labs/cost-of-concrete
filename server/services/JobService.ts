@@ -18,7 +18,11 @@ import type {
   JobResult,
   JobResponse,
 } from '../schemas/job.schemas'
-import { RETRY_DELAYS_MINUTES } from '../schemas/job.schemas'
+import {
+  RETRY_DELAYS_MINUTES,
+  REVIEWER_IMAGE_RETRY_DELAYS_MINUTES,
+  REVIEWER_IMAGE_MAX_RETRIES,
+} from '../schemas/job.schemas'
 
 export class JobService {
   private repository: JobRepository
@@ -43,7 +47,8 @@ export class JobService {
   async createJob(
     jobType: JobType,
     payload: JobPayload,
-    createdBy?: string
+    createdBy?: string,
+    scheduledFor?: Date | string
   ): Promise<BackgroundJobRow> {
     try {
       // Repository uses atomic RPC that creates job + log in one transaction
@@ -51,10 +56,14 @@ export class JobService {
         jobType,
         payload,
         createdBy,
+        scheduledFor,
       })
 
       // Log is created atomically by RPC - no separate call needed
-      consola.info(`Created ${jobType} job: ${job.id}`)
+      const scheduledMsg = scheduledFor
+        ? ` (scheduled for ${scheduledFor instanceof Date ? scheduledFor.toISOString() : scheduledFor})`
+        : ''
+      consola.info(`Created ${jobType} job: ${job.id}${scheduledMsg}`)
 
       return job
     } catch (error) {
@@ -316,5 +325,27 @@ export class JobService {
       completedAt: job.completed_at,
       createdBy: job.created_by,
     }
+  }
+
+  /**
+   * Calculate the scheduled time for a reviewer image retry job
+   * Uses escalating cooldown: 15m → 30m → 1h → 2h
+   *
+   * @param attemptNumber Current attempt number (1-based)
+   * @returns Date for scheduled execution, or null if max retries exceeded
+   */
+  static calculateReviewerImageRetryTime(attemptNumber: number): Date | null {
+    if (attemptNumber > REVIEWER_IMAGE_MAX_RETRIES) {
+      return null // Max retries exceeded
+    }
+
+    // Get the delay for this attempt (0-indexed from delays array)
+    const delayIndex = Math.min(attemptNumber - 1, REVIEWER_IMAGE_RETRY_DELAYS_MINUTES.length - 1)
+    const delayMinutes = REVIEWER_IMAGE_RETRY_DELAYS_MINUTES[delayIndex]
+
+    const scheduledTime = new Date()
+    scheduledTime.setMinutes(scheduledTime.getMinutes() + delayMinutes)
+
+    return scheduledTime
   }
 }

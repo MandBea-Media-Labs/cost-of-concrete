@@ -22,6 +22,8 @@ import { DataForSeoService, type FetchResultOutput } from '../DataForSeoService'
 import { ReviewRepository } from '../../repositories/ReviewRepository'
 import { ContractorRepository } from '../../repositories/ContractorRepository'
 import { SystemLogService } from '../SystemLogService'
+import { JobService } from '../JobService'
+import { ReviewImageService, RateLimitError } from '../ReviewImageService'
 import { consola } from 'consola'
 import type {
   DataForSeoReviewTask,
@@ -318,6 +320,16 @@ export class ReviewEnrichmentJobExecutor implements JobExecutor {
 
         await reviewRepo.updateEnrichmentStatus(mapping.contractorId, 'success', reviews.length)
 
+        // ===================================================
+        // PHASE 4b: Download reviewer profile images
+        // ===================================================
+        await this.downloadReviewerImages(
+          client,
+          mapping.contractorId,
+          job.id,
+          logService
+        )
+
         results.push({
           contractorId: mapping.contractorId,
           companyName: mapping.companyName,
@@ -384,5 +396,73 @@ export class ReviewEnrichmentJobExecutor implements JobExecutor {
 
     return result
   }
-}
 
+  /**
+   * Download reviewer profile images for a contractor
+   * Handles rate limiting by queuing retry jobs
+   */
+  private async downloadReviewerImages(
+    client: SupabaseClient<Database>,
+    contractorId: string,
+    jobId: string,
+    logService: SystemLogService
+  ): Promise<void> {
+    const imageService = new ReviewImageService(client)
+
+    try {
+      // Get reviews that need photo downloads
+      const reviews = await imageService.getReviewsNeedingPhotoDownload(contractorId)
+
+      if (reviews.length === 0) {
+        consola.debug(`[ReviewEnrichmentJobExecutor] No reviewer photos to download for ${contractorId}`)
+        return
+      }
+
+      consola.info(`[ReviewEnrichmentJobExecutor] Downloading ${reviews.length} reviewer photos for ${contractorId}`)
+
+      const result = await imageService.downloadReviewerPhotos(reviews, contractorId)
+
+      await logService.logJobEvent(jobId, 'images_downloaded', `Downloaded ${result.downloaded} reviewer photos`, {
+        contractorId,
+        downloaded: result.downloaded,
+        failed: result.failed,
+      })
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        // Queue retry job with cooldown
+        consola.warn(
+          `[ReviewEnrichmentJobExecutor] Rate limited downloading images for ${contractorId}. Queuing retry for ${error.remainingImages.length} images.`
+        )
+
+        const scheduledFor = JobService.calculateReviewerImageRetryTime(1)
+
+        if (scheduledFor) {
+          const jobService = new JobService(client)
+          await jobService.createJob({
+            jobType: 'reviewer_image_retry',
+            payload: {
+              contractorId,
+              images: error.remainingImages,
+              attemptNumber: 1,
+            },
+            scheduledFor,
+          })
+
+          await logService.logJobEvent(jobId, 'images_rate_limited', 'Queued retry job for remaining images', {
+            contractorId,
+            remainingImages: error.remainingImages.length,
+            scheduledFor: scheduledFor.toISOString(),
+          })
+        }
+
+        return // Don't throw - enrichment was successful, just images deferred
+      }
+
+      // Log other errors but don't fail the enrichment
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      consola.error(`[ReviewEnrichmentJobExecutor] Error downloading images for ${contractorId}:`, errorMsg)
+
+      await logService.logJobEvent(jobId, 'images_error', errorMsg, { contractorId })
+    }
+  }
+}

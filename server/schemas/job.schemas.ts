@@ -26,7 +26,7 @@ export type SystemLogInsert = Database['public']['Tables']['system_logs']['Inser
 export const JOB_STATUSES = ['pending', 'processing', 'completed', 'failed', 'cancelled'] as const
 export type JobStatus = typeof JOB_STATUSES[number]
 
-export const JOB_TYPES = ['image_enrichment', 'contractor_enrichment', 'review_enrichment'] as const
+export const JOB_TYPES = ['image_enrichment', 'contractor_enrichment', 'review_enrichment', 'reviewer_image_retry'] as const
 export type JobType = typeof JOB_TYPES[number]
 
 // =====================================================
@@ -67,9 +67,24 @@ export const reviewEnrichmentPayloadSchema = z.object({
 export type ReviewEnrichmentPayload = z.infer<typeof reviewEnrichmentPayloadSchema>
 
 /**
+ * Reviewer Image Retry Job Payload
+ * Retries downloading reviewer profile images after rate limit cooldown
+ */
+export const reviewerImageRetryPayloadSchema = z.object({
+  contractorId: z.string().uuid(),
+  images: z.array(z.object({
+    reviewId: z.string().uuid(),
+    originalUrl: z.string().url(),
+  })).min(1).max(500),
+  attemptNumber: z.number().int().min(1).max(5).default(1), // For escalating cooldown
+})
+
+export type ReviewerImageRetryPayload = z.infer<typeof reviewerImageRetryPayloadSchema>
+
+/**
  * Union of all job payloads
  */
-export type JobPayload = ImageEnrichmentPayload | ContractorEnrichmentPayload | ReviewEnrichmentPayload
+export type JobPayload = ImageEnrichmentPayload | ContractorEnrichmentPayload | ReviewEnrichmentPayload | ReviewerImageRetryPayload
 
 // =====================================================
 // JOB RESULT TYPES (per job type)
@@ -125,7 +140,21 @@ export interface ReviewEnrichmentResult {
   shouldContinue?: boolean
 }
 
-export type JobResult = ImageEnrichmentResult | ContractorEnrichmentResult | ReviewEnrichmentResult
+export interface ReviewerImageRetryResult {
+  contractorId: string
+  totalImages: number
+  downloaded: number
+  failed: number
+  /** If rate limited again, images that need retry */
+  remainingImages?: Array<{
+    reviewId: string
+    originalUrl: string
+  }>
+  /** Flag indicating if another retry job was queued */
+  requeuedForRetry?: boolean
+}
+
+export type JobResult = ImageEnrichmentResult | ContractorEnrichmentResult | ReviewEnrichmentResult | ReviewerImageRetryResult
 
 // =====================================================
 // API REQUEST SCHEMAS
@@ -233,3 +262,14 @@ export const MAX_REVIEW_DEPTH = 1500
 /** Re-enrichment cooldown in days */
 export const REVIEW_ENRICHMENT_COOLDOWN_DAYS = 30
 
+/** Delay between reviewer image downloads (ms) */
+export const REVIEWER_IMAGE_DOWNLOAD_DELAY_MS = 300
+
+/** Timeout for each reviewer image download (ms) */
+export const REVIEWER_IMAGE_DOWNLOAD_TIMEOUT_MS = 5000
+
+/** Reviewer image retry cooldown delays in minutes: 15m, 30m, 1h, 2h */
+export const REVIEWER_IMAGE_RETRY_DELAYS_MINUTES = [15, 30, 60, 120]
+
+/** Maximum retry attempts for reviewer images before abandoning */
+export const REVIEWER_IMAGE_MAX_RETRIES = 4

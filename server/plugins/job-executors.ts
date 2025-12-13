@@ -12,6 +12,7 @@ import { JobExecutorRegistry } from '../services/JobExecutorRegistry'
 import { ImageEnrichmentJobExecutor } from '../services/executors/ImageEnrichmentJobExecutor'
 import { ContractorEnrichmentJobExecutor } from '../services/executors/ContractorEnrichmentJobExecutor'
 import { ReviewEnrichmentJobExecutor } from '../services/executors/ReviewEnrichmentJobExecutor'
+import { ReviewerImageRetryJobExecutor } from '../services/executors/ReviewerImageRetryJobExecutor'
 
 export default defineNitroPlugin(() => {
   // Register all job executors
@@ -19,6 +20,7 @@ export default defineNitroPlugin(() => {
     { type: 'image_enrichment', executor: new ImageEnrichmentJobExecutor() },
     { type: 'contractor_enrichment', executor: new ContractorEnrichmentJobExecutor() },
     { type: 'review_enrichment', executor: new ReviewEnrichmentJobExecutor() },
+    { type: 'reviewer_image_retry', executor: new ReviewerImageRetryJobExecutor() },
   ] as const
 
   let registeredCount = 0
