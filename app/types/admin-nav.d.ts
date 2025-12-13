@@ -23,7 +23,7 @@ export interface AdminNavGroup {
 }
 
 export interface AdminNavMenu {
-  heading: string
+  heading?: string
   items: AdminNavMenuItems
 }
 

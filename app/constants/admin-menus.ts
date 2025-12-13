@@ -2,63 +2,67 @@ import type { AdminNavMenu, AdminNavMenuItems } from '~/types/admin-nav'
 
 export const adminNavMenu: AdminNavMenu[] = [
   {
+    items: [
+      {
+        title: 'Homepage',
+        icon: 'i-lucide-external-link',
+        link: '/',
+        external: true,
+      }
+    ],
+  },
+  {
     heading: 'Main',
     items: [
       {
         title: 'Overview',
         icon: 'i-lucide-home',
         link: '/admin',
-      },
-      {
-        title: 'View Site',
-        icon: 'i-lucide-external-link',
-        link: '/',
-        external: true,
-      },
+      }
     ],
   },
   {
     heading: 'Content',
     items: [
       {
-        title: 'Pages',
-        icon: 'i-lucide-file-text',
-        link: '/admin/pages',
-      },
-      {
         title: 'Menus',
         icon: 'i-lucide-menu',
         link: '/admin/menus',
       },
+      {
+        title: 'Pages',
+        icon: 'i-lucide-file-text',
+        link: '/admin/pages',
+      }
     ],
   },
   {
     heading: 'Directory',
     items: [
       {
-        title: 'Contractor Profiles',
-        icon: 'i-lucide-building-2',
-        link: '/admin/contractors',
-      },
-      {
         title: 'Profile Claims',
         icon: 'i-lucide-shield-check',
         link: '/admin/claims',
       },
+      {
+        title: 'Contractor Profiles',
+        icon: 'i-lucide-building-2',
+        link: '/admin/contractors',
+      }
     ],
   },
   {
     heading: 'Accounts',
     items: [
       {
-        title: 'System Accounts',
-        icon: 'i-lucide-users',
-        link: '/admin/accounts/system',
-      },
-      {
         title: 'Contractor Accounts',
         icon: 'i-lucide-building',
         link: '/admin/accounts/contractors',
+      },
+      {
+        title: 'System Accounts',
+        icon: 'i-lucide-users',
+        link: '/admin/accounts/system',
       },
     ],
   },
