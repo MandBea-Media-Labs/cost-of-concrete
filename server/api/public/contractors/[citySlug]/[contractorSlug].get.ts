@@ -67,10 +67,12 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Convert enriched business hours to frontend format
+    // Convert business hours to frontend format
     // Frontend expects: [{day: "Monday", hours: "7 AM to 7 PM"}, ...]
-    // Enrichment stores: { monday: { open: "8:00 AM", close: "5:00 PM" }, ... }
-    const businessHours = enrichment.business_hours
+    // Priority: 1) metadata.business_hours (owner-edited), 2) enrichment.business_hours (AI), 3) opening_hours (legacy)
+    const ownerBusinessHours = (metadata as Record<string, unknown>).business_hours as Record<string, { open: string; close: string } | null> | undefined
+    const enrichedBusinessHours = enrichment.business_hours
+    const businessHours = ownerBusinessHours || enrichedBusinessHours
     let openingHours: Array<{ day: string; hours: string }> = []
 
     if (businessHours && typeof businessHours === 'object') {
@@ -83,7 +85,7 @@ export default defineEventHandler(async (event) => {
         }))
     }
 
-    // Fall back to legacy opening_hours if no enriched data
+    // Fall back to legacy opening_hours if no owner or enriched data
     if (openingHours.length === 0 && metadata.opening_hours) {
       const legacyHours = metadata.opening_hours
       if (Array.isArray(legacyHours)) {

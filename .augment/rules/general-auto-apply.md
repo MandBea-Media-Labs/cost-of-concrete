@@ -3,7 +3,7 @@ type: "always_apply"
 ---
 
 # 0. PRIMARY DIRECTIVES (NON-NEGOTIABLE)
-- **Project Name:** Cost of Concrete
+- **Project Name (`Project Name`):** Cost of Concrete
 -- The project name matters because you will need it to find the right project in Linear and other supporting MCP tools.
 
 - **Package Manager:** ALWAYS use `pnpm`.

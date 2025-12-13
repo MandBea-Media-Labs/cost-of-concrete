@@ -7,7 +7,7 @@ type: "manual"
 **Trigger:** Use this protocol whenever we begin a new Feature, Refactor, or Implementation Plan.
 
 ### 1. Initialization & Context
-*   **Project Enforcement:** Per global rules, target the **"Cost of Concrete"** project.
+*   **Project Enforcement:** Per global rules, target the `Project Name` project.
 *   **Discovery:** Before creating *any* tickets, use the Linear MCP to query the project and retrieve the correct `Team ID` and `Project ID` to ensure we don't create orphaned tickets.
 *   **Context Linking:** If the user provided a PRD or a specific goal, reference it in the main issue description.
 
@@ -32,6 +32,18 @@ You will organize the work using a strict **Parent-Child** relationship:
         - [ ] Create Component X
         - [ ] Add Unit Tests
         - [ ] Integrate with Store
+        ```
+
+*   **Step D: Direction Comment***
+    *   Create an initial **Comment** for *each* issue (Root Issue and Sub-Issue(s)) with the following directions:
+        **Comment Message**:
+        ```markdown
+        - When checking out and beginning work on an issue:
+        -   You must mark the issue as 'In Progress'
+        - When completing an issue always:
+            - Ensure a detailed work summary comment was left within the issue
+            - Update the markdown Task List in the description truthfully
+            - Mark the issue as 'Done'
         ```
 
 ### 3. Execution & Completion Protocol
