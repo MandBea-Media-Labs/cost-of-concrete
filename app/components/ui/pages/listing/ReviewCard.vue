@@ -112,7 +112,7 @@ const toggleResponse = () => {
         <!-- Avatar: Real photo or initials fallback -->
         <div
           v-if="review.authorPhotoUrl"
-          class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full"
+          class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden"
         >
           <img
             :src="review.authorPhotoUrl"
@@ -167,7 +167,7 @@ const toggleResponse = () => {
     </div>
 
     <!-- Review Content -->
-    <p class="mb-3 text-neutral-600 dark:text-neutral-300">
+    <p class="mb-3 text-sm text-neutral-600 dark:text-neutral-300">
       {{ displayedContent }}
       <button
         v-if="needsTruncation"

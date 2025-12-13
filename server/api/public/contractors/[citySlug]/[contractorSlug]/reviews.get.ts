@@ -116,6 +116,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Helper to build public URL from storage path
+    const buildPhotoUrl = (storagePath: string | null): string | null => {
+      if (!storagePath) return null
+      const { data } = client.storage.from('contractors').getPublicUrl(storagePath)
+      return data.publicUrl
+    }
+
     // Transform to frontend format
     const publicReviews: PublicReview[] = (reviews || []).map((review) => {
       // Generate initials from reviewer name
@@ -128,7 +135,7 @@ export default defineEventHandler(async (event) => {
         id: review.id,
         authorName: review.reviewer_name || 'Anonymous',
         authorInitials: initials,
-        authorPhotoUrl: review.reviewer_photo_url,
+        authorPhotoUrl: buildPhotoUrl(review.downloaded_reviewer_photo_url),
         rating: review.stars,
         date: review.published_at || review.created_at || new Date().toISOString(),
         content: review.review_text || '',
