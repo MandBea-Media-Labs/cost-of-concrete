@@ -68,24 +68,34 @@ const contentBlocks = computed<ContentBlock[]>(() => {
   return [{ type: 'markdown', content: props.page.content || '' }]
 })
 
+// Generate URL-safe slug from text (must match useMarkdown slugify)
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special chars
+    .replace(/\s+/g, '-')      // Replace spaces with hyphens
+    .replace(/-+/g, '-')       // Collapse multiple hyphens
+}
+
 // Extract TOC from all markdown blocks
 const tableOfContents = computed(() => {
   if (!showToc.value) return []
 
   const headings: Array<{ id: string; text: string; level: 'h2' | 'h3' }> = []
-  let headingIndex = 0
 
   for (const block of contentBlocks.value) {
     if (block.type === 'markdown' && block.content) {
-      // Simple regex to extract markdown headings
+      // Simple regex to extract markdown headings (H2 and H3 only)
       const matches = block.content.matchAll(/^(#{2,3})\s+(.+)$/gm)
       for (const match of matches) {
         const hashMarks = match[1]
         const headingText = match[2]
         if (hashMarks && headingText) {
+          const text = headingText.trim()
           headings.push({
-            id: `heading-${headingIndex++}`,
-            text: headingText.trim(),
+            id: slugify(text), // Use same slugify as useMarkdown
+            text,
             level: hashMarks.length === 2 ? 'h2' : 'h3'
           })
         }
@@ -118,13 +128,13 @@ const scrollToHeading = (id: string) => {
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
     <!-- Hero Section -->
     <header
-      class="relative py-12 lg:py-16"
+      class="relative rounded-lg py-12 lg:py-16"
       :class="metadata.heroImage ? 'bg-neutral-800' : 'bg-white dark:bg-neutral-800'"
     >
       <!-- Optional grayscale background image -->
       <div
         v-if="metadata.heroImage"
-        class="absolute inset-0 bg-cover bg-center grayscale opacity-20"
+        class="absolute inset-0 rounded-lg bg-cover bg-center opacity-30 grayscale"
         :style="{ backgroundImage: `url(${metadata.heroImage})` }"
       />
 
@@ -154,7 +164,7 @@ const scrollToHeading = (id: string) => {
           <template v-for="(block, idx) in contentBlocks" :key="idx">
             <!-- Markdown Block -->
             <div v-if="block.type === 'markdown'"
-                 class="prose prose-lg prose-neutral max-w-none dark:prose-invert prose-headings:font-heading prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-700 dark:prose-a:text-blue-400 mb-8"
+                 class="prose prose-lg prose-neutral mb-8 max-w-none dark:prose-invert prose-headings:font-heading prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-700 dark:prose-a:text-blue-400"
                  v-html="useMarkdown(block.content).html.value" />
 
             <!-- FAQ Block -->
@@ -165,7 +175,7 @@ const scrollToHeading = (id: string) => {
         </article>
 
         <!-- Sidebar Column (1/3) - Desktop only -->
-        <aside class="hidden lg:block lg:col-span-1">
+        <aside class="hidden lg:col-span-1 lg:block">
           <div class="sticky top-8 space-y-6">
             <!-- Table of Contents -->
             <nav v-if="showToc && tableOfContents.length > 0" class="rounded-lg border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-800">
@@ -175,7 +185,7 @@ const scrollToHeading = (id: string) => {
               <ul class="space-y-2 text-sm">
                 <li v-for="item in tableOfContents" :key="item.id" :class="item.level === 'h3' ? 'ml-3' : ''">
                   <button type="button" @click="scrollToHeading(item.id)"
-                    class="text-left text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400 transition-colors">
+                    class="text-left text-neutral-600 transition-colors hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400">
                     {{ item.text }}
                   </button>
                 </li>
@@ -199,11 +209,11 @@ const scrollToHeading = (id: string) => {
     </div>
 
     <!-- Mobile TOC Bottom Tab -->
-    <div v-if="showToc && tableOfContents.length > 0" class="fixed bottom-0 left-0 right-0 lg:hidden z-30">
+    <div v-if="showToc && tableOfContents.length > 0" class="fixed bottom-0 left-0 right-0 z-30 lg:hidden">
       <button
         type="button"
         @click="isTocSheetOpen = true"
-        class="w-full flex items-center justify-center gap-2 py-3 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 font-medium shadow-lg"
+        class="flex w-full items-center justify-center gap-2 border-t border-neutral-200 bg-white py-3 font-medium text-neutral-700 shadow-lg dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
@@ -218,7 +228,7 @@ const scrollToHeading = (id: string) => {
       <ul class="space-y-3">
         <li v-for="item in tableOfContents" :key="item.id" :class="item.level === 'h3' ? 'ml-4' : ''">
           <button type="button" @click="scrollToHeading(item.id)"
-            class="w-full text-left py-2 text-neutral-700 hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 transition-colors">
+            class="w-full py-2 text-left text-neutral-700 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400">
             {{ item.text }}
           </button>
         </li>
