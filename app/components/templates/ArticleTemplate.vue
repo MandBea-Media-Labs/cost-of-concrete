@@ -21,6 +21,7 @@ interface MarkdownBlock {
 
 interface FaqBlock {
   type: 'faq'
+  title?: string
   items: Array<{ question: string; answer: string }>
 }
 
@@ -245,7 +246,7 @@ const scrollToHeading = (id: string) => {
 
             <!-- FAQ Block -->
             <div v-else-if="block.type === 'faq'" class="mb-8">
-              <FaqAccordion :items="block.items" />
+              <FaqAccordion :items="block.items" :title="block.title" />
             </div>
           </template>
         </article>

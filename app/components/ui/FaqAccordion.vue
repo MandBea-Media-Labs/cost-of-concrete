@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * FaqAccordion Component (Front-end)
- * 
+ *
  * Accessible FAQ accordion using Reka UI Accordion
  * Supports Schema.org FAQPage structured data
  */
@@ -14,6 +14,8 @@ interface FaqItem {
 interface Props {
   /** Array of FAQ items */
   items: FaqItem[]
+  /** Optional title displayed as H2 above the accordion */
+  title?: string
   /** Whether to include Schema.org FAQPage structured data */
   includeSchema?: boolean
   /** Allow multiple items open at once */
@@ -25,10 +27,21 @@ const props = withDefaults(defineProps<Props>(), {
   multiple: false
 })
 
+// Generate slug for heading ID (for TOC linking)
+const titleId = computed(() => {
+  if (!props.title) return ''
+  return props.title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+})
+
 // Generate Schema.org FAQPage structured data
 const faqSchema = computed(() => {
   if (!props.includeSchema || !props.items.length) return null
-  
+
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -58,11 +71,21 @@ useHead(() => {
 </script>
 
 <template>
-  <AccordionRoot
-    :type="multiple ? 'multiple' : 'single'"
-    :collapsible="!multiple"
-    class="w-full divide-y divide-neutral-200 dark:divide-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
-  >
+  <div>
+    <!-- Optional H2 title -->
+    <h2
+      v-if="title"
+      :id="titleId"
+      class="font-heading text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4"
+    >
+      {{ title }}
+    </h2>
+
+    <AccordionRoot
+      :type="multiple ? 'multiple' : 'single'"
+      :collapsible="!multiple"
+      class="w-full divide-y divide-neutral-200 dark:divide-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
+    >
     <AccordionItem
       v-for="(item, index) in items"
       :key="index"
@@ -96,7 +119,8 @@ useHead(() => {
         </div>
       </AccordionContent>
     </AccordionItem>
-  </AccordionRoot>
+    </AccordionRoot>
+  </div>
 </template>
 
 <style scoped>
