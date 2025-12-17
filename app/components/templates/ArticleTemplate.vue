@@ -89,17 +89,39 @@ function addHeadingIds(html: string): string {
     })
 }
 
-// Render content block - HTML or markdown with heading IDs
+// Placeholder ID for inline search box teleport
+const SEARCH_BOX_PLACEHOLDER_ID = 'inline-search-box-placeholder'
+
+// Check if content contains searchBox placeholder
+const hasSearchBoxPlaceholder = computed(() => {
+  const content = props.page.content || ''
+  return /<code>searchBox<\/code>/i.test(content)
+})
+
+// Process content to replace <code>searchBox</code> with a teleport target
+function processSearchBoxPlaceholder(html: string): string {
+  return html.replace(
+    /<code>searchBox<\/code>/gi,
+    `<div id="${SEARCH_BOX_PLACEHOLDER_ID}"></div>`
+  )
+}
+
+// Render content block - HTML or markdown with heading IDs and search box placeholder
 function renderBlock(content: string): string {
   if (!content) return ''
 
+  let processed: string
+
   if (isHtmlContent(content)) {
     // Content is HTML (TipTap) - add heading IDs directly
-    return addHeadingIds(content)
+    processed = addHeadingIds(content)
   } else {
     // Content is markdown - render through useMarkdown (which adds heading IDs)
-    return useMarkdown(content).html.value
+    processed = useMarkdown(content).html.value
   }
+
+  // Replace <code>searchBox</code> with teleport placeholder
+  return processSearchBoxPlaceholder(processed)
 }
 
 // Content blocks - always include page.content first, then any additional blocks from metadata
@@ -277,7 +299,9 @@ const scrollToHeading = (id: string) => {
                 <p class="mt-1 font-medium text-neutral-900 dark:text-neutral-50">{{ metadata.author }}</p>
               </div>
               <div v-if="formattedDate">
-                <span class="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Last updated</span>
+                <span class="flex flex-row items-center text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                  Last updated <Icon name="ion:checkmark" class="ml-1 h-3 w-3" />
+                </span>
                 <p class="mt-1 text-neutral-600 dark:text-neutral-300">{{ formattedDate }}</p>
               </div>
             </div>
@@ -312,6 +336,13 @@ const scrollToHeading = (id: string) => {
         </li>
       </ul>
     </BottomSheet>
+
+    <!-- Teleport InlineSearchBox into placeholder (client-side only) -->
+    <ClientOnly>
+      <Teleport v-if="hasSearchBoxPlaceholder" :to="`#${SEARCH_BOX_PLACEHOLDER_ID}`">
+        <InlineSearchBox />
+      </Teleport>
+    </ClientOnly>
   </div>
 </template>
 
