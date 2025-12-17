@@ -38,8 +38,27 @@ const showUnarchiveDialog = ref(false)
 const isArchiving = ref(false)
 const isDeleting = ref(false)
 
-// Form ref for triggering submit from sticky header
-const pageFormRef = ref<{ submit: () => void } | null>(null)
+// Sheet open states
+const showPageSettingsSheet = ref(false)
+const showSeoTemplateSheet = ref(false)
+
+// Form ref for triggering submit and accessing form state
+// Note: Exposed refs from child component are automatically unwrapped, no need for .value
+const pageFormRef = ref<{
+  submit: () => void
+  formValues: Record<string, any>
+  formErrors: Record<string, string | undefined>
+  setFieldValue: (field: string, value: any) => void
+  markSlugAsManuallyEdited: () => void
+  hasSlugChanged: boolean
+  hasParentChanged: boolean
+  hasTemplateChanged: boolean
+  parentPageOptions: Array<{ value: string | null; label: string }>
+  isLoadingParentPages: boolean
+  templateOptions: Array<{ value: string; label: string }>
+  isLoadingTemplates: boolean
+  templateLoadError: string | null
+} | null>(null)
 
 // Save button state: 'idle' | 'saving' | 'saved'
 const saveButtonState = ref<'idle' | 'saving' | 'saved'>('idle')
@@ -259,19 +278,26 @@ async function handleSubmit(formData: PageFormData) {
       consola.info('📤 Sending PATCH to API:', apiInput)
     }
 
-    // Call PATCH endpoint
-    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
-      method: 'PATCH',
-      body: apiInput
-    })
+    // Call PATCH endpoint using $fetch (not useFetch, which is for setup-time only)
+    try {
+      const data = await $fetch(`/api/pages/${pageId.value}`, {
+        method: 'PATCH',
+        body: apiInput
+      })
 
-    if (error.value) {
+      if (!data?.success) {
+        const failMsg = 'Failed to update page. Please try again.'
+        errorMessage.value = failMsg
+        toast.error('Update failed', { description: failMsg })
+        return
+      }
+    } catch (err: any) {
       if (import.meta.dev) {
-        consola.error('❌ API Error:', error.value)
+        consola.error('❌ API Error:', err)
       }
 
       // Handle different error types
-      const statusCode = error.value.statusCode || 500
+      const statusCode = err.statusCode || err.status || 500
 
       if (statusCode === 400) {
         // Validation errors
@@ -280,7 +306,7 @@ async function handleSubmit(formData: PageFormData) {
         toast.error('Validation errors', { description: validationMsg })
       } else if (statusCode === 409) {
         // Conflict (slug already exists)
-        const conflictMsg = error.value.message || 'A page with this slug already exists'
+        const conflictMsg = err.data?.message || err.message || 'A page with this slug already exists'
         errorMessage.value = conflictMsg
         toast.error('Page already exists', { description: conflictMsg })
       } else if (statusCode === 401 || statusCode === 403) {
@@ -290,18 +316,11 @@ async function handleSubmit(formData: PageFormData) {
         toast.error('Permission denied', { description: authMsg })
       } else {
         // Generic error
-        const genericMsg = error.value.message || 'Failed to update page. Please try again.'
+        const genericMsg = err.data?.message || err.message || 'Failed to update page. Please try again.'
         errorMessage.value = genericMsg
         toast.error('Failed to update page', { description: genericMsg })
       }
 
-      return
-    }
-
-    if (!data.value?.success) {
-      const failMsg = 'Failed to update page. Please try again.'
-      errorMessage.value = failMsg
-      toast.error('Update failed', { description: failMsg })
       return
     }
 
@@ -366,23 +385,25 @@ async function handleArchive() {
     }
 
     // Use PATCH endpoint to set status to 'archived'
-    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
-      method: 'PATCH',
-      body: { status: 'archived' }
-    })
-
-    if (error.value) {
+    let archiveSuccess = false
+    try {
+      const data = await $fetch(`/api/pages/${pageId.value}`, {
+        method: 'PATCH',
+        body: { status: 'archived' }
+      })
+      archiveSuccess = !!data?.success
+    } catch (err: any) {
       if (import.meta.dev) {
-        consola.error('❌ Archive error:', error.value)
+        consola.error('❌ Archive error:', err)
       }
-      const archiveErrorMsg = error.value.message || 'Failed to archive page'
+      const archiveErrorMsg = err.data?.message || err.message || 'Failed to archive page'
       errorMessage.value = archiveErrorMsg
       toast.error('Archive failed', { description: archiveErrorMsg })
       showArchiveDialog.value = false
       return
     }
 
-    if (!data.value?.success) {
+    if (!archiveSuccess) {
       const archiveFailMsg = 'Failed to archive page. Please try again.'
       errorMessage.value = archiveFailMsg
       toast.error('Archive failed', { description: archiveFailMsg })
@@ -424,22 +445,24 @@ async function handleDelete() {
     }
 
     // Use DELETE endpoint for soft delete
-    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
-      method: 'DELETE'
-    })
-
-    if (error.value) {
+    let deleteSuccess = false
+    try {
+      const data = await $fetch(`/api/pages/${pageId.value}`, {
+        method: 'DELETE'
+      })
+      deleteSuccess = !!data?.success
+    } catch (err: any) {
       if (import.meta.dev) {
-        consola.error('❌ Delete error:', error.value)
+        consola.error('❌ Delete error:', err)
       }
-      const deleteErrorMsg = error.value.message || 'Failed to delete page'
+      const deleteErrorMsg = err.data?.message || err.message || 'Failed to delete page'
       errorMessage.value = deleteErrorMsg
       toast.error('Delete failed', { description: deleteErrorMsg })
       showDeleteDialog.value = false
       return
     }
 
-    if (!data.value?.success) {
+    if (!deleteSuccess) {
       const deleteFailMsg = 'Failed to delete page. Please try again.'
       errorMessage.value = deleteFailMsg
       toast.error('Delete failed', { description: deleteFailMsg })
@@ -478,23 +501,25 @@ async function handleUnarchive() {
     }
 
     // Use PATCH endpoint to set status to 'draft'
-    const { data, error } = await useFetch(`/api/pages/${pageId.value}`, {
-      method: 'PATCH',
-      body: { status: 'draft' }
-    })
-
-    if (error.value) {
+    let unarchiveSuccess = false
+    try {
+      const data = await $fetch(`/api/pages/${pageId.value}`, {
+        method: 'PATCH',
+        body: { status: 'draft' }
+      })
+      unarchiveSuccess = !!data?.success
+    } catch (err: any) {
       if (import.meta.dev) {
-        consola.error('❌ Unarchive error:', error.value)
+        consola.error('❌ Unarchive error:', err)
       }
-      const unarchiveErrorMsg = error.value.message || 'Failed to restore page'
+      const unarchiveErrorMsg = err.data?.message || err.message || 'Failed to restore page'
       errorMessage.value = unarchiveErrorMsg
       toast.error('Restore failed', { description: unarchiveErrorMsg })
       showUnarchiveDialog.value = false
       return
     }
 
-    if (!data.value?.success) {
+    if (!unarchiveSuccess) {
       const unarchiveFailMsg = 'Failed to restore page. Please try again.'
       errorMessage.value = unarchiveFailMsg
       toast.error('Restore failed', { description: unarchiveFailMsg })
@@ -544,27 +569,101 @@ async function handleUnarchive() {
     <!-- Edit Form -->
     <div v-else-if="initialFormData">
       <!-- Sticky Header with Controls -->
-      <div class="sticky top-0 z-10 -mx-4 mb-6 border-b border-border bg-background/95 pb-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div class="sticky top-0 z-10 -mx-4 mb-6 bg-background/95 pb-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div class="flex items-center justify-between gap-4 px-4">
           <div>
             <h1 class="text-2xl font-bold">Edit Page</h1>
             <p class="text-sm text-muted-foreground">Update page content, SEO settings, and metadata</p>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <!-- Settings Sheet Buttons -->
+            <UiButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="showPageSettingsSheet = true"
+            >
+              <Icon name="heroicons:cog-6-tooth" class="size-4 mr-1.5" />
+              Page Settings
+            </UiButton>
+            <UiButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="showSeoTemplateSheet = true"
+            >
+              <Icon name="heroicons:magnifying-glass-circle" class="size-4 mr-1.5" />
+              SEO & Template
+            </UiButton>
+
+            <!-- Divider -->
+            <div class="w-px h-6 bg-border mx-1" />
+
+            <!-- Delete/Archive/Unarchive Dropdown -->
+            <UiDropdownMenu>
+              <UiDropdownMenuTrigger as-child>
+                <UiButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Icon name="heroicons:trash" class="size-4 mr-1.5" />
+                  <Icon name="heroicons:chevron-down" class="size-3" />
+                </UiButton>
+              </UiDropdownMenuTrigger>
+              <UiDropdownMenuContent align="end">
+                <!-- Archive (for pages with children) -->
+                <UiDropdownMenuItem
+                  v-if="showArchiveButton"
+                  @click="openArchiveDialog"
+                  class="text-destructive focus:text-destructive focus:bg-destructive/10"
+                >
+                  <Icon name="heroicons:archive-box" class="size-4 mr-2" />
+                  Archive Page
+                </UiDropdownMenuItem>
+                <!-- Delete (for pages without children) -->
+                <UiDropdownMenuItem
+                  v-if="showDeleteButton"
+                  @click="openDeleteDialog"
+                  class="text-destructive focus:text-destructive focus:bg-destructive/10"
+                >
+                  <Icon name="heroicons:trash" class="size-4 mr-2" />
+                  Delete Page
+                </UiDropdownMenuItem>
+                <!-- Unarchive (for archived pages) -->
+                <UiDropdownMenuItem
+                  v-if="showUnarchiveButton"
+                  @click="openUnarchiveDialog"
+                >
+                  <Icon name="heroicons:arrow-uturn-left" class="size-4 mr-2" />
+                  Restore Page
+                </UiDropdownMenuItem>
+              </UiDropdownMenuContent>
+            </UiDropdownMenu>
+
+            <!-- Divider -->
+            <div class="w-px h-6 bg-border mx-1" />
+
+            <!-- View Page Button -->
             <UiButton
               v-if="initialFormData?.slug"
               type="button"
               variant="outline"
+              size="sm"
               as="a"
               :href="`/${initialFormData.slug}`"
               target="_blank"
             >
               <Icon name="heroicons:arrow-top-right-on-square" class="size-4 mr-1.5" />
-              View Page
+              View
             </UiButton>
+
+            <!-- Save Button -->
             <UiButton
               @click="pageFormRef?.submit()"
               :disabled="saveButtonState !== 'idle'"
+              size="sm"
               class="min-w-[80px]"
             >
               <template v-if="saveButtonState === 'saving'">
@@ -600,65 +699,14 @@ async function handleUnarchive() {
         </UiCardContent>
       </UiCard>
 
-      <UiCard>
-        <UiCardContent class="pt-6">
-          <PageForm
-            ref="pageFormRef"
-            :initial-data="initialFormData"
-            :is-edit-mode="true"
-            :is-submitting="isSubmitting"
-            :current-page-id="pageId"
-            @submit="handleSubmit"
-          />
-        </UiCardContent>
-      </UiCard>
-
-      <!-- Archive / Delete / Unarchive Section -->
-      <UiCard class="mt-8 border-destructive/50">
-        <UiCardHeader>
-          <UiCardTitle class="text-destructive">Danger Zone</UiCardTitle>
-        </UiCardHeader>
-        <UiCardContent>
-          <!-- Archive Button (for pages with children) -->
-          <div v-if="showArchiveButton" class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold">Archive this page</h3>
-              <p class="mt-1 text-sm text-muted-foreground">
-                This page has {{ childrenCount }} child page(s). Archiving will also archive all descendants.
-              </p>
-            </div>
-            <UiButton variant="destructive" @click="openArchiveDialog">
-              Archive Page
-            </UiButton>
-          </div>
-
-          <!-- Delete Button (for pages without children) -->
-          <div v-if="showDeleteButton" class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold">Delete this page</h3>
-              <p class="mt-1 text-sm text-muted-foreground">
-                Permanently delete this page. This action cannot be undone.
-              </p>
-            </div>
-            <UiButton variant="destructive" @click="openDeleteDialog">
-              Delete Page
-            </UiButton>
-          </div>
-
-          <!-- Unarchive Button (for archived pages) -->
-          <div v-if="showUnarchiveButton" class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold">Unarchive this page</h3>
-              <p class="mt-1 text-sm text-muted-foreground">
-                Restore this page from the archive and set it back to draft status.
-              </p>
-            </div>
-            <UiButton @click="openUnarchiveDialog">
-              Unarchive Page
-            </UiButton>
-          </div>
-        </UiCardContent>
-      </UiCard>
+      <PageForm
+        ref="pageFormRef"
+        :initial-data="initialFormData"
+        :is-edit-mode="true"
+        :is-submitting="isSubmitting"
+        :current-page-id="pageId"
+        @submit="handleSubmit"
+      />
 
       <!-- Archive Confirmation Dialog -->
       <UiAlertDialog :open="showArchiveDialog" @update:open="showArchiveDialog = $event">
@@ -719,6 +767,51 @@ async function handleUnarchive() {
           </UiAlertDialogFooter>
         </UiAlertDialogContent>
       </UiAlertDialog>
+
+      <!-- Page Settings Sheet -->
+      <PageSettingsSheet
+        v-if="pageFormRef"
+        :open="showPageSettingsSheet"
+        @update:open="showPageSettingsSheet = $event"
+        :title="pageFormRef.formValues.title ?? ''"
+        :slug="pageFormRef.formValues.slug ?? ''"
+        :parentId="pageFormRef.formValues.parentId ?? null"
+        :template="pageFormRef.formValues.template ?? ''"
+        :status="pageFormRef.formValues.status ?? 'draft'"
+        :description="pageFormRef.formValues.description ?? null"
+        :parentPageOptions="pageFormRef.parentPageOptions"
+        :templateOptions="pageFormRef.templateOptions"
+        :isLoadingParentPages="pageFormRef.isLoadingParentPages"
+        :isLoadingTemplates="pageFormRef.isLoadingTemplates"
+        :templateLoadError="pageFormRef.templateLoadError"
+        :errors="pageFormRef.formErrors"
+        :isEditMode="true"
+        :hasSlugChanged="pageFormRef.hasSlugChanged"
+        :hasParentChanged="pageFormRef.hasParentChanged"
+        :hasTemplateChanged="pageFormRef.hasTemplateChanged"
+        :disabled="isSubmitting"
+        @update:title="pageFormRef.setFieldValue('title', $event)"
+        @update:slug="pageFormRef.setFieldValue('slug', $event)"
+        @update:parentId="pageFormRef.setFieldValue('parentId', $event)"
+        @update:template="pageFormRef.setFieldValue('template', $event)"
+        @update:status="pageFormRef.setFieldValue('status', $event)"
+        @update:description="pageFormRef.setFieldValue('description', $event)"
+        @slug-manual-edit="pageFormRef.markSlugAsManuallyEdited()"
+      />
+
+      <!-- SEO & Template Settings Sheet -->
+      <SeoTemplateSheet
+        v-if="pageFormRef"
+        :open="showSeoTemplateSheet"
+        @update:open="showSeoTemplateSheet = $event"
+        :template="pageFormRef.formValues.template ?? 'default'"
+        :metadata="pageFormRef.formValues.metadata ?? {}"
+        :seoValues="pageFormRef.formValues"
+        :seoErrors="pageFormRef.formErrors"
+        :disabled="isSubmitting"
+        @update:metadata="pageFormRef.setFieldValue('metadata', $event)"
+        @update:seoField="(name, value) => pageFormRef?.setFieldValue(name, value)"
+      />
     </div>
   </div>
 </template>

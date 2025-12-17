@@ -1,0 +1,310 @@
+<script setup lang="ts">
+/**
+ * PageSettingsSheet - Sheet component for page metadata settings
+ *
+ * Contains: Title, Slug, Parent Page, Template, Status, Description
+ * Used in edit.vue to declutter the main form and focus on content editing.
+ */
+
+interface PageOption {
+  value: string | null
+  label: string
+}
+
+interface TemplateOption {
+  value: string
+  label: string
+}
+
+interface Props {
+  open: boolean
+  // Form values
+  title: string
+  slug: string
+  parentId: string | null
+  template: string
+  status: string
+  description: string | null
+  // Options
+  parentPageOptions: PageOption[]
+  templateOptions: TemplateOption[]
+  // Loading states
+  isLoadingParentPages?: boolean
+  isLoadingTemplates?: boolean
+  templateLoadError?: string | null
+  // Validation errors
+  errors?: Record<string, string | undefined>
+  // Edit mode flags
+  isEditMode?: boolean
+  hasSlugChanged?: boolean
+  hasParentChanged?: boolean
+  hasTemplateChanged?: boolean
+  // Disabled state
+  disabled?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isLoadingParentPages: false,
+  isLoadingTemplates: false,
+  templateLoadError: null,
+  errors: () => ({}),
+  isEditMode: false,
+  hasSlugChanged: false,
+  hasParentChanged: false,
+  hasTemplateChanged: false,
+  disabled: false
+})
+
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+  'update:title': [value: string]
+  'update:slug': [value: string]
+  'update:parentId': [value: string | null]
+  'update:template': [value: string]
+  'update:status': [value: string]
+  'update:description': [value: string | null]
+  'slug-manual-edit': []
+}>()
+
+// Status options
+const statusOptions = [
+  { value: 'draft', label: 'Draft - Not visible to public' },
+  { value: 'published', label: 'Published - Visible to public' },
+  { value: 'archived', label: 'Archived - Hidden from public and admin lists' }
+]
+
+// Handle slug input to track manual edits
+function onSlugInput(value: string) {
+  emit('update:slug', value)
+  emit('slug-manual-edit')
+}
+</script>
+
+<template>
+  <UiSheet :open="open" @update:open="emit('update:open', $event)">
+    <UiSheetContent side="right" class="w-full sm:max-w-lg overflow-hidden flex flex-col p-6">
+      <UiSheetHeader class="flex-shrink-0 pb-4">
+        <UiSheetTitle>Page Settings</UiSheetTitle>
+        <UiSheetDescription>
+          Configure page metadata, hierarchy, and visibility
+        </UiSheetDescription>
+      </UiSheetHeader>
+
+      <div class="flex-1 overflow-y-auto min-h-0">
+        <div class="space-y-6 py-4">
+          <!-- Title Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-title">
+              Title <span class="text-destructive">*</span>
+            </UiLabel>
+            <UiInput
+              id="sheet-title"
+              :model-value="title"
+              @update:model-value="emit('update:title', $event)"
+              placeholder="Enter page title"
+              :disabled="disabled"
+            />
+            <p v-if="errors.title" class="text-sm text-destructive">
+              {{ errors.title }}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              The main heading for this page (max 200 characters)
+            </p>
+          </div>
+
+          <!-- Slug Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-slug">
+              Slug <span class="text-destructive">*</span>
+            </UiLabel>
+            <UiInput
+              id="sheet-slug"
+              :model-value="slug"
+              @update:model-value="onSlugInput"
+              placeholder="page-url-slug"
+              :disabled="disabled"
+            />
+            <p v-if="errors.slug" class="text-sm text-destructive">
+              {{ errors.slug }}
+            </p>
+            <!-- Warning for slug change in edit mode -->
+            <div
+              v-if="isEditMode && hasSlugChanged"
+              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
+            >
+              <div class="flex items-start gap-2">
+                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">SEO Impact Warning</p>
+                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Changing the slug will update the URL for this page and all its child pages.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="text-xs text-muted-foreground">
+              URL-friendly identifier (auto-generated from title, or customize manually)
+            </p>
+          </div>
+
+          <!-- Parent Page Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-parentId">Parent Page</UiLabel>
+            <UiSelect
+              :model-value="parentId"
+              @update:model-value="emit('update:parentId', $event)"
+              :disabled="disabled || isLoadingParentPages"
+            >
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Select parent page" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in parentPageOptions"
+                  :key="option.value ?? 'null'"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+            <p v-if="errors.parentId" class="text-sm text-destructive">
+              {{ errors.parentId }}
+            </p>
+            <!-- Warning for parent change in edit mode -->
+            <div
+              v-if="isEditMode && hasParentChanged"
+              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
+            >
+              <div class="flex items-start gap-2">
+                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Hierarchy Change Warning</p>
+                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Changing the parent will update the URL path and depth for this page and all its children.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="text-xs text-muted-foreground">
+              Optional: Select a parent page to create a hierarchical structure
+            </p>
+          </div>
+
+          <!-- Template Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-template">
+              Template <span class="text-destructive">*</span>
+            </UiLabel>
+            <UiSelect
+              :model-value="template"
+              @update:model-value="emit('update:template', $event)"
+              :disabled="disabled || isLoadingTemplates"
+            >
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Select template" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in templateOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+            <p v-if="isLoadingTemplates" class="text-sm text-primary">
+              Loading templates...
+            </p>
+            <p v-else-if="templateLoadError" class="text-sm text-destructive">
+              {{ templateLoadError }}
+            </p>
+            <p v-else-if="errors.template" class="text-sm text-destructive">
+              {{ errors.template }}
+            </p>
+            <!-- Warning for template change in edit mode -->
+            <div
+              v-else-if="isEditMode && hasTemplateChanged"
+              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
+            >
+              <div class="flex items-start gap-2">
+                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Template Change Warning</p>
+                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Changing the template may clear incompatible metadata fields.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="text-xs text-muted-foreground">
+              Choose the template that best fits your content type
+            </p>
+          </div>
+
+          <!-- Status Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-status">
+              Status <span class="text-destructive">*</span>
+            </UiLabel>
+            <UiSelect
+              :model-value="status"
+              @update:model-value="emit('update:status', $event)"
+              :disabled="disabled"
+            >
+              <UiSelectTrigger class="w-full">
+                <UiSelectValue placeholder="Select status" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
+            <p v-if="errors.status" class="text-sm text-destructive">
+              {{ errors.status }}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              Control the visibility of this page
+            </p>
+          </div>
+
+          <!-- Description Field -->
+          <div class="space-y-2">
+            <UiLabel for="sheet-description">Description</UiLabel>
+            <UiTextarea
+              id="sheet-description"
+              :model-value="description ?? ''"
+              @update:model-value="emit('update:description', $event || null)"
+              placeholder="Enter a brief description of this page"
+              :disabled="disabled"
+              rows="4"
+            />
+            <p v-if="errors.description" class="text-sm text-destructive">
+              {{ errors.description }}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              Optional: A short summary of the page content (max 500 characters)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex-shrink-0 flex items-center justify-end pt-4 border-t border-border">
+        <UiButton
+          type="button"
+          @click="emit('update:open', false)"
+        >
+          Save & Close
+        </UiButton>
+      </div>
+    </UiSheetContent>
+  </UiSheet>
+</template>
+

@@ -288,288 +288,60 @@ function onCancel() {
   emit('cancel')
 }
 
-// Expose submit function for external triggering
+// =====================================================
+// EXPOSE FORM STATE FOR SHEET INTEGRATION
+// =====================================================
+
+/**
+ * Expose form state, options, and methods for external sheet components.
+ * This enables the parent (edit.vue) to pass form data to sheets
+ * and receive updates back.
+ */
 defineExpose({
-  submit: onSubmit
+  // Form submission
+  submit: onSubmit,
+
+  // Form values (reactive)
+  formValues: values,
+  formErrors: errors,
+
+  // Field setters
+  setFieldValue,
+
+  // Slug manual edit tracking
+  markSlugAsManuallyEdited: () => { isSlugManuallyEdited.value = true },
+
+  // Change detection (computed)
+  hasSlugChanged,
+  hasParentChanged,
+  hasTemplateChanged,
+
+  // Parent page options
+  parentPageOptions,
+  isLoadingParentPages,
+
+  // Template options
+  templateOptions,
+  isLoadingTemplates,
+  templateLoadError
 })
 </script>
 
 <template>
   <form @submit.prevent="onSubmit">
-    <!-- Two-Column Grid Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column (2/3 width) -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Title Field -->
-        <div class="space-y-2">
-          <UiLabel for="title">
-            Title <span class="text-destructive">*</span>
-          </UiLabel>
-          <UiInput
-            id="title"
-            v-model="title"
-            v-bind="titleAttrs"
-            placeholder="Enter page title"
-            :disabled="isSubmitting"
-          />
-          <p v-if="errors.title" class="text-sm text-destructive">
-            {{ errors.title }}
-          </p>
-          <p class="text-xs text-muted-foreground">
-            The main heading for this page (max 200 characters)
-          </p>
-        </div>
-
-        <!-- Slug Field -->
-        <div class="space-y-2">
-          <UiLabel for="slug">
-            Slug <span class="text-destructive">*</span>
-          </UiLabel>
-          <UiInput
-            id="slug"
-            v-model="slug"
-            v-bind="slugAttrs"
-            placeholder="page-url-slug"
-            :disabled="isSubmitting"
-            @input="onSlugInput"
-          />
-          <p v-if="errors.slug" class="text-sm text-destructive">
-            {{ errors.slug }}
-          </p>
-          <!-- Warning for slug change in edit mode -->
-          <div
-            v-if="isEditMode && hasSlugChanged"
-            class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
-          >
-            <div class="flex items-start gap-2">
-              <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-              <div class="flex-1">
-                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">SEO Impact Warning</p>
-                <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                  Changing the slug will update the URL for this page and all its child pages. This may affect SEO rankings and break existing links.
-                </p>
-              </div>
-            </div>
-          </div>
-          <p v-else class="text-xs text-muted-foreground">
-            URL-friendly identifier (auto-generated from title, or customize manually)
-          </p>
-        </div>
-
-        <!-- Parent Page & Template (Side-by-Side) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Parent Page Field -->
-          <div class="space-y-2">
-            <UiLabel for="parentId">Parent Page</UiLabel>
-            <UiSelect v-model="parentId" v-bind="parentIdAttrs" :disabled="isSubmitting">
-              <UiSelectTrigger class="w-full">
-                <UiSelectValue placeholder="Select parent page" />
-              </UiSelectTrigger>
-              <UiSelectContent>
-                <UiSelectItem
-                  v-for="option in parentPageOptions"
-                  :key="option.value ?? 'null'"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </UiSelectItem>
-              </UiSelectContent>
-            </UiSelect>
-            <p v-if="errors.parentId" class="text-sm text-destructive">
-              {{ errors.parentId }}
-            </p>
-            <!-- Warning for parent change in edit mode -->
-            <div
-              v-if="isEditMode && hasParentChanged"
-              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
-            >
-              <div class="flex items-start gap-2">
-                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Hierarchy Change Warning</p>
-                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                    Changing the parent will update the URL path, depth, and potentially the template for this page and all its children.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p v-else class="text-xs text-muted-foreground">
-              Optional: Select a parent page to create a hierarchical structure
-            </p>
-          </div>
-
-          <!-- Template Field -->
-          <div class="space-y-2">
-            <UiLabel for="template">
-              Template <span class="text-destructive">*</span>
-            </UiLabel>
-            <UiSelect v-model="template" v-bind="templateAttrs" :disabled="isSubmitting || isLoadingTemplates">
-              <UiSelectTrigger class="w-full">
-                <UiSelectValue placeholder="Select template" />
-              </UiSelectTrigger>
-              <UiSelectContent>
-                <UiSelectItem
-                  v-for="option in templateOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </UiSelectItem>
-              </UiSelectContent>
-            </UiSelect>
-            <!-- Loading state -->
-            <p v-if="isLoadingTemplates" class="text-sm text-primary">
-              Loading templates...
-            </p>
-
-            <!-- Error state -->
-            <p v-else-if="templateLoadError" class="text-sm text-destructive">
-              {{ templateLoadError }}
-            </p>
-
-            <!-- Validation error -->
-            <p v-else-if="errors.template" class="text-sm text-destructive">
-              {{ errors.template }}
-            </p>
-
-            <!-- Template/Depth Warning -->
-            <div
-              v-if="templateWarning"
-              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
-            >
-              <div class="flex items-start gap-2">
-                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Unusual Template Selection</p>
-                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                    {{ templateWarning.message }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Warning for template change in edit mode -->
-            <div
-              v-else-if="isEditMode && hasTemplateChanged"
-              class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md"
-            >
-              <div class="flex items-start gap-2">
-                <Icon name="heroicons:exclamation-triangle" class="size-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Template Change Warning</p>
-                  <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                    Changing the template may clear incompatible metadata fields. Make sure the new template is compatible with your content.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Help text -->
-            <p v-else class="text-xs text-muted-foreground">
-              Choose the template that best fits your content type
-            </p>
-          </div>
-        </div>
-
-        <!-- Status Field -->
-        <div class="space-y-2">
-          <UiLabel for="status">
-            Status <span class="text-destructive">*</span>
-          </UiLabel>
-          <UiSelect v-model="status" v-bind="statusAttrs" :disabled="isSubmitting">
-            <UiSelectTrigger class="w-full">
-              <UiSelectValue placeholder="Select status" />
-            </UiSelectTrigger>
-            <UiSelectContent>
-              <UiSelectItem
-                v-for="option in statusOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </UiSelectItem>
-            </UiSelectContent>
-          </UiSelect>
-          <p v-if="errors.status" class="text-sm text-destructive">
-            {{ errors.status }}
-          </p>
-          <p class="text-xs text-muted-foreground">
-            Control the visibility of this page
-          </p>
-        </div>
-
-        <!-- Description Field -->
-        <div class="space-y-2">
-          <UiLabel for="description">Description</UiLabel>
-          <UiTextarea
-            id="description"
-            v-model="description"
-            v-bind="descriptionAttrs"
-            placeholder="Enter a brief description of this page"
-            :disabled="isSubmitting"
-            rows="4"
-          />
-          <p v-if="errors.description" class="text-sm text-destructive">
-            {{ errors.description }}
-          </p>
-          <p class="text-xs text-muted-foreground">
-            Optional: A short summary of the page content (max 500 characters)
-          </p>
-        </div>
-
-        <!-- Content Field (TipTap Editor) -->
-        <div class="space-y-2">
-          <UiLabel for="content">
-            Content <span class="text-destructive">*</span>
-          </UiLabel>
-          <TipTapEditor
-            v-model="content"
-            v-bind="contentAttrs"
-            placeholder="Start writing your page content..."
-            :disabled="isSubmitting"
-          />
-          <p v-if="errors.content" class="text-sm text-destructive">
-            {{ errors.content }}
-          </p>
-          <p class="text-xs text-muted-foreground">
-            The main content of your page (supports rich text formatting)
-          </p>
-        </div>
-      </div>
-
-      <!-- Right Column (1/3 width) - Sticky on desktop -->
-      <div class="lg:col-span-1 lg:sticky lg:top-6 lg:self-start space-y-6">
-
-        <!-- Template Metadata Section -->
-        <UiCard v-if="template">
-          <UiCardHeader>
-            <UiCardTitle>Template Settings</UiCardTitle>
-            <UiCardDescription>
-              Configure template-specific options for the {{ template }} template
-            </UiCardDescription>
-          </UiCardHeader>
-          <UiCardContent>
-            <TemplateMetadataFields
-              :template="template"
-              :metadata="values.metadata"
-              @update:metadata="handleMetadataUpdate"
-              :disabled="isSubmitting"
-            />
-          </UiCardContent>
-        </UiCard>
-
-        <!-- SEO Settings Section -->
-        <UiCard>
-          <UiCardContent class="pt-6">
-            <SeoFieldsSection
-              :values="values"
-              :errors="errors"
-              @update:field="setFieldValue"
-              :disabled="isSubmitting"
-            />
-          </UiCardContent>
-        </UiCard>
-      </div>
+    <!-- Content Field (TipTap Editor) - Full Width -->
+    <div class="space-y-2">
+      <TipTapEditor
+        v-model="content"
+        v-bind="contentAttrs"
+        placeholder="Start writing your page content..."
+        :disabled="isSubmitting"
+        :stickyToolbar="true"
+        stickyOffset="60px"
+      />
+      <p v-if="errors.content" class="text-sm text-destructive">
+        {{ errors.content }}
+      </p>
     </div>
   </form>
 </template>

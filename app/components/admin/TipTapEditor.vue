@@ -26,12 +26,33 @@ interface Props {
    * @default true
    */
   showToolbar?: boolean
+
+  /**
+   * Whether the toolbar should be sticky at the top of the viewport
+   * @default false
+   */
+  stickyToolbar?: boolean
+
+  /**
+   * Top offset for sticky toolbar (e.g., to account for fixed headers)
+   * Can be a number (px) or CSS value (e.g., '72px', '4.5rem')
+   * @default '0'
+   */
+  stickyOffset?: string | number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Start writing...',
   disabled: false,
-  showToolbar: true
+  showToolbar: true,
+  stickyToolbar: false,
+  stickyOffset: '0'
+})
+
+const stickyTopStyle = computed(() => {
+  if (!props.stickyToolbar) return {}
+  const offset = typeof props.stickyOffset === 'number' ? `${props.stickyOffset}px` : props.stickyOffset
+  return { top: offset }
 })
 
 const emit = defineEmits<{
@@ -133,9 +154,16 @@ function redo() {
 </script>
 
 <template>
-  <div v-if="editor" class="tiptap-editor border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden bg-white dark:bg-neutral-800">
+  <div v-if="editor" class="tiptap-editor border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800">
     <!-- Toolbar -->
-    <div v-if="showToolbar" class="toolbar flex flex-wrap items-center gap-1 p-2 border-b border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900">
+    <div
+      v-if="showToolbar"
+      :class="[
+        'toolbar flex flex-wrap items-center gap-1 p-2 border-b border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 rounded-t-lg',
+        stickyToolbar && 'sticky z-[15] shadow-sm'
+      ]"
+      :style="stickyTopStyle"
+    >
       <!-- Undo/Redo -->
       <button
         type="button"
