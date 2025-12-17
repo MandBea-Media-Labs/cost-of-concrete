@@ -92,17 +92,41 @@ function addHeadingIds(html: string): string {
 // Placeholder ID for inline search box teleport
 const SEARCH_BOX_PLACEHOLDER_ID = 'inline-search-box-placeholder'
 
-// Check if content contains searchBox placeholder
+// InlineSearchBox configuration parsed from content
+interface SearchBoxConfig {
+  headline?: string
+  subtext?: string
+  buttonText?: string
+  placeholder?: string
+}
+
+// Parsed search box config from content
+const searchBoxConfig = ref<SearchBoxConfig>({})
+
+// Check if content contains searchBox placeholder (with or without JSON config)
 const hasSearchBoxPlaceholder = computed(() => {
   const content = props.page.content || ''
-  return /<code>searchBox<\/code>/i.test(content)
+  return /<code>searchBox(:[^<]+)?<\/code>/i.test(content)
 })
 
-// Process content to replace <code>searchBox</code> with a teleport target
+// Process content to replace <code>searchBox</code> or <code>searchBox:{...}</code> with a teleport target
 function processSearchBoxPlaceholder(html: string): string {
   return html.replace(
-    /<code>searchBox<\/code>/gi,
-    `<div id="${SEARCH_BOX_PLACEHOLDER_ID}"></div>`
+    /<code>searchBox(:(\{[^<]+\}))?<\/code>/gi,
+    (_, __, jsonStr) => {
+      // Parse JSON config if present
+      if (jsonStr) {
+        try {
+          searchBoxConfig.value = JSON.parse(jsonStr)
+        } catch (e) {
+          console.warn('Failed to parse searchBox config:', jsonStr)
+          searchBoxConfig.value = {}
+        }
+      } else {
+        searchBoxConfig.value = {}
+      }
+      return `<div id="${SEARCH_BOX_PLACEHOLDER_ID}"></div>`
+    }
   )
 }
 
@@ -340,7 +364,12 @@ const scrollToHeading = (id: string) => {
     <!-- Teleport InlineSearchBox into placeholder (client-side only) -->
     <ClientOnly>
       <Teleport v-if="hasSearchBoxPlaceholder" :to="`#${SEARCH_BOX_PLACEHOLDER_ID}`">
-        <InlineSearchBox />
+        <InlineSearchBox
+          :headline="searchBoxConfig.headline"
+          :subtext="searchBoxConfig.subtext"
+          :button-text="searchBoxConfig.buttonText"
+          :placeholder="searchBoxConfig.placeholder"
+        />
       </Teleport>
     </ClientOnly>
   </div>
