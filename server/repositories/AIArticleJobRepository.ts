@@ -242,6 +242,53 @@ export class AIArticleJobRepository {
   }
 
   /**
+   * Start processing a job (sets status to 'processing' and started_at timestamp)
+   */
+  async startProcessing(id: string): Promise<AIArticleJobRow> {
+    return this.setStatus(id, 'processing', { startedAt: true })
+  }
+
+  /**
+   * Update job status (alias for setStatus for convenience)
+   */
+  async updateStatus(id: string, status: AIJobStatus): Promise<AIArticleJobRow> {
+    const options: { startedAt?: boolean; completedAt?: boolean } = {}
+    if (status === 'processing') options.startedAt = true
+    if (status === 'completed' || status === 'failed' || status === 'cancelled') options.completedAt = true
+    return this.setStatus(id, status, options)
+  }
+
+  /**
+   * Set the page ID for a completed job
+   */
+  async setPageId(id: string, pageId: string): Promise<AIArticleJobRow> {
+    const { data, error } = await this.client
+      .from('ai_article_jobs')
+      .update({ page_id: pageId })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  /**
+   * Set the last error for a job
+   */
+  async setError(id: string, errorMessage: string): Promise<AIArticleJobRow> {
+    const { data, error } = await this.client
+      .from('ai_article_jobs')
+      .update({ last_error: errorMessage })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  /**
    * Cancel a job
    */
   async cancel(id: string): Promise<AIArticleJobRow> {
