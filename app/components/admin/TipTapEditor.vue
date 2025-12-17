@@ -1,6 +1,21 @@
 <script setup lang="ts">
+/**
+ * TipTap WYSIWYG Editor
+ *
+ * Rich text editor with image upload support.
+ *
+ * Issue: BAM-304 / BAM-307
+ *
+ * FUTURE ENHANCEMENTS:
+ * - Link editing dialog
+ * - Table support
+ * - Image resize handles
+ * - Media library browser
+ */
+
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
 import { watch } from 'vue'
 
 interface Props {
@@ -60,6 +75,16 @@ const emit = defineEmits<{
 }>()
 
 // =====================================================
+// IMAGE UPLOAD
+// =====================================================
+
+const { getImageFromDataTransfer } = useTipTapImageUpload()
+
+// Image dialog state
+const showImageDialog = ref(false)
+const preselectedFile = ref<File | null>(null)
+
+// =====================================================
 // EDITOR SETUP
 // =====================================================
 
@@ -70,12 +95,63 @@ const editor = useEditor({
       heading: {
         levels: [1, 2, 3, 4, 5, 6]
       }
-    })
+    }),
+    Image.extend({
+      addAttributes() {
+        return {
+          ...this.parent?.(),
+          'data-align': {
+            default: 'center',
+            parseHTML: element => element.getAttribute('data-align') || 'center',
+            renderHTML: attributes => {
+              if (!attributes['data-align']) return {}
+              return { 'data-align': attributes['data-align'] }
+            },
+          },
+        }
+      },
+    }).configure({
+      inline: false,
+      allowBase64: false,
+      HTMLAttributes: {
+        class: 'tiptap-image',
+      },
+    }),
   ],
   editable: !props.disabled,
   onUpdate: ({ editor }) => {
     emit('update:modelValue', editor.getHTML())
-  }
+  },
+  editorProps: {
+    handleDrop: (_view, event, _slice, moved) => {
+      if (moved || !event.dataTransfer) return false
+
+      const file = getImageFromDataTransfer(event.dataTransfer)
+      if (!file) return false
+
+      // Prevent default drop behavior
+      event.preventDefault()
+
+      // Open dialog with preselected file
+      preselectedFile.value = file
+      showImageDialog.value = true
+      return true
+    },
+    handlePaste: (_view, event) => {
+      if (!event.clipboardData) return false
+
+      const file = getImageFromDataTransfer(event.clipboardData)
+      if (!file) return false
+
+      // Prevent default paste behavior
+      event.preventDefault()
+
+      // Open dialog with preselected file
+      preselectedFile.value = file
+      showImageDialog.value = true
+      return true
+    },
+  },
 })
 
 // =====================================================
@@ -88,7 +164,7 @@ watch(() => props.modelValue, (newValue) => {
   const isSame = editor.value.getHTML() === newValue
   if (isSame) return
 
-  editor.value.commands.setContent(newValue, false)
+  editor.value.commands.setContent(newValue, { emitUpdate: false })
 })
 
 watch(() => props.disabled, (newDisabled) => {
@@ -150,6 +226,41 @@ function undo() {
 
 function redo() {
   editor.value?.chain().focus().redo().run()
+}
+
+// =====================================================
+// IMAGE FUNCTIONS
+// =====================================================
+
+function openImageDialog() {
+  preselectedFile.value = null
+  showImageDialog.value = true
+}
+
+function onImageUploaded(data: { url: string; alt?: string; title?: string }) {
+  if (!editor.value) return
+
+  editor.value.chain().focus().setImage({
+    src: data.url,
+    alt: data.alt || '',
+    title: data.title || '',
+  }).run()
+}
+
+function setImageAlignment(alignment: 'left' | 'center' | 'right') {
+  if (!editor.value) return
+
+  // Get current selection and check if it's an image
+  const { state } = editor.value
+  const { selection } = state
+  const node = state.doc.nodeAt(selection.from)
+
+  if (node?.type.name === 'image') {
+    // Update the image's data-align attribute
+    editor.value.chain().focus().updateAttributes('image', {
+      'data-align': alignment,
+    }).run()
+  }
 }
 </script>
 
@@ -315,10 +426,58 @@ function redo() {
       >
         <Icon name="heroicons:minus" class="h-4 w-4" />
       </button>
+
+      <div class="w-px h-6 bg-neutral-300 dark:bg-neutral-600 mx-1" />
+
+      <!-- Image -->
+      <button
+        type="button"
+        @click="openImageDialog"
+        class="toolbar-btn"
+        title="Insert Image"
+      >
+        <Icon name="heroicons:photo" class="h-4 w-4" />
+      </button>
+
+      <!-- Image Alignment (shown when image is selected) -->
+      <template v-if="editor.isActive('image')">
+        <div class="w-px h-6 bg-neutral-300 dark:bg-neutral-600 mx-1" />
+        <button
+          type="button"
+          @click="setImageAlignment('left')"
+          class="toolbar-btn"
+          title="Align Left"
+        >
+          <Icon name="heroicons:bars-3-bottom-left" class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          @click="setImageAlignment('center')"
+          class="toolbar-btn"
+          title="Align Center"
+        >
+          <Icon name="heroicons:bars-3" class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          @click="setImageAlignment('right')"
+          class="toolbar-btn"
+          title="Align Right"
+        >
+          <Icon name="heroicons:bars-3-bottom-right" class="h-4 w-4" />
+        </button>
+      </template>
     </div>
 
     <!-- Editor Content -->
     <EditorContent :editor="editor" class="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[300px] focus:outline-none" />
+
+    <!-- Image Upload Dialog -->
+    <TipTapImageDialog
+      v-model:open="showImageDialog"
+      :preselected-file="preselectedFile"
+      @uploaded="onImageUploaded"
+    />
   </div>
 </template>
 
@@ -408,5 +567,31 @@ function redo() {
 
 :deep(.tiptap s) {
   @apply line-through;
+}
+
+/* Image Styles */
+:deep(.tiptap img) {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+:deep(.tiptap img.tiptap-image) {
+  @apply cursor-pointer;
+}
+
+:deep(.tiptap img[data-align="left"]) {
+  @apply float-left mr-4 mb-2;
+}
+
+:deep(.tiptap img[data-align="center"]) {
+  @apply mx-auto block;
+}
+
+:deep(.tiptap img[data-align="right"]) {
+  @apply float-right ml-4 mb-2;
+}
+
+/* Selected image styling */
+:deep(.tiptap .ProseMirror-selectednode img) {
+  @apply ring-2 ring-blue-500 ring-offset-2;
 }
 </style>
