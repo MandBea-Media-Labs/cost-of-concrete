@@ -259,9 +259,9 @@ function setImageAlignment(alignment: 'left' | 'center' | 'right') {
   const { selection } = state
   const node = state.doc.nodeAt(selection.from)
 
-  if (node?.type.name === 'image') {
+  if (node?.type.name === 'imageResize') {
     // Update the image's data-align attribute
-    editor.value.chain().focus().updateAttributes('image', {
+    editor.value.chain().focus().updateAttributes('imageResize', {
       'data-align': alignment,
     }).run()
   }
@@ -274,7 +274,7 @@ function getCurrentImageNode() {
   const { selection } = state
   const node = state.doc.nodeAt(selection.from)
 
-  if (node?.type.name === 'image') {
+  if (node?.type.name === 'imageResize') {
     return node
   }
   return null
@@ -295,7 +295,7 @@ function openEditImageDialog() {
 function onEditImageSave(data: { alt: string; title: string }) {
   if (!editor.value) return
 
-  editor.value.chain().focus().updateAttributes('image', {
+  editor.value.chain().focus().updateAttributes('imageResize', {
     alt: data.alt,
     title: data.title,
   }).run()
@@ -486,7 +486,7 @@ function deleteImage() {
       </button>
 
       <!-- Image Controls (shown when image is selected) -->
-      <template v-if="editor.isActive('image')">
+      <template v-if="editor.isActive('imageResize')">
         <div class="w-px h-6 bg-neutral-300 dark:bg-neutral-600 mx-1" />
         <button
           type="button"
