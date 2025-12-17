@@ -57,7 +57,21 @@ const showToc = computed(() => metadata.value.showTableOfContents !== false)
 // Mobile TOC sheet state
 const isTocSheetOpen = ref(false)
 
-// Note: Markdown rendering is done inline in template via useMarkdown(block.content)
+// Process HTML content to add IDs to headings for TOC linking
+function addHeadingIds(html: string): string {
+  if (!html) return ''
+
+  // Add IDs to H2 and H3 tags based on their text content
+  return html
+    .replace(/<h2>([^<]+)<\/h2>/gi, (_, text) => {
+      const id = slugify(text.trim())
+      return `<h2 id="${id}">${text}</h2>`
+    })
+    .replace(/<h3>([^<]+)<\/h3>/gi, (_, text) => {
+      const id = slugify(text.trim())
+      return `<h3 id="${id}">${text}</h3>`
+    })
+}
 
 // Content blocks (use blocks if defined, otherwise wrap content as single markdown block)
 const contentBlocks = computed<ContentBlock[]>(() => {
@@ -68,7 +82,7 @@ const contentBlocks = computed<ContentBlock[]>(() => {
   return [{ type: 'markdown', content: props.page.content || '' }]
 })
 
-// Generate URL-safe slug from text (must match useMarkdown slugify)
+// Generate URL-safe slug from text
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -78,30 +92,50 @@ function slugify(text: string): string {
     .replace(/-+/g, '-')       // Collapse multiple hyphens
 }
 
-// Extract TOC from all markdown blocks
+// Extract TOC from HTML content (TipTap stores as HTML, not markdown)
 const tableOfContents = computed(() => {
   if (!showToc.value) return []
 
   const headings: Array<{ id: string; text: string; level: 'h2' | 'h3' }> = []
 
+  // Get content - either from blocks or directly from page.content
+  let htmlContent = ''
   for (const block of contentBlocks.value) {
     if (block.type === 'markdown' && block.content) {
-      // Simple regex to extract markdown headings (H2 and H3 only)
-      const matches = block.content.matchAll(/^(#{2,3})\s+(.+)$/gm)
-      for (const match of matches) {
-        const hashMarks = match[1]
-        const headingText = match[2]
-        if (hashMarks && headingText) {
-          const text = headingText.trim()
-          headings.push({
-            id: slugify(text), // Use same slugify as useMarkdown
-            text,
-            level: hashMarks.length === 2 ? 'h2' : 'h3'
-          })
-        }
-      }
+      htmlContent += block.content
     }
   }
+
+  // Extract H2 and H3 headings from HTML
+  const h2Matches = htmlContent.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)
+  const h3Matches = htmlContent.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)
+
+  // Collect all headings with their positions for proper ordering
+  const allHeadings: Array<{ text: string; level: 'h2' | 'h3'; pos: number }> = []
+
+  for (const match of h2Matches) {
+    if (match[1]) {
+      allHeadings.push({ text: match[1].trim(), level: 'h2', pos: match.index || 0 })
+    }
+  }
+  for (const match of h3Matches) {
+    if (match[1]) {
+      allHeadings.push({ text: match[1].trim(), level: 'h3', pos: match.index || 0 })
+    }
+  }
+
+  // Sort by position in document
+  allHeadings.sort((a, b) => a.pos - b.pos)
+
+  // Convert to TOC items with IDs
+  for (const heading of allHeadings) {
+    headings.push({
+      id: slugify(heading.text),
+      text: heading.text,
+      level: heading.level
+    })
+  }
+
   return headings
 })
 
@@ -162,10 +196,10 @@ const scrollToHeading = (id: string) => {
         <article class="lg:col-span-2">
           <!-- Render content blocks -->
           <template v-for="(block, idx) in contentBlocks" :key="idx">
-            <!-- Markdown Block -->
+            <!-- HTML Content Block (TipTap stores as HTML) -->
             <div v-if="block.type === 'markdown'"
                  class="prose prose-lg prose-neutral mb-8 max-w-none dark:prose-invert prose-headings:font-heading prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-700 dark:prose-a:text-blue-400"
-                 v-html="useMarkdown(block.content).html.value" />
+                 v-html="addHeadingIds(block.content)" />
 
             <!-- FAQ Block -->
             <div v-else-if="block.type === 'faq'" class="mb-8">
