@@ -11,12 +11,14 @@ import type { Component } from 'vue'
 import type { TemplateSlug } from '~/types/templates'
 import { consola } from 'consola'
 
-// Import all template components
+// Import active template components
 import DefaultTemplate from '~/components/templates/DefaultTemplate.vue'
-import HubTemplate from '~/components/templates/HubTemplate.vue'
-import SpokeTemplate from '~/components/templates/SpokeTemplate.vue'
-import SubSpokeTemplate from '~/components/templates/SubSpokeTemplate.vue'
 import ArticleTemplate from '~/components/templates/ArticleTemplate.vue'
+
+// Legacy templates (deprecated - kept for backwards compatibility)
+import HubTemplateLegacy from '~/components/templates/deprecated/HubTemplateLegacy.vue'
+import SpokeTemplateLegacy from '~/components/templates/deprecated/SpokeTemplateLegacy.vue'
+import SubSpokeTemplateLegacy from '~/components/templates/deprecated/SubSpokeTemplateLegacy.vue'
 
 // =====================================================
 // TEMPLATE COMPONENT REGISTRY
@@ -25,27 +27,23 @@ import ArticleTemplate from '~/components/templates/ArticleTemplate.vue'
 /**
  * Registry mapping template slugs to Vue components
  *
+ * Active templates: article, default
+ * Legacy templates: hub, spoke, sub-spoke (disabled in DB, kept for existing pages)
+ *
  * To add a new template:
  * 1. Import the component at the top of this file
  * 2. Add the mapping to this object
  * 3. The template will automatically be available for use
- *
- * @example
- * // Adding a new template
- * import MyNewTemplate from '~/components/templates/MyNewTemplate.vue'
- *
- * export const TEMPLATE_COMPONENTS = {
- *   // ... existing mappings
- *   'my-new-template': MyNewTemplate
- * }
  */
 export const TEMPLATE_COMPONENTS: Record<string, Component> = {
-  'hub': HubTemplate,
-  'spoke': SpokeTemplate,
-  'sub-spoke': SubSpokeTemplate,
+  // Active templates
   'article': ArticleTemplate,
-  'custom': DefaultTemplate,
-  'default': DefaultTemplate
+  'default': DefaultTemplate,
+
+  // Legacy templates (disabled in DB, kept for backwards compatibility)
+  'hub': HubTemplateLegacy,
+  'spoke': SpokeTemplateLegacy,
+  'sub-spoke': SubSpokeTemplateLegacy
 }
 
 // =====================================================

@@ -11,8 +11,16 @@
 
 /**
  * Core template slugs that ship with the system
+ *
+ * Active: article, default
+ * Deprecated: hub, spoke, sub-spoke (disabled in DB, kept for type compatibility)
  */
-export const CORE_TEMPLATES = ['hub', 'spoke', 'sub-spoke', 'article', 'custom', 'default'] as const
+export const CORE_TEMPLATES = ['article', 'default'] as const
+
+/**
+ * Legacy template slugs (deprecated but kept for backwards compatibility)
+ */
+export const LEGACY_TEMPLATES = ['hub', 'spoke', 'sub-spoke'] as const
 
 /**
  * Type for core template slugs (with autocomplete)
@@ -22,7 +30,7 @@ export type CoreTemplateSlug = typeof CORE_TEMPLATES[number]
 /**
  * Type for any template slug (core or custom)
  * Provides autocomplete for core templates while accepting any string
- * 
+ *
  * This uses a branded type pattern to allow both:
  * - Autocomplete for core templates
  * - Acceptance of any string for custom templates
@@ -35,10 +43,10 @@ export type TemplateSlug = CoreTemplateSlug | (string & {})
 
 /**
  * Type guard to check if a slug is a core template
- * 
+ *
  * @param slug - Template slug to check
  * @returns True if the slug is a core template
- * 
+ *
  * @example
  * if (isCoreTemplate('hub')) {
  *   // TypeScript knows this is a CoreTemplateSlug
@@ -54,7 +62,7 @@ export function isCoreTemplate(slug: string): slug is CoreTemplateSlug {
 
 /**
  * Page Template (matches database schema)
- * 
+ *
  * Represents a template record from the page_templates table
  */
 export interface PageTemplate {

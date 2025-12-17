@@ -248,36 +248,9 @@ const calculatedDepth = computed(() => {
 })
 
 // Check for unusual template/depth combinations
+// Note: Legacy hub/spoke/sub-spoke templates are disabled - no warnings needed for article/default
 const templateWarning = computed(() => {
-  if (!template.value) return null
-
-  const depth = calculatedDepth.value
-  const templateSlug = template.value as string
-
-  // Hub template with parent (depth > 0)
-  if (templateSlug === 'hub' && depth > 0) {
-    return {
-      type: 'warning',
-      message: 'Hub templates are typically used at the top level (depth 0). Using a Hub template with a parent page may not display as expected.'
-    }
-  }
-
-  // Spoke template at depth 0
-  if (templateSlug === 'spoke' && depth === 0) {
-    return {
-      type: 'warning',
-      message: 'Spoke templates are typically used at depth 1 (one level below Hub). Using a Spoke template at the top level may not display as expected.'
-    }
-  }
-
-  // Sub-Spoke template at depth 0 or 1
-  if (templateSlug === 'sub-spoke' && (depth === 0 || depth === 1)) {
-    return {
-      type: 'warning',
-      message: 'Sub-Spoke templates are typically used at depth 2 or deeper. Using a Sub-Spoke template at this level may not display as expected.'
-    }
-  }
-
+  // Article and Default templates work at any depth - no warnings needed
   return null
 })
 
