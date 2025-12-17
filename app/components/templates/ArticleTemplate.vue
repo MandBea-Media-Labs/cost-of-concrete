@@ -57,6 +57,21 @@ const showToc = computed(() => metadata.value.showTableOfContents !== false)
 // Mobile TOC sheet state
 const isTocSheetOpen = ref(false)
 
+// Generate URL-safe slug from text
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special chars
+    .replace(/\s+/g, '-')      // Replace spaces with hyphens
+    .replace(/-+/g, '-')       // Collapse multiple hyphens
+}
+
+// Check if content is HTML (has HTML tags) or markdown
+function isHtmlContent(content: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(content)
+}
+
 // Process HTML content to add IDs to headings for TOC linking
 function addHeadingIds(html: string): string {
   if (!html) return ''
@@ -73,6 +88,19 @@ function addHeadingIds(html: string): string {
     })
 }
 
+// Render content block - HTML or markdown with heading IDs
+function renderBlock(content: string): string {
+  if (!content) return ''
+
+  if (isHtmlContent(content)) {
+    // Content is HTML (TipTap) - add heading IDs directly
+    return addHeadingIds(content)
+  } else {
+    // Content is markdown - render through useMarkdown (which adds heading IDs)
+    return useMarkdown(content).html.value
+  }
+}
+
 // Content blocks (use blocks if defined, otherwise wrap content as single markdown block)
 const contentBlocks = computed<ContentBlock[]>(() => {
   if (metadata.value.blocks && metadata.value.blocks.length > 0) {
@@ -82,45 +110,51 @@ const contentBlocks = computed<ContentBlock[]>(() => {
   return [{ type: 'markdown', content: props.page.content || '' }]
 })
 
-// Generate URL-safe slug from text
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special chars
-    .replace(/\s+/g, '-')      // Replace spaces with hyphens
-    .replace(/-+/g, '-')       // Collapse multiple hyphens
-}
-
-// Extract TOC from HTML content (TipTap stores as HTML, not markdown)
+// Extract TOC from content (supports both HTML and markdown)
 const tableOfContents = computed(() => {
   if (!showToc.value) return []
 
   const headings: Array<{ id: string; text: string; level: 'h2' | 'h3' }> = []
 
   // Get content - either from blocks or directly from page.content
-  let htmlContent = ''
+  let content = ''
   for (const block of contentBlocks.value) {
     if (block.type === 'markdown' && block.content) {
-      htmlContent += block.content
+      content += block.content
     }
   }
-
-  // Extract H2 and H3 headings from HTML
-  const h2Matches = htmlContent.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)
-  const h3Matches = htmlContent.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)
 
   // Collect all headings with their positions for proper ordering
   const allHeadings: Array<{ text: string; level: 'h2' | 'h3'; pos: number }> = []
 
-  for (const match of h2Matches) {
-    if (match[1]) {
-      allHeadings.push({ text: match[1].trim(), level: 'h2', pos: match.index || 0 })
+  if (isHtmlContent(content)) {
+    // Extract H2 and H3 headings from HTML
+    const h2Matches = content.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)
+    const h3Matches = content.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)
+
+    for (const match of h2Matches) {
+      if (match[1]) {
+        allHeadings.push({ text: match[1].trim(), level: 'h2', pos: match.index || 0 })
+      }
     }
-  }
-  for (const match of h3Matches) {
-    if (match[1]) {
-      allHeadings.push({ text: match[1].trim(), level: 'h3', pos: match.index || 0 })
+    for (const match of h3Matches) {
+      if (match[1]) {
+        allHeadings.push({ text: match[1].trim(), level: 'h3', pos: match.index || 0 })
+      }
+    }
+  } else {
+    // Extract headings from markdown syntax (## and ###)
+    const mdMatches = content.matchAll(/^(#{2,3})\s+(.+)$/gm)
+    for (const match of mdMatches) {
+      const hashMarks = match[1]
+      const headingText = match[2]
+      if (hashMarks && headingText) {
+        allHeadings.push({
+          text: headingText.trim(),
+          level: hashMarks.length === 2 ? 'h2' : 'h3',
+          pos: match.index || 0
+        })
+      }
     }
   }
 
@@ -196,10 +230,10 @@ const scrollToHeading = (id: string) => {
         <article class="lg:col-span-2">
           <!-- Render content blocks -->
           <template v-for="(block, idx) in contentBlocks" :key="idx">
-            <!-- HTML Content Block (TipTap stores as HTML) -->
+            <!-- Content Block (supports HTML from TipTap or markdown) -->
             <div v-if="block.type === 'markdown'"
                  class="prose prose-lg prose-neutral mb-8 max-w-none dark:prose-invert prose-headings:font-heading prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-700 dark:prose-a:text-blue-400"
-                 v-html="addHeadingIds(block.content)" />
+                 v-html="renderBlock(block.content)" />
 
             <!-- FAQ Block -->
             <div v-else-if="block.type === 'faq'" class="mb-8">
