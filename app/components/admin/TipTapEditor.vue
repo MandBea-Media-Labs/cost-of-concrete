@@ -13,7 +13,6 @@
  */
 
 import { useEditor, EditorContent } from '@tiptap/vue-3'
-import { BubbleMenu } from '@tiptap/vue-3/menus'
 import StarterKit from '@tiptap/starter-kit'
 import ImageResize from 'tiptap-extension-resize-image'
 import { watch } from 'vue'
@@ -486,7 +485,7 @@ function deleteImage() {
         <Icon name="heroicons:photo" class="h-4 w-4" />
       </button>
 
-      <!-- Image Alignment (shown when image is selected) -->
+      <!-- Image Controls (shown when image is selected) -->
       <template v-if="editor.isActive('image')">
         <div class="w-px h-6 bg-neutral-300 dark:bg-neutral-600 mx-1" />
         <button
@@ -513,68 +512,33 @@ function deleteImage() {
         >
           <Icon name="heroicons:bars-3-bottom-right" class="h-4 w-4" />
         </button>
+
+        <div class="w-px h-6 bg-neutral-300 dark:bg-neutral-600 mx-1" />
+
+        <!-- Edit Image Properties -->
+        <button
+          type="button"
+          @click="openEditImageDialog"
+          class="toolbar-btn"
+          title="Edit Image Properties"
+        >
+          <Icon name="heroicons:pencil-square" class="h-4 w-4" />
+        </button>
+
+        <!-- Delete Image -->
+        <button
+          type="button"
+          @click="deleteImage"
+          class="toolbar-btn text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
+          title="Delete Image"
+        >
+          <Icon name="heroicons:trash" class="h-4 w-4" />
+        </button>
       </template>
     </div>
 
     <!-- Editor Content -->
     <EditorContent :editor="editor" class="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[300px] focus:outline-none" />
-
-    <!-- Image Bubble Menu -->
-    <BubbleMenu
-      v-if="editor"
-      :editor="editor"
-      :tippy-options="{ duration: 100 }"
-      :should-show="({ editor: e }: { editor: any }) => e.isActive('image')"
-      class="flex items-center gap-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg p-1"
-    >
-      <!-- Alignment buttons -->
-      <button
-        type="button"
-        @click="setImageAlignment('left')"
-        class="bubble-btn"
-        title="Align Left"
-      >
-        <Icon name="heroicons:bars-3-bottom-left" class="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        @click="setImageAlignment('center')"
-        class="bubble-btn"
-        title="Align Center"
-      >
-        <Icon name="heroicons:bars-3" class="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        @click="setImageAlignment('right')"
-        class="bubble-btn"
-        title="Align Right"
-      >
-        <Icon name="heroicons:bars-3-bottom-right" class="h-4 w-4" />
-      </button>
-
-      <div class="w-px h-5 bg-neutral-300 dark:bg-neutral-600 mx-1" />
-
-      <!-- Edit button -->
-      <button
-        type="button"
-        @click="openEditImageDialog"
-        class="bubble-btn"
-        title="Edit Properties"
-      >
-        <Icon name="heroicons:pencil" class="h-4 w-4" />
-      </button>
-
-      <!-- Delete button -->
-      <button
-        type="button"
-        @click="deleteImage"
-        class="bubble-btn text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-        title="Delete Image"
-      >
-        <Icon name="heroicons:trash" class="h-4 w-4" />
-      </button>
-    </BubbleMenu>
 
     <!-- Image Upload Dialog -->
     <TipTapImageDialog
@@ -599,11 +563,6 @@ function deleteImage() {
 
 .toolbar-btn.is-active {
   @apply bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300;
-}
-
-/* Bubble menu button styles */
-.bubble-btn {
-  @apply p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors;
 }
 
 /* TipTap Editor Styles */
