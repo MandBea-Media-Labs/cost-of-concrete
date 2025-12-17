@@ -39,3 +39,6 @@ export { BaseAIAgent } from './AIAgent'
 // Agent Registry
 export { AgentRegistry, loadAgents } from './AgentRegistry'
 
+// Agent Implementations
+export { ResearchAgent, researchAgent } from './agents/ResearchAgent'
+
