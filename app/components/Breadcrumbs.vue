@@ -31,10 +31,17 @@ interface Props {
    * @default true
    */
   showHome?: boolean
+
+  /**
+   * Use light variant for dark backgrounds (e.g., hero images)
+   * @default false
+   */
+  light?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showHome: true
+  showHome: true,
+  light: false
 })
 
 // Get site config
@@ -102,7 +109,8 @@ useHead({
 <template>
   <nav
     aria-label="Breadcrumb"
-    class="flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400"
+    class="flex flex-wrap items-center gap-2 text-xs"
+    :class="light ? 'text-neutral-300' : 'text-neutral-600 dark:text-neutral-400'"
   >
     <template v-for="(crumb, index) in breadcrumbList" :key="index">
       <!-- Breadcrumb Item -->
@@ -111,7 +119,8 @@ useHead({
         <NuxtLink
           v-if="!crumb.isCurrent"
           :to="crumb.path"
-          class="transition-colors hover:text-neutral-900 dark:hover:text-neutral-100"
+          class="transition-colors"
+          :class="light ? 'hover:text-white' : 'hover:text-neutral-900 dark:hover:text-neutral-100'"
           :aria-current="crumb.isCurrent ? 'page' : undefined"
         >
           {{ crumb.title }}
@@ -120,7 +129,8 @@ useHead({
         <!-- Current Page (non-clickable) -->
         <span
           v-else
-          class="font-medium text-neutral-900 dark:text-neutral-100"
+          class="font-medium"
+          :class="light ? 'text-white' : 'text-neutral-900 dark:text-neutral-100'"
           aria-current="page"
         >
           {{ crumb.title }}
@@ -129,7 +139,8 @@ useHead({
         <!-- Separator (chevron) -->
         <svg
           v-if="index < breadcrumbList.length - 1"
-          class="h-3 w-3 flex-shrink-0 text-neutral-400 dark:text-neutral-600"
+          class="h-3 w-3 flex-shrink-0"
+          :class="light ? 'text-neutral-400' : 'text-neutral-400 dark:text-neutral-600'"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

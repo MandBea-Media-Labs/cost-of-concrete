@@ -57,8 +57,7 @@ const showToc = computed(() => metadata.value.showTableOfContents !== false)
 // Mobile TOC sheet state
 const isTocSheetOpen = ref(false)
 
-// Render markdown content (legacy support when no blocks defined)
-const { html: legacyContent } = useMarkdown(computed(() => props.page.content || ''))
+// Note: Markdown rendering is done inline in template via useMarkdown(block.content)
 
 // Content blocks (use blocks if defined, otherwise wrap content as single markdown block)
 const contentBlocks = computed<ContentBlock[]>(() => {
@@ -81,11 +80,15 @@ const tableOfContents = computed(() => {
       // Simple regex to extract markdown headings
       const matches = block.content.matchAll(/^(#{2,3})\s+(.+)$/gm)
       for (const match of matches) {
-        headings.push({
-          id: `heading-${headingIndex++}`,
-          text: match[2].trim(),
-          level: match[1].length === 2 ? 'h2' : 'h3'
-        })
+        const hashMarks = match[1]
+        const headingText = match[2]
+        if (hashMarks && headingText) {
+          headings.push({
+            id: `heading-${headingIndex++}`,
+            text: headingText.trim(),
+            level: hashMarks.length === 2 ? 'h2' : 'h3'
+          })
+        }
       }
     }
   }
@@ -130,6 +133,7 @@ const scrollToHeading = (id: string) => {
         <Breadcrumbs
           v-if="showBreadcrumbs && breadcrumbs"
           :items="breadcrumbs"
+          :light="!!metadata.heroImage"
           class="mb-6"
         />
 
@@ -138,13 +142,6 @@ const scrollToHeading = (id: string) => {
             :class="metadata.heroImage ? 'text-white' : ''">
           {{ page.title }}
         </h1>
-
-        <!-- Description -->
-        <p v-if="page.description"
-           class="mt-4 text-lg text-neutral-600 dark:text-neutral-300 max-w-3xl"
-           :class="metadata.heroImage ? 'text-neutral-200' : ''">
-          {{ page.description }}
-        </p>
       </div>
     </header>
 
