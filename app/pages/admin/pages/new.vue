@@ -26,8 +26,26 @@ const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string>>({})
 
-// Form ref for triggering submit from sticky header
-const pageFormRef = ref<{ submit: () => void } | null>(null)
+// Sheet open states
+const showPageSettingsSheet = ref(false)
+const showSeoTemplateSheet = ref(false)
+
+// Form ref for triggering submit and accessing form state
+const pageFormRef = ref<{
+  submit: () => void
+  formValues: Record<string, any>
+  formErrors: Record<string, string | undefined>
+  setFieldValue: (field: string, value: any) => void
+  markSlugAsManuallyEdited: () => void
+  hasSlugChanged: boolean
+  hasParentChanged: boolean
+  hasTemplateChanged: boolean
+  parentPageOptions: Array<{ value: string | null; label: string }>
+  isLoadingParentPages: boolean
+  templateOptions: Array<{ value: string; label: string }>
+  isLoadingTemplates: boolean
+  templateLoadError: string | null
+} | null>(null)
 
 // =====================================================
 // FORM SUBMISSION
@@ -176,24 +194,53 @@ function handleCancel() {
 <template>
   <div>
     <!-- Sticky Header with Controls -->
-    <div class="sticky top-0 z-10 -mx-4 px-4 py-4 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
-      <div class="flex items-center justify-between gap-4">
+    <div class="sticky top-0 z-10 -mx-4 mb-6 bg-background/95 pb-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div class="flex items-center justify-between gap-4 px-4">
         <div>
           <h1 class="text-2xl font-bold">Create New Page</h1>
-          <p class="text-muted-foreground text-sm">Add a new page to your website</p>
+          <p class="text-sm text-muted-foreground">Add a new page to your website</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <!-- Settings Sheet Buttons -->
+          <UiButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            @click="showPageSettingsSheet = true"
+          >
+            <Icon name="heroicons:cog-6-tooth" class="size-4 mr-1.5" />
+            Page Settings
+          </UiButton>
+          <UiButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            @click="showSeoTemplateSheet = true"
+          >
+            <Icon name="heroicons:magnifying-glass-circle" class="size-4 mr-1.5" />
+            SEO & Template
+          </UiButton>
+
+          <!-- Divider -->
+          <div class="w-px h-6 bg-border mx-1" />
+
+          <!-- Cancel Button -->
           <UiButton
             type="button"
             variant="outline"
+            size="sm"
             @click="handleCancel"
             :disabled="isSubmitting"
           >
             Cancel
           </UiButton>
+
+          <!-- Create Page Button -->
           <UiButton
             @click="pageFormRef?.submit()"
             :disabled="isSubmitting"
+            size="sm"
+            class="min-w-[100px]"
           >
             <Icon v-if="isSubmitting" name="heroicons:arrow-path" class="size-4 animate-spin mr-2" />
             Create Page
@@ -205,15 +252,10 @@ function handleCancel() {
     <!-- Error Message -->
     <UiCard v-if="errorMessage" class="mb-6 border-destructive bg-destructive/10">
       <UiCardContent class="pt-6">
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:exclamation-circle" class="size-5 text-destructive flex-shrink-0 mt-0.5" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium text-destructive">
-              Error Creating Page
-            </h3>
-            <p class="mt-1 text-sm text-destructive/80">
-              {{ errorMessage }}
-            </p>
+        <div class="flex items-start justify-between">
+          <div class="flex items-start gap-3">
+            <Icon name="heroicons:exclamation-circle" class="size-5 mt-0.5 text-destructive" />
+            <p class="text-sm text-destructive">{{ errorMessage }}</p>
           </div>
           <UiButton
             variant="ghost"
@@ -226,43 +268,55 @@ function handleCancel() {
       </UiCardContent>
     </UiCard>
 
-    <!-- Form Card -->
-    <UiCard>
-      <UiCardHeader>
-        <UiCardTitle>Page Information</UiCardTitle>
-        <p class="text-sm text-muted-foreground">
-          Fill in all the details for your new page including content, template settings, and SEO options.
-        </p>
-      </UiCardHeader>
-      <UiCardContent>
-        <PageForm
-          ref="pageFormRef"
-          :is-submitting="isSubmitting"
-          @submit="handleSubmit"
-          @cancel="handleCancel"
-        />
-      </UiCardContent>
-    </UiCard>
+    <!-- Page Form (TipTap Editor Only) -->
+    <PageForm
+      ref="pageFormRef"
+      :is-submitting="isSubmitting"
+      @submit="handleSubmit"
+      @cancel="handleCancel"
+    />
 
-    <!-- Help Text -->
-    <UiCard class="mt-6 border-primary/30 bg-primary/5">
-      <UiCardContent class="pt-6">
-        <div class="flex items-start gap-3">
-          <Icon name="heroicons:information-circle" class="size-5 text-primary flex-shrink-0 mt-0.5" />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">
-              Form Sections
-            </h3>
-            <ul class="mt-2 text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Core Fields:</strong> Title, slug, parent page, template, status, and description</li>
-              <li><strong>Content:</strong> Rich text editor with formatting options</li>
-              <li><strong>Template Settings:</strong> Template-specific options (varies by template)</li>
-              <li><strong>SEO Settings:</strong> Meta tags, social media, and structured data</li>
-            </ul>
-          </div>
-        </div>
-      </UiCardContent>
-    </UiCard>
+    <!-- Page Settings Sheet -->
+    <PageSettingsSheet
+      v-if="pageFormRef"
+      :open="showPageSettingsSheet"
+      @update:open="showPageSettingsSheet = $event"
+      :title="pageFormRef.formValues.title ?? ''"
+      :slug="pageFormRef.formValues.slug ?? ''"
+      :parentId="pageFormRef.formValues.parentId ?? null"
+      :template="pageFormRef.formValues.template ?? 'default'"
+      :status="pageFormRef.formValues.status ?? 'draft'"
+      :description="pageFormRef.formValues.description ?? null"
+      :parentPageOptions="pageFormRef.parentPageOptions"
+      :templateOptions="pageFormRef.templateOptions"
+      :isLoadingParentPages="pageFormRef.isLoadingParentPages"
+      :isLoadingTemplates="pageFormRef.isLoadingTemplates"
+      :templateLoadError="pageFormRef.templateLoadError"
+      :errors="pageFormRef.formErrors"
+      :isEditMode="false"
+      :disabled="isSubmitting"
+      @update:title="pageFormRef.setFieldValue('title', $event)"
+      @update:slug="pageFormRef.setFieldValue('slug', $event)"
+      @update:parentId="pageFormRef.setFieldValue('parentId', $event)"
+      @update:template="pageFormRef.setFieldValue('template', $event)"
+      @update:status="pageFormRef.setFieldValue('status', $event)"
+      @update:description="pageFormRef.setFieldValue('description', $event)"
+      @slug-manual-edit="pageFormRef.markSlugAsManuallyEdited()"
+    />
+
+    <!-- SEO & Template Settings Sheet -->
+    <SeoTemplateSheet
+      v-if="pageFormRef"
+      :open="showSeoTemplateSheet"
+      @update:open="showSeoTemplateSheet = $event"
+      :template="pageFormRef.formValues.template ?? 'default'"
+      :metadata="pageFormRef.formValues.metadata ?? {}"
+      :seoValues="pageFormRef.formValues"
+      :seoErrors="pageFormRef.formErrors"
+      :disabled="isSubmitting"
+      @update:metadata="pageFormRef.setFieldValue('metadata', $event)"
+      @update:seoField="(name, value) => pageFormRef?.setFieldValue(name, value)"
+    />
   </div>
 </template>
 
