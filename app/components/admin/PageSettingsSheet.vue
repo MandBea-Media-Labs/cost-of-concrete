@@ -43,6 +43,10 @@ interface Props {
   hasTemplateChanged?: boolean
   // Disabled state
   disabled?: boolean
+  // Validation callback for Create mode
+  onBeforeClose?: () => Promise<boolean>
+  // Cancel callback - clears errors and closes
+  onCancel?: () => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -54,7 +58,9 @@ const props = withDefaults(defineProps<Props>(), {
   hasSlugChanged: false,
   hasParentChanged: false,
   hasTemplateChanged: false,
-  disabled: false
+  disabled: false,
+  onBeforeClose: undefined,
+  onCancel: undefined
 })
 
 const emit = defineEmits<{
@@ -89,17 +95,58 @@ function onSlugInput(value: string) {
   emit('slug-manual-edit')
 }
 
-// Handle close attempt - only allow if no errors
-function handleClose() {
+// Handle close attempt - validate first if callback provided, then check for errors
+async function handleClose() {
+  // If onBeforeClose is provided (Create mode), trigger validation first
+  if (props.onBeforeClose) {
+    await props.onBeforeClose()
+  }
+
+  // Only close if no errors
   if (!hasErrors.value) {
+    emit('update:open', false)
+  }
+}
+
+// Handle overlay/escape close attempts (with validation)
+async function handleOpenChange(value: boolean) {
+  if (!value) {
+    // Trying to close - validate first if needed
+    if (props.onBeforeClose) {
+      await props.onBeforeClose()
+    }
+    if (!hasErrors.value) {
+      emit('update:open', false)
+    }
+  } else {
+    emit('update:open', value)
+  }
+}
+
+// Force close without validation (for X button and Cancel button)
+// Calls onCancel to clear errors if provided
+function forceClose() {
+  if (props.onCancel) {
+    props.onCancel()
+  } else {
     emit('update:open', false)
   }
 }
 </script>
 
 <template>
-  <UiSheet :open="open" @update:open="hasErrors ? undefined : emit('update:open', $event)">
-    <UiSheetContent side="right" class="w-full sm:max-w-lg overflow-hidden flex flex-col p-6">
+  <UiSheet :open="open" @update:open="handleOpenChange">
+    <UiSheetContent side="right" class="w-full sm:max-w-lg overflow-hidden flex flex-col p-6" hide-close-button>
+      <!-- Custom X button that bypasses validation -->
+      <button
+        type="button"
+        class="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden z-10"
+        @click="forceClose"
+      >
+        <Icon name="lucide:x" class="size-4" />
+        <span class="sr-only">Close</span>
+      </button>
+
       <UiSheetHeader class="flex-shrink-0 pb-4">
         <UiSheetTitle>Page Settings</UiSheetTitle>
         <UiSheetDescription>
@@ -323,7 +370,14 @@ function handleClose() {
           <p class="text-sm text-destructive">Please fix the validation errors above before closing.</p>
         </div>
 
-        <div class="flex items-center justify-end">
+        <div class="flex items-center justify-end gap-2">
+          <UiButton
+            type="button"
+            variant="outline"
+            @click="forceClose"
+          >
+            Cancel
+          </UiButton>
           <UiButton
             type="button"
             @click="handleClose"

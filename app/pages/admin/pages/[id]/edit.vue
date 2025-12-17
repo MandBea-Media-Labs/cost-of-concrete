@@ -49,6 +49,7 @@ const pageFormRef = ref<{
   formValues: Record<string, any>
   formErrors: Record<string, string | undefined>
   setFieldValue: (field: string, value: any) => void
+  clearFieldErrors: (fields: string[]) => void
   markSlugAsManuallyEdited: () => void
   hasSlugChanged: boolean
   hasParentChanged: boolean
@@ -59,6 +60,36 @@ const pageFormRef = ref<{
   isLoadingTemplates: boolean
   templateLoadError: string | null
 } | null>(null)
+
+// Page Settings sheet fields
+const pageSettingsFields = ['title', 'slug', 'parentId', 'template', 'status', 'description']
+
+// SEO sheet fields
+const seoSheetFields = [
+  'metaTitle', 'metaDescription', 'canonicalUrl',
+  'ogTitle', 'ogDescription', 'ogImage',
+  'twitterTitle', 'twitterDescription', 'twitterImage'
+]
+
+/**
+ * Cancel Page Settings sheet - clear errors and close
+ */
+function cancelPageSettingsSheet() {
+  if (pageFormRef.value) {
+    pageFormRef.value.clearFieldErrors(pageSettingsFields)
+  }
+  showPageSettingsSheet.value = false
+}
+
+/**
+ * Cancel SEO sheet - clear errors and close
+ */
+function cancelSeoSheet() {
+  if (pageFormRef.value) {
+    pageFormRef.value.clearFieldErrors(seoSheetFields)
+  }
+  showSeoTemplateSheet.value = false
+}
 
 // Save button state: 'idle' | 'saving' | 'saved'
 const saveButtonState = ref<'idle' | 'saving' | 'saved'>('idle')
@@ -790,6 +821,7 @@ async function handleUnarchive() {
         :hasParentChanged="pageFormRef.hasParentChanged"
         :hasTemplateChanged="pageFormRef.hasTemplateChanged"
         :disabled="isSubmitting"
+        :onCancel="cancelPageSettingsSheet"
         @update:title="pageFormRef.setFieldValue('title', $event)"
         @update:slug="pageFormRef.setFieldValue('slug', $event)"
         @update:parentId="pageFormRef.setFieldValue('parentId', $event)"
@@ -809,6 +841,7 @@ async function handleUnarchive() {
         :seoValues="pageFormRef.formValues"
         :seoErrors="pageFormRef.formErrors"
         :disabled="isSubmitting"
+        :onCancel="cancelSeoSheet"
         @update:metadata="pageFormRef.setFieldValue('metadata', $event)"
         @update:seoField="(name, value) => pageFormRef?.setFieldValue(name, value)"
       />

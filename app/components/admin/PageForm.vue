@@ -46,10 +46,19 @@ const emit = defineEmits<{
 // FORM SETUP
 // =====================================================
 
-const { values, errors, defineField, handleSubmit, setFieldValue } = useForm({
+const { values, errors, defineField, handleSubmit, setFieldValue, validate, validateField, setFieldError } = useForm({
   validationSchema: toTypedSchema(pageFormSchema),
   initialValues: props.initialData || pageFormDefaultValues
 })
+
+/**
+ * Clear validation errors for specific fields
+ */
+function clearFieldErrors(fields: string[]) {
+  for (const field of fields) {
+    setFieldError(field as keyof PageFormData, undefined)
+  }
+}
 
 // Define form fields with VeeValidate
 const [title, titleAttrs] = defineField('title')
@@ -307,6 +316,11 @@ defineExpose({
 
   // Field setters
   setFieldValue,
+
+  // Validation methods (for sheet validation)
+  validate,
+  validateField,
+  clearFieldErrors,
 
   // Slug manual edit tracking
   markSlugAsManuallyEdited: () => { isSlugManuallyEdited.value = true },

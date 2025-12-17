@@ -36,6 +36,9 @@ const pageFormRef = ref<{
   formValues: Record<string, any>
   formErrors: Record<string, string | undefined>
   setFieldValue: (field: string, value: any) => void
+  validate: () => Promise<{ valid: boolean; errors: Record<string, string> }>
+  validateField: (field: string) => Promise<{ valid: boolean; errors: string[] }>
+  clearFieldErrors: (fields: string[]) => void
   markSlugAsManuallyEdited: () => void
   hasSlugChanged: boolean
   hasParentChanged: boolean
@@ -46,6 +49,84 @@ const pageFormRef = ref<{
   isLoadingTemplates: boolean
   templateLoadError: string | null
 } | null>(null)
+
+// =====================================================
+// SHEET VALIDATION
+// =====================================================
+
+/**
+ * Validate Page Settings sheet fields before allowing close
+ */
+async function validatePageSettingsFields(): Promise<boolean> {
+  if (!pageFormRef.value) return true
+
+  // Validate required fields in Page Settings sheet
+  const fieldsToValidate = ['title', 'slug', 'template', 'status']
+
+  for (const field of fieldsToValidate) {
+    await pageFormRef.value.validateField(field)
+  }
+
+  // Check if any of these fields have errors
+  const errors = pageFormRef.value.formErrors
+  const hasErrors = fieldsToValidate.some(field => errors[field])
+
+  return !hasErrors
+}
+
+/**
+ * Validate SEO sheet fields before allowing close
+ */
+async function validateSeoFields(): Promise<boolean> {
+  if (!pageFormRef.value) return true
+
+  // SEO fields that need validation (URLs, lengths, etc.)
+  const fieldsToValidate = [
+    'metaTitle', 'metaDescription', 'canonicalUrl',
+    'ogTitle', 'ogDescription', 'ogImage',
+    'twitterTitle', 'twitterDescription', 'twitterImage'
+  ]
+
+  for (const field of fieldsToValidate) {
+    await pageFormRef.value.validateField(field)
+  }
+
+  // Check if any SEO fields have errors
+  const errors = pageFormRef.value.formErrors
+  const hasErrors = fieldsToValidate.some(field => errors[field])
+
+  return !hasErrors
+}
+
+// Page Settings sheet fields
+const pageSettingsFields = ['title', 'slug', 'parentId', 'template', 'status', 'description']
+
+// SEO sheet fields
+const seoSheetFields = [
+  'metaTitle', 'metaDescription', 'canonicalUrl',
+  'ogTitle', 'ogDescription', 'ogImage',
+  'twitterTitle', 'twitterDescription', 'twitterImage'
+]
+
+/**
+ * Cancel Page Settings sheet - clear errors and close
+ */
+function cancelPageSettingsSheet() {
+  if (pageFormRef.value) {
+    pageFormRef.value.clearFieldErrors(pageSettingsFields)
+  }
+  showPageSettingsSheet.value = false
+}
+
+/**
+ * Cancel SEO sheet - clear errors and close
+ */
+function cancelSeoSheet() {
+  if (pageFormRef.value) {
+    pageFormRef.value.clearFieldErrors(seoSheetFields)
+  }
+  showSeoTemplateSheet.value = false
+}
 
 // =====================================================
 // FORM SUBMISSION
@@ -295,6 +376,8 @@ function handleCancel() {
       :errors="pageFormRef.formErrors"
       :isEditMode="false"
       :disabled="isSubmitting"
+      :onBeforeClose="validatePageSettingsFields"
+      :onCancel="cancelPageSettingsSheet"
       @update:title="pageFormRef.setFieldValue('title', $event)"
       @update:slug="pageFormRef.setFieldValue('slug', $event)"
       @update:parentId="pageFormRef.setFieldValue('parentId', $event)"
@@ -314,6 +397,8 @@ function handleCancel() {
       :seoValues="pageFormRef.formValues"
       :seoErrors="pageFormRef.formErrors"
       :disabled="isSubmitting"
+      :onBeforeClose="validateSeoFields"
+      :onCancel="cancelSeoSheet"
       @update:metadata="pageFormRef.setFieldValue('metadata', $event)"
       @update:seoField="(name, value) => pageFormRef?.setFieldValue(name, value)"
     />
