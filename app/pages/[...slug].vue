@@ -3,6 +3,11 @@
 // Handles all page paths and renders appropriate template based on database data
 // IMPORTANT: This route must NOT catch state/city routes - those are handled by [state] routes
 
+// Use page layout (no container constraints - templates control their own widths)
+definePageMeta({
+  layout: 'page'
+})
+
 import { consola } from 'consola'
 import { getTemplateComponent } from '~/utils/pageTemplateRegistry'
 import { isValidStateSlug } from '~/utils/usStates'
