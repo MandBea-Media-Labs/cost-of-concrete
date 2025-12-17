@@ -203,18 +203,19 @@ const scrollToHeading = (id: string) => {
 
 <template>
   <div class="min-h-screen bg-neutral-50 dark:bg-neutral-900">
-    <!-- Hero Section -->
+    <!-- Hero Section - full viewport width background -->
     <header
-      class="relative rounded-lg py-12 lg:py-16"
+      class="relative py-12 lg:py-16"
       :class="metadata.heroImage ? 'bg-neutral-800' : 'bg-white dark:bg-neutral-800'"
     >
-      <!-- Optional grayscale background image -->
+      <!-- Optional grayscale background image - full width -->
       <div
         v-if="metadata.heroImage"
-        class="absolute inset-0 rounded-lg bg-cover bg-center opacity-30 grayscale"
+        class="absolute inset-0 bg-cover bg-center opacity-30 grayscale"
         :style="{ backgroundImage: `url(${metadata.heroImage})` }"
       />
 
+      <!-- Content container - constrained width -->
       <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumbs -->
         <Breadcrumbs
