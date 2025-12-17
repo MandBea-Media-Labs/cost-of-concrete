@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 /**
  * PageSettingsSheet - Sheet component for page metadata settings
  *
@@ -66,6 +68,14 @@ const emit = defineEmits<{
   'slug-manual-edit': []
 }>()
 
+// Fields that belong to this sheet
+const sheetFields = ['title', 'slug', 'parentId', 'template', 'status', 'description'] as const
+
+// Check if this sheet has any validation errors
+const hasErrors = computed(() => {
+  return sheetFields.some(field => props.errors[field])
+})
+
 // Status options
 const statusOptions = [
   { value: 'draft', label: 'Draft - Not visible to public' },
@@ -78,10 +88,17 @@ function onSlugInput(value: string) {
   emit('update:slug', value)
   emit('slug-manual-edit')
 }
+
+// Handle close attempt - only allow if no errors
+function handleClose() {
+  if (!hasErrors.value) {
+    emit('update:open', false)
+  }
+}
 </script>
 
 <template>
-  <UiSheet :open="open" @update:open="emit('update:open', $event)">
+  <UiSheet :open="open" @update:open="hasErrors ? undefined : emit('update:open', $event)">
     <UiSheetContent side="right" class="w-full sm:max-w-lg overflow-hidden flex flex-col p-6">
       <UiSheetHeader class="flex-shrink-0 pb-4">
         <UiSheetTitle>Page Settings</UiSheetTitle>
@@ -296,13 +313,25 @@ function onSlugInput(value: string) {
       </div>
 
       <!-- Footer -->
-      <div class="flex-shrink-0 flex items-center justify-end pt-4 border-t border-border">
-        <UiButton
-          type="button"
-          @click="emit('update:open', false)"
+      <div class="flex-shrink-0 pt-4 border-t border-border space-y-3">
+        <!-- Error Message -->
+        <div
+          v-if="hasErrors"
+          class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md"
         >
-          Save & Close
-        </UiButton>
+          <Icon name="heroicons:exclamation-circle" class="size-4 text-destructive flex-shrink-0" />
+          <p class="text-sm text-destructive">Please fix the validation errors above before closing.</p>
+        </div>
+
+        <div class="flex items-center justify-end">
+          <UiButton
+            type="button"
+            @click="handleClose"
+            :disabled="hasErrors"
+          >
+            Save & Close
+          </UiButton>
+        </div>
       </div>
     </UiSheetContent>
   </UiSheet>

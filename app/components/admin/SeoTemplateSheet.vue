@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 /**
  * SeoTemplateSheet - Sheet component for SEO & Template settings
  *
@@ -30,10 +32,32 @@ const emit = defineEmits<{
   'update:metadata': [value: Record<string, any>]
   'update:seoField': [name: keyof PageFormData, value: any]
 }>()
+
+// SEO fields that belong to this sheet
+const seoFields = [
+  'metaTitle', 'metaDescription', 'metaKeywords', 'focusKeyword',
+  'canonicalUrl', 'metaRobots', 'sitemapPriority', 'sitemapChangefreq',
+  'redirectUrl', 'redirectType',
+  'ogTitle', 'ogDescription', 'ogImage', 'ogType',
+  'twitterCard', 'twitterTitle', 'twitterDescription', 'twitterImage',
+  'schemaType'
+] as const
+
+// Check if this sheet has any validation errors
+const hasErrors = computed(() => {
+  return seoFields.some(field => props.seoErrors[field])
+})
+
+// Handle close attempt - only allow if no errors
+function handleClose() {
+  if (!hasErrors.value) {
+    emit('update:open', false)
+  }
+}
 </script>
 
 <template>
-  <UiSheet :open="open" @update:open="emit('update:open', $event)">
+  <UiSheet :open="open" @update:open="hasErrors ? undefined : emit('update:open', $event)">
     <UiSheetContent side="right" class="w-full sm:max-w-xl overflow-hidden flex flex-col p-6">
       <UiSheetHeader class="flex-shrink-0 pb-4">
         <UiSheetTitle>SEO & Template Settings</UiSheetTitle>
@@ -80,13 +104,25 @@ const emit = defineEmits<{
       </div>
 
       <!-- Footer -->
-      <div class="flex-shrink-0 flex items-center justify-end pt-4 border-t border-border">
-        <UiButton
-          type="button"
-          @click="emit('update:open', false)"
+      <div class="flex-shrink-0 pt-4 border-t border-border space-y-3">
+        <!-- Error Message -->
+        <div
+          v-if="hasErrors"
+          class="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md"
         >
-          Save & Close
-        </UiButton>
+          <Icon name="heroicons:exclamation-circle" class="size-4 text-destructive flex-shrink-0" />
+          <p class="text-sm text-destructive">Please fix the validation errors above before closing.</p>
+        </div>
+
+        <div class="flex items-center justify-end">
+          <UiButton
+            type="button"
+            @click="handleClose"
+            :disabled="hasErrors"
+          >
+            Save & Close
+          </UiButton>
+        </div>
       </div>
     </UiSheetContent>
   </UiSheet>
