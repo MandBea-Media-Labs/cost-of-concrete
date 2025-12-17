@@ -49,6 +49,34 @@ export interface KeywordOverviewResult {
   monthly_searches?: Array<{ year: number; month: number; search_volume: number }>
 }
 
+/** Raw item from DataForSEO keyword overview API (nested in result.items) */
+export interface KeywordOverviewRawItem {
+  keyword: string
+  keyword_info?: {
+    search_volume: number | null
+    cpc: number | null
+    competition: number | null
+    competition_level: string | null
+    monthly_searches?: Array<{ year: number; month: number; search_volume: number }>
+  }
+  keyword_properties?: {
+    keyword_difficulty: number | null
+  }
+  search_intent_info?: {
+    main_intent: string
+    foreign_intent: string[] | null
+  }
+}
+
+/** Raw result group from DataForSEO keyword overview API */
+export interface KeywordOverviewResultGroup {
+  se_type: string
+  location_code: number
+  language_code: string
+  items_count: number
+  items: KeywordOverviewRawItem[]
+}
+
 export interface KeywordOverviewResponse {
   status_code: number
   status_message: string
@@ -56,7 +84,7 @@ export interface KeywordOverviewResponse {
   tasks: Array<{
     status_code: number
     status_message: string
-    result: KeywordOverviewResult[] | null
+    result: KeywordOverviewResultGroup[] | null
   }>
 }
 
@@ -123,10 +151,17 @@ export const relatedKeywordsRequestSchema = z.object({
 export type RelatedKeywordsRequest = z.infer<typeof relatedKeywordsRequestSchema>
 
 export interface RelatedKeywordItem {
-  keyword: string
-  search_volume: number | null
-  keyword_difficulty: number | null
-  cpc: number | null
+  keyword_data: {
+    keyword: string
+    keyword_info?: {
+      search_volume: number | null
+      cpc: number | null
+    }
+    keyword_properties?: {
+      keyword_difficulty: number | null
+    }
+  }
+  related_keywords?: string[]
 }
 
 export interface RelatedKeywordsResponse {
@@ -157,10 +192,16 @@ export const keywordSuggestionsRequestSchema = z.object({
 export type KeywordSuggestionsRequest = z.infer<typeof keywordSuggestionsRequestSchema>
 
 export interface KeywordSuggestionItem {
-  keyword: string
-  search_volume: number | null
-  keyword_difficulty: number | null
-  cpc: number | null
+  keyword_data: {
+    keyword: string
+    keyword_info?: {
+      search_volume: number | null
+      cpc: number | null
+    }
+    keyword_properties?: {
+      keyword_difficulty: number | null
+    }
+  }
 }
 
 export interface KeywordSuggestionsResponse {

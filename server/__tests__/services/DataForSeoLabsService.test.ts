@@ -23,16 +23,26 @@ const mockKeywordOverviewResponse = {
     status_code: DATAFORSEO_STATUS_CODES.SUCCESS,
     status_message: 'Ok.',
     result: [{
-      keyword: 'concrete contractors',
-      search_volume: 12000,
-      keyword_difficulty: 45,
-      cpc: 8.50,
-      competition: 0.65,
-      competition_level: 'MEDIUM',
-      search_intent_info: {
-        main_intent: 'commercial',
-        foreign_intent: null,
-      },
+      se_type: 'google',
+      location_code: 2840,
+      language_code: 'en',
+      items_count: 1,
+      items: [{
+        keyword: 'concrete contractors',
+        keyword_info: {
+          search_volume: 12000,
+          cpc: 8.50,
+          competition: 0.65,
+          competition_level: 'MEDIUM',
+        },
+        keyword_properties: {
+          keyword_difficulty: 45,
+        },
+        search_intent_info: {
+          main_intent: 'commercial',
+          foreign_intent: null,
+        },
+      }],
     }],
   }],
 }
@@ -89,9 +99,9 @@ const mockRelatedKeywordsResponse = {
     result: [{
       seed_keyword: 'concrete contractors',
       items: [
-        { keyword: 'concrete contractors near me', search_volume: 8000, keyword_difficulty: 40, cpc: 7.0 },
-        { keyword: 'cement contractors', search_volume: 3000, keyword_difficulty: 35, cpc: 5.0 },
-        { keyword: 'concrete driveway contractors', search_volume: 2500, keyword_difficulty: 38, cpc: 6.0 },
+        { keyword_data: { keyword: 'concrete contractors near me', keyword_info: { search_volume: 8000, cpc: 7.0 }, keyword_properties: { keyword_difficulty: 40 } } },
+        { keyword_data: { keyword: 'cement contractors', keyword_info: { search_volume: 3000, cpc: 5.0 }, keyword_properties: { keyword_difficulty: 35 } } },
+        { keyword_data: { keyword: 'concrete driveway contractors', keyword_info: { search_volume: 2500, cpc: 6.0 }, keyword_properties: { keyword_difficulty: 38 } } },
       ],
     }],
   }],
@@ -107,8 +117,8 @@ const mockKeywordSuggestionsResponse = {
     result: [{
       seed_keyword: 'concrete contractors',
       items: [
-        { keyword: 'affordable concrete contractors', search_volume: 1500, keyword_difficulty: 30, cpc: 4.0 },
-        { keyword: 'licensed concrete contractors', search_volume: 1200, keyword_difficulty: 32, cpc: 4.5 },
+        { keyword_data: { keyword: 'affordable concrete contractors', keyword_info: { search_volume: 1500, cpc: 4.0 }, keyword_properties: { keyword_difficulty: 30 } } },
+        { keyword_data: { keyword: 'licensed concrete contractors', keyword_info: { search_volume: 1200, cpc: 4.5 }, keyword_properties: { keyword_difficulty: 32 } } },
       ],
     }],
   }],

@@ -80,7 +80,31 @@ export class DataForSeoLabsService {
       throw new DataForSeoError(`Keyword overview failed: ${data.status_message}`, data.status_code)
     }
 
-    const results = data.tasks?.[0]?.result || []
+    // DataForSEO returns: tasks[0].result[0].items[0] which contains the keyword data
+    // We need to flatten this structure to match our KeywordOverviewResult interface
+    const rawResults = data.tasks?.[0]?.result || []
+    const results: KeywordOverviewResult[] = []
+
+    for (const resultGroup of rawResults) {
+      if (resultGroup.items) {
+        for (const item of resultGroup.items) {
+          results.push({
+            keyword: item.keyword,
+            search_volume: item.keyword_info?.search_volume ?? null,
+            keyword_difficulty: item.keyword_properties?.keyword_difficulty ?? null,
+            cpc: item.keyword_info?.cpc ?? null,
+            competition: item.keyword_info?.competition ?? null,
+            competition_level: item.keyword_info?.competition_level ?? null,
+            search_intent_info: item.search_intent_info ? {
+              main_intent: item.search_intent_info.main_intent,
+              foreign_intent: item.search_intent_info.foreign_intent ?? null,
+            } : undefined,
+            monthly_searches: item.keyword_info?.monthly_searches,
+          })
+        }
+      }
+    }
+
     return { results, cost: data.cost }
   }
 
@@ -154,7 +178,14 @@ export class DataForSeoLabsService {
     }
 
     const items = data.tasks?.[0]?.result?.[0]?.items || []
-    const keywords = items.map(item => item.keyword).filter(Boolean)
+
+    // Extract keywords from keyword_data.keyword (API structure)
+    const keywords: string[] = []
+    for (const item of items) {
+      if (item.keyword_data?.keyword) {
+        keywords.push(item.keyword_data.keyword)
+      }
+    }
 
     return { keywords, cost: data.cost }
   }
@@ -181,7 +212,14 @@ export class DataForSeoLabsService {
     }
 
     const items = data.tasks?.[0]?.result?.[0]?.items || []
-    const keywords = items.map(item => item.keyword).filter(Boolean)
+
+    // Extract keywords from keyword_data.keyword (API structure)
+    const keywords: string[] = []
+    for (const item of items) {
+      if (item.keyword_data?.keyword) {
+        keywords.push(item.keyword_data.keyword)
+      }
+    }
 
     return { keywords, cost: data.cost }
   }

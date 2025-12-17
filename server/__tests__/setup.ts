@@ -6,13 +6,24 @@
  */
 
 import { vi } from 'vitest'
+import { config } from 'dotenv'
+import { resolve } from 'path'
 
 // =====================================================
 // ENVIRONMENT VARIABLES
 // =====================================================
 
-// Set test environment variables
-process.env.DATAFORSEO_API_KEY = 'test-api-key-base64-encoded'
+// When running integration tests, load .env.local first so real credentials
+// are available. This must happen BEFORE any service imports in test files.
+if (process.env.RUN_INTEGRATION === 'true') {
+  config({ path: resolve(process.cwd(), '.env.local') })
+}
+
+// Set a fallback API key for unit tests that don't need real credentials
+// This only applies if no real key was loaded above
+if (!process.env.DATAFORSEO_API_KEY) {
+  process.env.DATAFORSEO_API_KEY = 'test-api-key-base64-encoded'
+}
 process.env.NODE_ENV = 'test'
 
 // =====================================================

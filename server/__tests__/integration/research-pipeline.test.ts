@@ -7,18 +7,13 @@
  * To run with real API:
  *   RUN_INTEGRATION=true pnpm test:unit -- --grep "Research Pipeline"
  *
+ * Note: .env.local is loaded in setup.ts when RUN_INTEGRATION=true,
+ * before any test files are executed.
+ *
  * @see BAM-311 Batch 2.3: Testing
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest'
-import { config } from 'dotenv'
-import { resolve } from 'path'
-
-// Load .env.local for integration tests
-if (process.env.RUN_INTEGRATION === 'true') {
-  config({ path: resolve(process.cwd(), '.env.local') })
-}
-
 import { DataForSeoLabsService } from '../../services/DataForSeoLabsService'
 import { ResearchAgent } from '../../services/ai/agents/ResearchAgent'
 import { researchOutputSchema } from '../../schemas/ai.schemas'
@@ -33,6 +28,11 @@ const TEST_KEYWORD = 'concrete contractors los angeles'
 
 // Skip integration tests unless explicitly enabled
 const itIntegration = RUN_INTEGRATION ? it : it.skip
+
+// Unmock consola for integration tests so we can see debug output
+if (RUN_INTEGRATION) {
+  vi.unmock('consola')
+}
 
 // =====================================================
 // MOCK CONTEXT
