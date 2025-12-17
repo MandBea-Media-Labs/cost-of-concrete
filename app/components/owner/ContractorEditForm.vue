@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
-import BusinessHoursEditor from './BusinessHoursEditor.vue'
 import {
   ownerContractorFormSchema,
   type OwnerContractorFormData,
@@ -171,15 +169,15 @@ const socialPlatforms = [
 
 <template>
   <form @submit.prevent="onSubmit" class="space-y-6">
-    <Tabs default-value="info">
-      <TabsList>
-        <TabsTrigger value="info">Business Info</TabsTrigger>
-        <TabsTrigger value="hours">Hours & Services</TabsTrigger>
-        <TabsTrigger value="social">Social Media</TabsTrigger>
-      </TabsList>
+    <OwnerTabs default-value="info">
+      <OwnerTabsList>
+        <OwnerTabsTrigger value="info">Business Info</OwnerTabsTrigger>
+        <OwnerTabsTrigger value="hours">Hours & Services</OwnerTabsTrigger>
+        <OwnerTabsTrigger value="social">Social Media</OwnerTabsTrigger>
+      </OwnerTabsList>
 
       <!-- Tab 1: Business Info -->
-      <TabsContent value="info" class="space-y-5">
+      <OwnerTabsContent value="info" class="space-y-5">
         <div class="grid gap-2 md:grid-cols-2">
           <!-- Company Name -->
           <div class="md:col-span-2">
@@ -247,10 +245,10 @@ const socialPlatforms = [
             </div>
           </div>
         </UiCard>
-      </TabsContent>
+      </OwnerTabsContent>
 
       <!-- Tab 2: Hours & Services -->
-      <TabsContent value="hours" class="space-y-6">
+      <OwnerTabsContent value="hours" class="space-y-6">
         <!-- Business Hours -->
         <div>
           <h3 class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Business Hours</h3>
@@ -281,10 +279,10 @@ const socialPlatforms = [
             No service categories available
           </p>
         </div>
-      </TabsContent>
+      </OwnerTabsContent>
 
       <!-- Tab 3: Social Media -->
-      <TabsContent value="social" class="space-y-5">
+      <OwnerTabsContent value="social" class="space-y-5">
         <p class="text-sm text-neutral-500">Add your social media profiles to help customers find you online.</p>
         <div class="grid gap-4">
           <div v-for="platform in socialPlatforms" :key="platform.key">
@@ -300,8 +298,8 @@ const socialPlatforms = [
             />
           </div>
         </div>
-      </TabsContent>
-    </Tabs>
+      </OwnerTabsContent>
+    </OwnerTabs>
 
     <!-- Form Actions -->
     <div class="flex items-center justify-end gap-3 border-t border-neutral-200 pt-6 dark:border-neutral-700">
