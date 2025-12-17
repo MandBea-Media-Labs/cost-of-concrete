@@ -26,7 +26,7 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div class="not-prose my-8 overflow-hidden rounded-xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:border-neutral-700 dark:from-neutral-800 dark:to-neutral-900">
+  <div class="not-prose my-8 rounded-xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:border-neutral-700 dark:from-neutral-800 dark:to-neutral-900">
     <!-- Decorative city skyline background -->
     <div class="relative px-6 py-8 sm:px-8 sm:py-10">
       <!-- Background pattern (subtle) -->
