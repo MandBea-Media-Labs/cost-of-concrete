@@ -328,13 +328,6 @@ async function handleSubmit(formData: PageFormData) {
   }
 }
 
-/**
- * Handle cancel button
- */
-function handleCancel() {
-  router.push('/admin/pages')
-}
-
 // =====================================================
 // ARCHIVE / DELETE / UNARCHIVE HANDLERS
 // =====================================================
@@ -559,12 +552,15 @@ async function handleUnarchive() {
           </div>
           <div class="flex items-center gap-3">
             <UiButton
+              v-if="initialFormData?.slug"
               type="button"
               variant="outline"
-              @click="handleCancel"
-              :disabled="isSubmitting"
+              as="a"
+              :href="`/${initialFormData.slug}`"
+              target="_blank"
             >
-              Cancel
+              <Icon name="heroicons:arrow-top-right-on-square" class="size-4 mr-1.5" />
+              View Page
             </UiButton>
             <UiButton
               @click="pageFormRef?.submit()"
@@ -613,7 +609,6 @@ async function handleUnarchive() {
             :is-submitting="isSubmitting"
             :current-page-id="pageId"
             @submit="handleSubmit"
-            @cancel="handleCancel"
           />
         </UiCardContent>
       </UiCard>
