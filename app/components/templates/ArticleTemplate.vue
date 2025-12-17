@@ -32,6 +32,7 @@ interface ArticleMetadata {
   heroImage?: string
   author?: string
   showTableOfContents?: boolean
+  showSidebarSearch?: boolean
   blocks?: ContentBlock[]
 }
 
@@ -54,6 +55,9 @@ const metadata = computed<ArticleMetadata>(() => {
 
 // Show TOC (default true)
 const showToc = computed(() => metadata.value.showTableOfContents !== false)
+
+// Show sidebar search (default false - opt-in)
+const showSidebarSearch = computed(() => metadata.value.showSidebarSearch === true)
 
 // Mobile TOC sheet state
 const isTocSheetOpen = ref(false)
@@ -329,6 +333,9 @@ const scrollToHeading = (id: string) => {
                 <p class="mt-1 text-neutral-600 dark:text-neutral-300">{{ formattedDate }}</p>
               </div>
             </div>
+
+            <!-- Sidebar Search Box (opt-in via metadata) -->
+            <SidebarSearchBox v-if="showSidebarSearch" />
           </div>
         </aside>
       </div>
