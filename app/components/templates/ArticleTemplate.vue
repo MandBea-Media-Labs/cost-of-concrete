@@ -101,13 +101,21 @@ function renderBlock(content: string): string {
   }
 }
 
-// Content blocks (use blocks if defined, otherwise wrap content as single markdown block)
+// Content blocks - always include page.content first, then any additional blocks from metadata
 const contentBlocks = computed<ContentBlock[]>(() => {
-  if (metadata.value.blocks && metadata.value.blocks.length > 0) {
-    return metadata.value.blocks
+  const blocks: ContentBlock[] = []
+
+  // Always include page.content as the primary content block
+  if (props.page.content) {
+    blocks.push({ type: 'markdown', content: props.page.content })
   }
-  // Legacy: wrap page.content as single markdown block
-  return [{ type: 'markdown', content: props.page.content || '' }]
+
+  // Append any additional blocks from metadata (FAQ, etc.)
+  if (metadata.value.blocks && metadata.value.blocks.length > 0) {
+    blocks.push(...metadata.value.blocks)
+  }
+
+  return blocks
 })
 
 // Extract TOC from content (supports both HTML and markdown)
