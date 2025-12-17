@@ -9,13 +9,13 @@
  * FUTURE ENHANCEMENTS:
  * - Link editing dialog
  * - Table support
- * - Image resize handles
  * - Media library browser
  */
 
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { BubbleMenu } from '@tiptap/vue-3/menus'
 import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
+import ImageResize from 'tiptap-extension-resize-image'
 import { watch } from 'vue'
 
 interface Props {
@@ -84,6 +84,10 @@ const { getImageFromDataTransfer } = useTipTapImageUpload()
 const showImageDialog = ref(false)
 const preselectedFile = ref<File | null>(null)
 
+// Edit image dialog state
+const showEditImageDialog = ref(false)
+const editingImageData = ref<{ src: string; alt: string; title: string } | null>(null)
+
 // =====================================================
 // EDITOR SETUP
 // =====================================================
@@ -96,7 +100,8 @@ const editor = useEditor({
         levels: [1, 2, 3, 4, 5, 6]
       }
     }),
-    Image.extend({
+    // ImageResize provides drag handles for resizing + alignment support
+    ImageResize.extend({
       addAttributes() {
         return {
           ...this.parent?.(),
@@ -261,6 +266,48 @@ function setImageAlignment(alignment: 'left' | 'center' | 'right') {
       'data-align': alignment,
     }).run()
   }
+}
+
+function getCurrentImageNode() {
+  if (!editor.value) return null
+
+  const { state } = editor.value
+  const { selection } = state
+  const node = state.doc.nodeAt(selection.from)
+
+  if (node?.type.name === 'image') {
+    return node
+  }
+  return null
+}
+
+function openEditImageDialog() {
+  const node = getCurrentImageNode()
+  if (!node) return
+
+  editingImageData.value = {
+    src: node.attrs.src || '',
+    alt: node.attrs.alt || '',
+    title: node.attrs.title || '',
+  }
+  showEditImageDialog.value = true
+}
+
+function onEditImageSave(data: { alt: string; title: string }) {
+  if (!editor.value) return
+
+  editor.value.chain().focus().updateAttributes('image', {
+    alt: data.alt,
+    title: data.title,
+  }).run()
+
+  showEditImageDialog.value = false
+  editingImageData.value = null
+}
+
+function deleteImage() {
+  if (!editor.value) return
+  editor.value.chain().focus().deleteSelection().run()
 }
 </script>
 
@@ -472,11 +519,75 @@ function setImageAlignment(alignment: 'left' | 'center' | 'right') {
     <!-- Editor Content -->
     <EditorContent :editor="editor" class="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[300px] focus:outline-none" />
 
+    <!-- Image Bubble Menu -->
+    <BubbleMenu
+      v-if="editor"
+      :editor="editor"
+      :tippy-options="{ duration: 100 }"
+      :should-show="({ editor: e }: { editor: any }) => e.isActive('image')"
+      class="flex items-center gap-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg p-1"
+    >
+      <!-- Alignment buttons -->
+      <button
+        type="button"
+        @click="setImageAlignment('left')"
+        class="bubble-btn"
+        title="Align Left"
+      >
+        <Icon name="heroicons:bars-3-bottom-left" class="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        @click="setImageAlignment('center')"
+        class="bubble-btn"
+        title="Align Center"
+      >
+        <Icon name="heroicons:bars-3" class="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        @click="setImageAlignment('right')"
+        class="bubble-btn"
+        title="Align Right"
+      >
+        <Icon name="heroicons:bars-3-bottom-right" class="h-4 w-4" />
+      </button>
+
+      <div class="w-px h-5 bg-neutral-300 dark:bg-neutral-600 mx-1" />
+
+      <!-- Edit button -->
+      <button
+        type="button"
+        @click="openEditImageDialog"
+        class="bubble-btn"
+        title="Edit Properties"
+      >
+        <Icon name="heroicons:pencil" class="h-4 w-4" />
+      </button>
+
+      <!-- Delete button -->
+      <button
+        type="button"
+        @click="deleteImage"
+        class="bubble-btn text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+        title="Delete Image"
+      >
+        <Icon name="heroicons:trash" class="h-4 w-4" />
+      </button>
+    </BubbleMenu>
+
     <!-- Image Upload Dialog -->
     <TipTapImageDialog
       v-model:open="showImageDialog"
       :preselected-file="preselectedFile"
       @uploaded="onImageUploaded"
+    />
+
+    <!-- Edit Image Dialog -->
+    <TipTapImageEditDialog
+      v-model:open="showEditImageDialog"
+      :image-data="editingImageData"
+      @save="onEditImageSave"
     />
   </div>
 </template>
@@ -488,6 +599,11 @@ function setImageAlignment(alignment: 'left' | 'center' | 'right') {
 
 .toolbar-btn.is-active {
   @apply bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300;
+}
+
+/* Bubble menu button styles */
+.bubble-btn {
+  @apply p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors;
 }
 
 /* TipTap Editor Styles */
@@ -593,5 +709,30 @@ function setImageAlignment(alignment: 'left' | 'center' | 'right') {
 /* Selected image styling */
 :deep(.tiptap .ProseMirror-selectednode img) {
   @apply ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Image resize handles from tiptap-extension-resize-image */
+:deep(.tiptap .image-resizer) {
+  @apply relative inline-block;
+}
+
+:deep(.tiptap .image-resizer .resize-trigger) {
+  @apply absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-sm shadow-md cursor-nwse-resize;
+}
+
+:deep(.tiptap .image-resizer .resize-trigger.top-left) {
+  @apply top-0 left-0 -translate-x-1/2 -translate-y-1/2;
+}
+
+:deep(.tiptap .image-resizer .resize-trigger.top-right) {
+  @apply top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize;
+}
+
+:deep(.tiptap .image-resizer .resize-trigger.bottom-left) {
+  @apply bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize;
+}
+
+:deep(.tiptap .image-resizer .resize-trigger.bottom-right) {
+  @apply bottom-0 right-0 translate-x-1/2 translate-y-1/2;
 }
 </style>
