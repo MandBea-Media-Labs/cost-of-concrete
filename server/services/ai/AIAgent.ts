@@ -115,6 +115,12 @@ export interface WriterAgentInput {
   keyword: string
   researchData: unknown // ResearchOutput type
   targetWordCount: number
+  /** QA feedback for revision cycles (optional, provided when iteration > 1) */
+  qaFeedback?: string
+  /** Previous article content for revision reference (optional) */
+  previousArticle?: unknown // WriterOutput type
+  /** Current iteration number */
+  iteration?: number
 }
 
 /**

@@ -102,28 +102,35 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
   // =====================================================
 
   async execute(input: WriterAgentInput, context: AgentContext): Promise<AgentResult<WriterOutput>> {
-    const { keyword, researchData, targetWordCount } = input
+    const { keyword, researchData, targetWordCount, qaFeedback, previousArticle, iteration } = input
     const { log, onProgress, llmProvider, persona } = context
     const startTime = Date.now()
+    const isRevision = Boolean(qaFeedback && previousArticle && (iteration ?? 1) > 1)
 
-    log('info', `Starting Writer Agent for keyword: "${keyword}"`)
-    onProgress?.('Writer Agent starting article generation...')
+    if (isRevision) {
+      log('info', `Starting Writer Agent REVISION for keyword: "${keyword}" (iteration ${iteration})`)
+      onProgress?.(`Writer Agent revising article based on QA feedback (iteration ${iteration})...`)
+    } else {
+      log('info', `Starting Writer Agent for keyword: "${keyword}"`)
+      onProgress?.('Writer Agent starting article generation...')
+    }
 
     try {
       // Cast research data to expected type
       const research = researchData as ResearchOutput
+      const prevArticle = previousArticle as WriterOutput | undefined
 
       // Build the user prompt with research context
-      log('debug', 'Building prompt with research context...')
-      onProgress?.('Analyzing research data and preparing prompt...')
+      log('debug', isRevision ? 'Building revision prompt with QA feedback...' : 'Building prompt with research context...')
+      onProgress?.(isRevision ? 'Preparing revision based on QA feedback...' : 'Analyzing research data and preparing prompt...')
 
-      const userPrompt = this.buildUserPrompt(keyword, research, targetWordCount)
+      const userPrompt = this.buildUserPrompt(keyword, research, targetWordCount, qaFeedback, prevArticle)
 
       // Get system prompt from persona or use default
       const systemPrompt = persona.system_prompt || WRITER_SYSTEM_PROMPT
 
-      log('debug', `Requesting article generation from LLM (model: ${persona.model})`)
-      onProgress?.('Generating article content with Claude...')
+      log('debug', `Requesting article ${isRevision ? 'revision' : 'generation'} from LLM (model: ${persona.model})`)
+      onProgress?.(isRevision ? 'Revising article with Claude...' : 'Generating article content with Claude...')
 
       // Generate article using LLM
       const result = await llmProvider.generateJSON<WriterOutput>({
@@ -170,20 +177,45 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
 
   /**
    * Build the user prompt with research data context
+   * Supports revision mode with QA feedback
    */
   private buildUserPrompt(
     keyword: string,
     research: ResearchOutput,
-    targetWordCount: number
+    targetWordCount: number,
+    qaFeedback?: string,
+    previousArticle?: WriterOutput
   ): string {
     const sections: string[] = []
+    const isRevision = Boolean(qaFeedback && previousArticle)
 
-    // Main instruction
-    sections.push(`Write a comprehensive, SEO-optimized article about: "${keyword}"`)
+    // Main instruction - different for revision vs initial
+    if (isRevision) {
+      sections.push(`## REVISION REQUEST`)
+      sections.push(``)
+      sections.push(`Your previous article did not pass quality assurance. Please revise the article based on the feedback below.`)
+      sections.push(``)
+      sections.push(`### QA Feedback`)
+      sections.push(qaFeedback!)
+      sections.push(``)
+      sections.push(`### Previous Article to Revise`)
+      sections.push(`Title: ${previousArticle!.title}`)
+      sections.push(`Word Count: ${previousArticle!.wordCount}`)
+      sections.push(``)
+      sections.push(`Content:`)
+      sections.push(previousArticle!.content)
+      sections.push(``)
+      sections.push(`---`)
+      sections.push(``)
+      sections.push(`Please revise the article above, addressing ALL feedback points while maintaining the overall structure and keyword focus.`)
+    } else {
+      sections.push(`Write a comprehensive, SEO-optimized article about: "${keyword}"`)
+    }
+
     sections.push(`Target word count: ${targetWordCount} words (minimum ${Math.floor(targetWordCount * 0.9)}, maximum ${Math.ceil(targetWordCount * 1.1)})`)
     sections.push('')
 
-    // Keyword data
+    // Keyword data (always include for reference)
     if (research.keywordData) {
       sections.push('## Keyword Research Data')
       if (research.keywordData.searchVolume) {
@@ -223,8 +255,8 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
       sections.push('')
     }
 
-    // Competitor analysis for context
-    if (research.competitors.length > 0) {
+    // Competitor analysis for context (only for initial generation)
+    if (!isRevision && research.competitors.length > 0) {
       sections.push('## Top Competitor Titles (for reference, do not copy)')
       for (const comp of research.competitors.slice(0, 5)) {
         sections.push(`- ${comp.title}`)

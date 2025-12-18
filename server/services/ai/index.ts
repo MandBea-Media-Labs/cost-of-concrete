@@ -51,3 +51,7 @@ export { WriterAgent, writerAgent } from './agents/WriterAgent'
 export { SEOAgent, seoAgent } from './agents/SEOAgent'
 export { QAAgent, qaAgent } from './agents/QAAgent'
 
+// Pipeline Orchestrator
+export { ArticlePipelineOrchestrator } from './ArticlePipelineOrchestrator'
+export type { PipelineResult, PipelineCallbacks } from './ArticlePipelineOrchestrator'
+
