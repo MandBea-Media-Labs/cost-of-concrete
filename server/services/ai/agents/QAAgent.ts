@@ -4,17 +4,20 @@
  * Fourth agent in the AI article writing pipeline.
  * Performs quality assurance checks on generated content.
  * Returns pass/fail with detailed feedback for Writer revision.
+ * Records automated eval to ai_article_evals on every run.
  */
 
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { BaseAIAgent, type AgentContext, type AgentResult, type QAAgentInput } from '../AIAgent'
 import { AgentRegistry } from '../AgentRegistry'
+import { AIEvalRepository } from '../../../repositories/AIEvalRepository'
 import {
   qaOutputSchema,
   type QAOutput,
   type AIAgentType,
   type WriterOutput,
   type SEOOutput,
+  type EvalIssue,
 } from '../../../schemas/ai.schemas'
 
 // =====================================================
@@ -238,6 +241,12 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
         )
       }
 
+      // Step 7: Record automated eval to database
+      log('debug', 'Recording automated eval to database...')
+      onProgress?.('Recording quality evaluation...')
+      await this.recordEval(parseResult.data, context)
+      log('info', 'Automated eval recorded successfully')
+
       // Return with feedback for Writer revision if failed
       const agentResult = this.success(parseResult.data, result.usage, qaOutput.passed)
       if (!qaOutput.passed) {
@@ -250,6 +259,42 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log('error', `QA Agent failed: ${message}`, error)
       return this.failure(message, { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+    }
+  }
+
+  /**
+   * Record automated eval to ai_article_evals table
+   */
+  private async recordEval(output: QAOutput, context: AgentContext): Promise<void> {
+    const { client, job, iteration, stepId, log } = context
+
+    try {
+      const evalRepo = new AIEvalRepository(client)
+
+      // Map QA output issues to EvalIssue format
+      const evalIssues: EvalIssue[] = output.issues.map(issue => ({
+        category: issue.category,
+        severity: issue.severity,
+        description: issue.description,
+        suggestion: issue.suggestion,
+      }))
+
+      await evalRepo.create({
+        jobId: job.id,
+        stepId,
+        evalType: 'automated',
+        iteration,
+        overallScore: output.overallScore,
+        dimensionScores: output.dimensionScores,
+        passed: output.passed,
+        issues: evalIssues,
+        feedback: output.feedback,
+      })
+
+      log('debug', `Eval recorded: score=${output.overallScore}, passed=${output.passed}, issues=${evalIssues.length}`)
+    } catch (error) {
+      // Log but don't fail the agent if eval recording fails
+      log('warn', 'Failed to record eval (non-fatal)', error)
     }
   }
 

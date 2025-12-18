@@ -30,6 +30,8 @@ export interface AgentContext {
   persona: AIPersonaRow
   /** Current iteration number (for QA feedback loops) */
   iteration: number
+  /** Current step ID (for linking evals to steps) */
+  stepId?: string
   /** Callback for logging agent activity */
   log: (level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: unknown) => void
   /** Callback for streaming progress updates */
