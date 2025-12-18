@@ -49,4 +49,5 @@ export { AgentRegistry, loadAgents } from './AgentRegistry'
 export { ResearchAgent, researchAgent } from './agents/ResearchAgent'
 export { WriterAgent, writerAgent } from './agents/WriterAgent'
 export { SEOAgent, seoAgent } from './agents/SEOAgent'
+export { QAAgent, qaAgent } from './agents/QAAgent'
 
