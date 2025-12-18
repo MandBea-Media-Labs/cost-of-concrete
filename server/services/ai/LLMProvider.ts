@@ -6,6 +6,7 @@
  * without changing agent implementation code.
  */
 
+import type { z } from 'zod'
 import type { LLMProvider as LLMProviderType } from '../../schemas/ai.schemas'
 
 // =====================================================
@@ -99,6 +100,37 @@ export interface ILLMProvider {
     request: LLMCompletionRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<LLMCompletionResponse>
+
+  /**
+   * Generate text with optional streaming support
+   * Higher-level method that simplifies text generation
+   * @param options - Text generation options
+   * @returns Promise resolving to completion response
+   */
+  generateText(options: {
+    prompt: string
+    systemPrompt?: string
+    model: string
+    temperature?: number
+    maxTokens?: number
+    onStream?: (chunk: LLMStreamChunk) => void
+  }): Promise<LLMCompletionResponse>
+
+  /**
+   * Generate structured JSON output with Zod validation
+   * Automatically repairs malformed JSON and validates against schema
+   * @param options - JSON generation options
+   * @returns Promise resolving to validated JSON data
+   */
+  generateJSON<T>(options: {
+    prompt: string
+    systemPrompt?: string
+    model: string
+    schema: z.ZodSchema<T>
+    temperature?: number
+    maxTokens?: number
+    maxRetries?: number
+  }): Promise<{ data: T; usage: TokenUsage; estimatedCostUsd: number }>
 
   /**
    * Estimate token count for text (approximate)

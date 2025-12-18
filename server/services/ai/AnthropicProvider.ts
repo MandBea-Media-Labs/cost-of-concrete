@@ -7,6 +7,7 @@
 
 import { consola } from 'consola'
 import Anthropic from '@anthropic-ai/sdk'
+import type { z } from 'zod'
 import type {
   ILLMProvider,
   LLMCompletionRequest,
@@ -16,6 +17,8 @@ import type {
   TokenUsage,
 } from './LLMProvider'
 import { TOKEN_COSTS } from '../../schemas/ai.schemas'
+import { repairJSON } from '../../utils/json-repair'
+import { withRetry } from '../../utils/retry'
 
 /** Convert our message format to Anthropic format */
 function toAnthropicMessages(messages: LLMMessage[]): Anthropic.MessageParam[] {
@@ -50,14 +53,22 @@ export class AnthropicProvider implements ILLMProvider {
 
     consola.debug(`Anthropic completion: model=${request.model}, messages=${messages.length}`)
 
-    const response = await this.client.messages.create({
-      model: request.model,
-      max_tokens: request.maxTokens ?? 4096,
-      temperature: request.temperature ?? 0.7,
-      system,
-      messages,
-      stop_sequences: request.stopSequences,
-    })
+    // Wrap API call with retry logic for rate limits
+    const response = await withRetry(
+      () =>
+        this.client.messages.create({
+          model: request.model,
+          max_tokens: request.maxTokens ?? 4096,
+          temperature: request.temperature ?? 0.7,
+          system,
+          messages,
+          stop_sequences: request.stopSequences,
+        }),
+      {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+      }
+    )
 
     const content = response.content
       .filter(block => block.type === 'text')
@@ -92,14 +103,22 @@ export class AnthropicProvider implements ILLMProvider {
     let usage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
     let stopReason: string | null = null
 
-    const stream = await this.client.messages.stream({
-      model: request.model,
-      max_tokens: request.maxTokens ?? 4096,
-      temperature: request.temperature ?? 0.7,
-      system,
-      messages,
-      stop_sequences: request.stopSequences,
-    })
+    // Wrap stream creation with retry logic for rate limits
+    const stream = await withRetry(
+      () =>
+        this.client.messages.stream({
+          model: request.model,
+          max_tokens: request.maxTokens ?? 4096,
+          temperature: request.temperature ?? 0.7,
+          system,
+          messages,
+          stop_sequences: request.stopSequences,
+        }),
+      {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+      }
+    )
 
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -126,6 +145,103 @@ export class AnthropicProvider implements ILLMProvider {
       stopReason,
       estimatedCostUsd: this.calculateCost(request.model, usage),
     }
+  }
+
+  async generateText(options: {
+    prompt: string
+    systemPrompt?: string
+    model: string
+    temperature?: number
+    maxTokens?: number
+    onStream?: (chunk: LLMStreamChunk) => void
+  }): Promise<LLMCompletionResponse> {
+    const request: LLMCompletionRequest = {
+      messages: [{ role: 'user', content: options.prompt }],
+      model: options.model,
+      systemPrompt: options.systemPrompt,
+      temperature: options.temperature,
+      maxTokens: options.maxTokens,
+    }
+
+    // Use streaming if callback provided, otherwise use regular completion
+    if (options.onStream) {
+      return this.stream(request, options.onStream)
+    } else {
+      return this.complete(request)
+    }
+  }
+
+  async generateJSON<T>(options: {
+    prompt: string
+    systemPrompt?: string
+    model: string
+    schema: z.ZodSchema<T>
+    temperature?: number
+    maxTokens?: number
+    maxRetries?: number
+  }): Promise<{ data: T; usage: TokenUsage; estimatedCostUsd: number }> {
+    const maxRetries = options.maxRetries ?? 2
+    let lastError: Error | undefined
+
+    // Enhanced system prompt for JSON output
+    const jsonSystemPrompt = [
+      options.systemPrompt || '',
+      '',
+      'CRITICAL: You must respond with valid JSON only. Do not wrap the JSON in markdown code blocks.',
+      'Do not include any explanatory text before or after the JSON.',
+      'Ensure all strings are properly escaped and the JSON is well-formed.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Request completion
+        const response = await this.generateText({
+          prompt: options.prompt,
+          systemPrompt: jsonSystemPrompt,
+          model: options.model,
+          temperature: options.temperature ?? 0.3, // Lower temp for more consistent JSON
+          maxTokens: options.maxTokens,
+        })
+
+        // Attempt to repair and validate JSON
+        const repairResult = repairJSON(response.content, options.schema)
+
+        if (repairResult.success && repairResult.data) {
+          consola.debug(`JSON generation succeeded on attempt ${attempt + 1}`)
+          return {
+            data: repairResult.data,
+            usage: response.usage,
+            estimatedCostUsd: response.estimatedCostUsd,
+          }
+        }
+
+        // Repair failed, prepare for retry
+        lastError = new Error(
+          `JSON validation failed: ${repairResult.error || 'Unknown error'}`
+        )
+
+        if (attempt < maxRetries) {
+          consola.warn(
+            `JSON generation attempt ${attempt + 1} failed, retrying...`,
+            { error: repairResult.error }
+          )
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+
+        if (attempt < maxRetries) {
+          consola.warn(`JSON generation attempt ${attempt + 1} threw error, retrying...`, {
+            error: lastError.message,
+          })
+        }
+      }
+    }
+
+    // All retries exhausted
+    consola.error('JSON generation failed after all retries', { error: lastError?.message })
+    throw lastError || new Error('JSON generation failed after all retries')
   }
 
   estimateTokens(text: string): number {

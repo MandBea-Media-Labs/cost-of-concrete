@@ -23,6 +23,12 @@ export {
 // Anthropic provider implementation
 export { AnthropicProvider } from './AnthropicProvider'
 
+// Utilities
+export { repairJSON, validateJSON } from '../../utils/json-repair'
+export type { JSONRepairResult } from '../../utils/json-repair'
+export { withRetry, isRateLimitError, DEFAULT_RETRY_CONFIG } from '../../utils/retry'
+export type { RetryConfig } from '../../utils/retry'
+
 // AI Agent interface and types
 export type {
   AgentContext,
