@@ -47,4 +47,5 @@ export { AgentRegistry, loadAgents } from './AgentRegistry'
 
 // Agent Implementations
 export { ResearchAgent, researchAgent } from './agents/ResearchAgent'
+export { WriterAgent, writerAgent } from './agents/WriterAgent'
 
