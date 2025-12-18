@@ -20,6 +20,7 @@ logs
 _ignore
 .trees
 shadcn-nuxt-template
+.mcp.json
 
 # Local env files
 .env
