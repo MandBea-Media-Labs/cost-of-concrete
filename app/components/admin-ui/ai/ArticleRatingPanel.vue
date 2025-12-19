@@ -199,30 +199,73 @@ async function markAsGolden() {
       <div v-if="automatedEval || humanEval" class="grid gap-4 md:grid-cols-2">
         <!-- Automated Eval -->
         <div v-if="automatedEval" class="rounded-lg border bg-muted/30 p-3">
-          <div class="mb-2 flex items-center gap-2 text-sm font-medium">
-            <Icon name="i-lucide-bot" class="size-4" />
-            Automated Score
+          <div class="mb-2 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm font-medium">
+              <Icon name="i-lucide-bot" class="size-4" />
+              Automated Score
+            </div>
+            <UiBadge
+              :variant="automatedEval.passed ? 'default' : 'destructive'"
+              class="text-[10px]"
+            >
+              {{ automatedEval.passed ? 'PASSED' : 'FAILED' }}
+            </UiBadge>
           </div>
-          <div class="text-2xl font-bold">{{ automatedEval.overallScore ?? 'N/A' }}</div>
+          <div class="flex items-baseline gap-1">
+            <span
+              class="text-2xl font-bold"
+              :class="{
+                'text-green-600 dark:text-green-400': (automatedEval.overallScore ?? 0) >= 70,
+                'text-yellow-600 dark:text-yellow-400': (automatedEval.overallScore ?? 0) >= 50 && (automatedEval.overallScore ?? 0) < 70,
+                'text-red-600 dark:text-red-400': (automatedEval.overallScore ?? 0) < 50,
+              }"
+            >{{ automatedEval.overallScore ?? 'N/A' }}</span>
+            <span class="text-sm text-muted-foreground">/100</span>
+          </div>
+          <div v-if="automatedEval.issues && automatedEval.issues.length > 0" class="mt-1 text-xs text-muted-foreground">
+            {{ automatedEval.issues.length }} issue{{ automatedEval.issues.length > 1 ? 's' : '' }} found
+            ({{ automatedEval.issues.filter(i => i.severity === 'critical').length }} critical,
+            {{ automatedEval.issues.filter(i => i.severity === 'high').length }} high)
+          </div>
           <div v-if="automatedEval.dimensionScores" class="mt-2 space-y-1 text-xs">
+            <div class="mb-1 text-[10px] text-muted-foreground">Dimension Scores (weighted):</div>
             <div v-for="dim in DIMENSIONS" :key="dim.key" class="flex justify-between">
               <span class="text-muted-foreground">{{ dim.label }}</span>
-              <span>{{ automatedEval.dimensionScores[dim.key as keyof EvalDimensionScores] }}</span>
+              <span>{{ automatedEval.dimensionScores[dim.key as keyof EvalDimensionScores] }}/100</span>
             </div>
           </div>
         </div>
 
         <!-- Human Eval -->
         <div v-if="humanEval" class="rounded-lg border bg-muted/30 p-3">
-          <div class="mb-2 flex items-center gap-2 text-sm font-medium">
-            <Icon name="i-lucide-user" class="size-4" />
-            Human Score
+          <div class="mb-2 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm font-medium">
+              <Icon name="i-lucide-user" class="size-4" />
+              Human Score
+            </div>
+            <UiBadge
+              :variant="(humanEval.overallScore ?? 0) >= 70 ? 'default' : 'destructive'"
+              class="text-[10px]"
+            >
+              {{ (humanEval.overallScore ?? 0) >= 70 ? 'PASSED' : 'FAILED' }}
+            </UiBadge>
           </div>
-          <div class="text-2xl font-bold">{{ humanEval.overallScore ?? 'N/A' }}</div>
+          <div class="flex items-baseline gap-1">
+            <span
+              class="text-2xl font-bold"
+              :class="{
+                'text-green-600 dark:text-green-400': (humanEval.overallScore ?? 0) >= 70,
+                'text-yellow-600 dark:text-yellow-400': (humanEval.overallScore ?? 0) >= 50 && (humanEval.overallScore ?? 0) < 70,
+                'text-red-600 dark:text-red-400': (humanEval.overallScore ?? 0) < 50,
+              }"
+            >{{ humanEval.overallScore ?? 'N/A' }}</span>
+            <span class="text-sm text-muted-foreground">/100</span>
+          </div>
           <div v-if="humanEval.dimensionScores" class="mt-2 space-y-1 text-xs">
+            <div class="mb-1 text-[10px] text-muted-foreground">Dimension Scores:</div>
             <div v-for="dim in DIMENSIONS" :key="dim.key" class="flex justify-between">
               <span class="text-muted-foreground">{{ dim.label }}</span>
-              <span>{{ humanEval.dimensionScores[dim.key as keyof EvalDimensionScores] }}</span>
+              <span>{{ humanEval.dimensionScores[dim.key as keyof EvalDimensionScores] }}/100</span>
             </div>
           </div>
         </div>
