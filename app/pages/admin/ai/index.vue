@@ -5,6 +5,8 @@
  * Landing page for the AI section showing job stats and quick actions.
  */
 
+import NumberFlow from '@number-flow/vue'
+
 definePageMeta({
   layout: 'admin'
 })
