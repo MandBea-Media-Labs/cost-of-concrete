@@ -29,21 +29,34 @@ export interface JSONRepairResult<T = unknown> {
 /**
  * Extract JSON from markdown code blocks
  * Handles: ```json\n{...}\n``` or ```\n{...}\n```
+ * Also handles cases where LLM wraps entire response in code block
  */
 function extractFromMarkdown(text: string): string {
-  // Try to extract from code blocks
-  const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+  let cleaned = text.trim()
+
+  // First, strip any leading/trailing backticks with optional language tag
+  // This handles: ```json\n{...}\n``` including multi-line
+  if (cleaned.startsWith('```')) {
+    // Remove opening code fence (```json or ``` on first line)
+    cleaned = cleaned.replace(/^```[a-z]*\s*\n?/i, '')
+    // Remove closing code fence
+    cleaned = cleaned.replace(/\n?```\s*$/, '')
+  }
+
+  // Try to extract from code blocks (for embedded code blocks)
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
   if (codeBlockMatch) {
-    return codeBlockMatch[1].trim()
+    cleaned = codeBlockMatch[1].trim()
   }
 
   // Try to find JSON object or array boundaries
-  const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/m)
+  // This handles cases where there's extra text before/after JSON
+  const jsonMatch = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/m)
   if (jsonMatch) {
     return jsonMatch[1].trim()
   }
 
-  return text.trim()
+  return cleaned.trim()
 }
 
 /**
@@ -75,17 +88,70 @@ function fixCommonIssues(text: string): string {
 }
 
 /**
- * Normalize SEO fields by truncating to valid lengths
- * LLMs often ignore character limits, so this is a fallback
+ * Normalize content fields by truncating to valid lengths and fixing type issues
+ * LLMs often ignore character limits or return strings instead of numbers
  *
  * Handles:
+ * - title: max 80 characters (truncates with ellipsis)
+ * - excerpt: max 160 characters (truncates with ellipsis)
  * - metaTitle: max 60 characters (truncates with ellipsis)
  * - metaDescription: max 160 characters (truncates with ellipsis)
+ * - keywordDensity.percentage: convert string (e.g., "2.5%") to number
  */
 function normalizeSEOFields(parsed: unknown): unknown {
   if (!parsed || typeof parsed !== 'object') return parsed
 
   const obj = parsed as Record<string, unknown>
+
+  // Fix keywordDensity.percentage if it's a string (e.g., "2.5%" or "2.5")
+  if (obj.keywordDensity && typeof obj.keywordDensity === 'object') {
+    const kd = obj.keywordDensity as Record<string, unknown>
+    if (typeof kd.percentage === 'string') {
+      // Remove % sign and parse as float
+      const numericValue = parseFloat(kd.percentage.replace('%', ''))
+      if (!isNaN(numericValue)) {
+        kd.percentage = numericValue
+        consola.debug(`Converted keywordDensity.percentage from string "${kd.percentage}" to number ${numericValue}`)
+      }
+    }
+  }
+
+  // Truncate title to 80 chars if needed (for article titles)
+  if (typeof obj.title === 'string' && obj.title.length > 80) {
+    const title = obj.title
+    let truncated = title.substring(0, 77)
+
+    // Break at last space
+    const lastSpace = truncated.lastIndexOf(' ')
+    if (lastSpace > 50) {
+      truncated = truncated.substring(0, lastSpace)
+    }
+
+    obj.title = truncated.trim() + '...'
+    consola.warn(`Truncated title from ${title.length} to ${obj.title.length} chars`)
+  }
+
+  // Truncate excerpt to 160 chars if needed (WriterAgent output)
+  if (typeof obj.excerpt === 'string' && obj.excerpt.length > 160) {
+    const excerpt = obj.excerpt
+    let truncated = excerpt.substring(0, 157)
+
+    // Break at last sentence end or space
+    const lastPeriod = truncated.lastIndexOf('.')
+    if (lastPeriod > 100) {
+      truncated = truncated.substring(0, lastPeriod + 1)
+    } else {
+      const lastSpace = truncated.lastIndexOf(' ')
+      if (lastSpace > 130) {
+        truncated = truncated.substring(0, lastSpace) + '...'
+      } else {
+        truncated = truncated + '...'
+      }
+    }
+
+    obj.excerpt = truncated.trim()
+    consola.warn(`Truncated excerpt from ${excerpt.length} to ${obj.excerpt.length} chars`)
+  }
 
   // Truncate metaTitle to 60 chars if needed
   if (typeof obj.metaTitle === 'string' && obj.metaTitle.length > 60) {

@@ -25,6 +25,7 @@ interface EvalIssue {
 interface ArticleEval {
   id: string
   evalType: 'automated' | 'human'
+  iteration?: number
   overallScore: number | null
   dimensionScores: EvalDimensionScores | null
   passed: boolean | null
@@ -80,9 +81,19 @@ const newIssue = ref({
   suggestion: '',
 })
 
-// Computed
-const automatedEval = computed(() => props.existingEvals.find(e => e.evalType === 'automated'))
-const humanEval = computed(() => props.existingEvals.find(e => e.evalType === 'human'))
+// Computed - get the LATEST automated/human eval (highest iteration)
+const automatedEval = computed(() => {
+  const automated = props.existingEvals.filter(e => e.evalType === 'automated')
+  if (automated.length === 0) return undefined
+  // Sort by iteration descending and return the latest one
+  return automated.sort((a, b) => (b.iteration ?? 1) - (a.iteration ?? 1))[0]
+})
+const humanEval = computed(() => {
+  const human = props.existingEvals.filter(e => e.evalType === 'human')
+  if (human.length === 0) return undefined
+  // Sort by iteration descending and return the latest one
+  return human.sort((a, b) => (b.iteration ?? 1) - (a.iteration ?? 1))[0]
+})
 const hasRated = computed(() => !!humanEval.value)
 const canRate = computed(() => props.jobStatus === 'completed')
 const canMarkGolden = computed(() =>

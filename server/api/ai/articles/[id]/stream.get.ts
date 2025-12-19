@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
   // Track if client disconnected
   let isAborted = false
   let lastStepCount = 0
+  let lastStepStatuses: Record<string, string> = {} // Track step status changes
 
   // Handle client disconnect
   eventStream.onClosed(() => {
@@ -104,10 +105,36 @@ export default defineEventHandler(async (event) => {
             break
           }
 
-          // Check for new steps
+          // Check for new steps and step status changes
           const steps = await stepRepository.findByJobId(jobId)
+
+          // Check for status changes on existing steps (e.g., running -> completed)
+          for (const step of steps) {
+            const prevStatus = lastStepStatuses[step.id]
+            const currStatus = step.status
+
+            // Emit step:complete when a step transitions to a terminal status
+            if (prevStatus && prevStatus !== currStatus && ['completed', 'failed'].includes(currStatus)) {
+              await eventStream.push({
+                event: 'step:complete',
+                data: JSON.stringify({
+                  type: 'step:complete',
+                  jobId,
+                  stepId: step.id,
+                  agentType: step.agent_type,
+                  stepStatus: step.status,
+                  iteration: step.iteration,
+                  timestamp: new Date().toISOString(),
+                }),
+              })
+            }
+
+            // Track current status
+            lastStepStatuses[step.id] = currStatus
+          }
+
+          // Emit events for new steps
           if (steps.length > lastStepCount) {
-            // Emit events for new steps
             for (let i = lastStepCount; i < steps.length; i++) {
               const step = steps[i]
               const stepEvent = step.status === 'running' ? 'step:start' : 'step:complete'
@@ -123,6 +150,8 @@ export default defineEventHandler(async (event) => {
                   timestamp: new Date().toISOString(),
                 }),
               })
+              // Track new step status
+              lastStepStatuses[step.id] = step.status
             }
             lastStepCount = steps.length
           }
