@@ -243,7 +243,7 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
       day: 'numeric',
     })
     sections.push(`## CURRENT DATE`)
-    sections.push(`Today is ${currentDate}. All content must be written for ${now.getFullYear()}, not previous years.`)
+    sections.push(`Today is ${currentDate}. All content must be written for ${now.getFullYear()}, not previous years and will be important if you are referencing dates in the article.`)
     sections.push(`When referencing pricing, statistics, or trends, use ${now.getFullYear()} data. Do NOT reference 2024 or earlier years as current.`)
     sections.push('')
 
