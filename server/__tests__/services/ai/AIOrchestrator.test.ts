@@ -1,16 +1,17 @@
 /**
- * Article Pipeline Orchestrator Integration Tests
+ * AI Orchestrator Integration Tests
  *
- * Tests the full pipeline execution with QA feedback loop.
- * Verifies: Research → Writer → SEO → QA → (revision if fail) → complete
+ * Tests the full pipeline execution with QA feedback loop,
+ * cancellation support, retry logic, and skipAgents configuration.
  *
- * @see BAM-313 Batch 4.5: Testing
+ * @see BAM-314 Phase 5: Orchestrator & Page Creation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ArticlePipelineOrchestrator, type PipelineCallbacks } from '../../../services/ai/ArticlePipelineOrchestrator'
+import { AIOrchestrator, type PipelineCallbacks } from '../../../services/ai/AIOrchestrator'
 import { AgentRegistry } from '../../../services/ai/AgentRegistry'
-import type { IAIAgent, AgentContext, AgentResult } from '../../../services/ai/AIAgent'
+import { AIArticleJobRepository } from '../../../repositories/AIArticleJobRepository'
+import type { IAIAgent, AgentResult } from '../../../services/ai/AIAgent'
 import type { ILLMProvider, TokenUsage } from '../../../services/ai/LLMProvider'
 import type {
   AIArticleJobRow,
@@ -19,6 +20,7 @@ import type {
   WriterOutput,
   SEOOutput,
   QAOutput,
+  ProjectManagerOutput,
 } from '../../../schemas/ai.schemas'
 
 // =====================================================
@@ -70,6 +72,26 @@ const mockQAFailOutput: QAOutput = {
   dimensionScores: { readability: 50, seo: 50, accuracy: 50, engagement: 50, brandVoice: 50 },
   issues: [{ category: 'readability', severity: 'high', description: 'Too complex', suggestion: 'Simplify' }],
   feedback: 'Content needs improvement.',
+}
+
+const mockPMOutput: ProjectManagerOutput = {
+  readyForPublish: true,
+  validationErrors: [],
+  finalArticle: {
+    title: 'Concrete Driveway Cost Guide',
+    slug: 'concrete-driveway-cost',
+    content: '# Concrete Driveway Cost\n\nContent here...',
+    excerpt: 'Learn about costs.',
+    metaTitle: 'Concrete Driveway Cost 2024',
+    metaDescription: 'Learn concrete driveway costs.',
+    schemaMarkup: { '@type': 'Article' },
+    template: 'article',
+    status: 'draft',
+    focusKeyword: 'concrete driveway cost',
+    wordCount: 1500,
+  },
+  summary: 'Article assembled successfully.',
+  recommendations: [],
 }
 
 const mockJob: AIArticleJobRow = {
@@ -147,12 +169,8 @@ function createMockAgent(agentType: string, output: unknown, passed = true): IAI
     } as AgentResult),
   }
 }
-// =====================================================
-// MOCK SUPABASE CLIENT
-// =====================================================
 
 function createMockSupabaseClient() {
-  // Create a deeply chainable mock that handles all Supabase query patterns
   const createChainable = (finalData: unknown = mockJob) => {
     const chain: Record<string, unknown> = {}
     const methods = ['select', 'insert', 'update', 'eq', 'is', 'in', 'order', 'limit', 'range', 'single', 'maybeSingle']
@@ -177,7 +195,7 @@ function createMockSupabaseClient() {
 // TEST SUITE
 // =====================================================
 
-describe('ArticlePipelineOrchestrator', () => {
+describe('AIOrchestrator', () => {
   let mockClient: ReturnType<typeof createMockSupabaseClient>
   let mockLLMProvider: ILLMProvider
   let callbacks: PipelineCallbacks
@@ -189,6 +207,7 @@ describe('ArticlePipelineOrchestrator', () => {
       onProgress: vi.fn(),
       onAgentStart: vi.fn(),
       onAgentComplete: vi.fn(),
+      onCancelled: vi.fn(),
     }
 
     // Clear AgentRegistry and register mock agents
@@ -202,6 +221,8 @@ describe('ArticlePipelineOrchestrator', () => {
           return createMockAgent('seo', mockSEOOutput)
         case 'qa':
           return createMockAgent('qa', mockQAPassOutput)
+        case 'project_manager':
+          return createMockAgent('project_manager', mockPMOutput)
         default:
           return undefined
       }
@@ -218,12 +239,12 @@ describe('ArticlePipelineOrchestrator', () => {
 
   describe('constructor', () => {
     it('should create orchestrator with required dependencies', () => {
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider)
       expect(orchestrator).toBeDefined()
     })
 
     it('should accept optional callbacks', () => {
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       expect(orchestrator).toBeDefined()
     })
   })
@@ -234,11 +255,10 @@ describe('ArticlePipelineOrchestrator', () => {
 
   describe('execute', () => {
     it('should execute full pipeline when QA passes on first iteration', async () => {
-      // Mock persona repository
-      vi.spyOn(ArticlePipelineOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof ArticlePipelineOrchestrator)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
         .mockResolvedValue(mockPersona)
 
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       const result = await orchestrator.execute(mockJob)
 
       expect(result.success).toBe(true)
@@ -267,20 +287,21 @@ describe('ArticlePipelineOrchestrator', () => {
             return createMockAgent('seo', mockSEOOutput)
           case 'qa':
             qaCallCount++
-            // First call fails, second call passes
             if (qaCallCount === 1) {
               return createMockAgent('qa', mockQAFailOutput, false)
             }
             return createMockAgent('qa', mockQAPassOutput, true)
+          case 'project_manager':
+            return createMockAgent('project_manager', mockPMOutput)
           default:
             return undefined
         }
       })
 
-      vi.spyOn(ArticlePipelineOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof ArticlePipelineOrchestrator)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
         .mockResolvedValue(mockPersona)
 
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       const result = await orchestrator.execute(mockJob)
 
       expect(result.success).toBe(true)
@@ -299,22 +320,104 @@ describe('ArticlePipelineOrchestrator', () => {
           case 'seo':
             return createMockAgent('seo', mockSEOOutput)
           case 'qa':
-            // Always fail
             return createMockAgent('qa', mockQAFailOutput, false)
+          case 'project_manager':
+            return createMockAgent('project_manager', mockPMOutput)
           default:
             return undefined
         }
       })
 
-      vi.spyOn(ArticlePipelineOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof ArticlePipelineOrchestrator)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
         .mockResolvedValue(mockPersona)
 
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       const result = await orchestrator.execute(maxIterationsJob)
 
-      // Should complete (with best effort) after max iterations
       expect(result.success).toBe(true)
       expect(result.iterations).toBe(2)
+    })
+  })
+
+  // =====================================================
+  // CANCELLATION TESTS
+  // =====================================================
+
+  describe('cancellation', () => {
+    it('should return cancelled result when job is cancelled before start', async () => {
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(true)
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(mockJob)
+
+      expect(result.success).toBe(false)
+      expect(result.cancelled).toBe(true)
+      expect(callbacks.onCancelled).toHaveBeenCalled()
+    })
+
+    it('should return cancelled result when job is cancelled mid-pipeline', async () => {
+      let checkCount = 0
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockImplementation(async () => {
+        checkCount++
+        // Cancel after research completes (3rd check: before writer)
+        return checkCount >= 3
+      })
+
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
+        .mockResolvedValue(mockPersona)
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(mockJob)
+
+      expect(result.success).toBe(false)
+      expect(result.cancelled).toBe(true)
+      // Research should have run, but not writer
+      expect(AgentRegistry.get).toHaveBeenCalledWith('research')
+    })
+  })
+
+  // =====================================================
+  // SKIP AGENTS TESTS
+  // =====================================================
+
+  describe('skipAgents', () => {
+    it('should skip research agent when configured', async () => {
+      const jobWithSkip: AIArticleJobRow = {
+        ...mockJob,
+        settings: { skipAgents: ['research'] },
+      }
+
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(false)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
+        .mockResolvedValue(mockPersona)
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithSkip)
+
+      expect(result.success).toBe(true)
+      // Research should NOT have been called
+      expect(AgentRegistry.get).not.toHaveBeenCalledWith('research')
+      // But writer should have been called
+      expect(AgentRegistry.get).toHaveBeenCalledWith('writer')
+    })
+
+    it('should skip QA agent when configured', async () => {
+      const jobWithSkip: AIArticleJobRow = {
+        ...mockJob,
+        settings: { skipAgents: ['qa'] },
+      }
+
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(false)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
+        .mockResolvedValue(mockPersona)
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithSkip)
+
+      expect(result.success).toBe(true)
+      expect(result.iterations).toBe(1)
+      // QA should NOT have been called
+      expect(AgentRegistry.get).not.toHaveBeenCalledWith('qa')
     })
   })
 
@@ -325,11 +428,12 @@ describe('ArticlePipelineOrchestrator', () => {
   describe('error handling', () => {
     it('should return failure when agent not found', async () => {
       vi.spyOn(AgentRegistry, 'get').mockReturnValue(undefined)
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(false)
 
-      vi.spyOn(ArticlePipelineOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof ArticlePipelineOrchestrator)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
         .mockResolvedValue(mockPersona)
 
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       const result = await orchestrator.execute(mockJob)
 
       expect(result.success).toBe(false)
@@ -337,10 +441,11 @@ describe('ArticlePipelineOrchestrator', () => {
     })
 
     it('should return failure when persona not found', async () => {
-      vi.spyOn(ArticlePipelineOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof ArticlePipelineOrchestrator)
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(false)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
         .mockResolvedValue(null)
 
-      const orchestrator = new ArticlePipelineOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
       const result = await orchestrator.execute(mockJob)
 
       expect(result.success).toBe(false)
@@ -348,4 +453,3 @@ describe('ArticlePipelineOrchestrator', () => {
     })
   })
 })
-

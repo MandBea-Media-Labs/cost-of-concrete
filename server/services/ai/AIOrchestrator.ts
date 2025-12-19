@@ -1,0 +1,541 @@
+/**
+ * AI Orchestrator
+ *
+ * Supervisor service for the AI article writing pipeline.
+ * Manages the execution of: Research → Writer → SEO → QA (→ Writer revision if QA fails) → PM
+ *
+ * Features:
+ * - Agent execution sequence via AgentRegistry
+ * - QA feedback loops with configurable max iterations
+ * - Job cancellation support (checked before each agent)
+ * - Retry logic for transient failures
+ * - Skip agents via job settings
+ * - Job step recording with timing
+ * - Progress tracking for SSE streaming
+ *
+ * @see BAM-314 Phase 5: Orchestrator & Page Creation
+ */
+
+import { consola } from 'consola'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../../../app/types/supabase'
+import type {
+  AIArticleJobRow,
+  AIAgentType,
+  AIPersonaRow,
+  AIArticleJobSettings,
+  ResearchOutput,
+  WriterOutput,
+  SEOOutput,
+  QAOutput,
+  ProjectManagerOutput,
+} from '../../schemas/ai.schemas'
+import { DEFAULT_MAX_ITERATIONS } from '../../schemas/ai.schemas'
+import { AIArticleJobRepository } from '../../repositories/AIArticleJobRepository'
+import { AIJobStepRepository, type StepLogEntry } from '../../repositories/AIJobStepRepository'
+import { AIPersonaRepository } from '../../repositories/AIPersonaRepository'
+import { AgentRegistry } from './AgentRegistry'
+import { withRetry } from '../../utils/retry'
+import type {
+  AgentContext,
+  AgentResult,
+  WriterAgentInput,
+  SEOAgentInput,
+  QAAgentInput,
+  ProjectManagerAgentInput,
+} from './AIAgent'
+import type { ILLMProvider } from './LLMProvider'
+
+// =====================================================
+// TYPES
+// =====================================================
+
+export interface PipelineResult {
+  success: boolean
+  job: AIArticleJobRow
+  error?: string
+  iterations: number
+  totalTokens: number
+  cancelled?: boolean
+}
+
+export interface PipelineCallbacks {
+  onProgress?: (agentType: AIAgentType, message: string, data?: unknown) => void
+  onAgentStart?: (agentType: AIAgentType, iteration: number) => void
+  onAgentComplete?: (agentType: AIAgentType, iteration: number, result: AgentResult) => void
+  onCancelled?: () => void
+}
+
+// =====================================================
+// AI ORCHESTRATOR
+// =====================================================
+
+export class AIOrchestrator {
+  private client: SupabaseClient<Database>
+  private llmProvider: ILLMProvider
+  private jobRepo: AIArticleJobRepository
+  private stepRepo: AIJobStepRepository
+  private personaRepo: AIPersonaRepository
+  private callbacks: PipelineCallbacks
+
+  constructor(
+    client: SupabaseClient<Database>,
+    llmProvider: ILLMProvider,
+    callbacks: PipelineCallbacks = {}
+  ) {
+    this.client = client
+    this.llmProvider = llmProvider
+    this.jobRepo = new AIArticleJobRepository(client)
+    this.stepRepo = new AIJobStepRepository(client)
+    this.personaRepo = new AIPersonaRepository(client)
+    this.callbacks = callbacks
+  }
+
+  /**
+   * Execute the full article pipeline for a job
+   */
+  async execute(job: AIArticleJobRow): Promise<PipelineResult> {
+    const settings = job.settings as AIArticleJobSettings | null
+    const maxIterations = job.max_iterations ?? DEFAULT_MAX_ITERATIONS
+    const skipAgents = settings?.skipAgents ?? []
+    let currentIteration = job.current_iteration ?? 1
+    let totalTokens = job.total_tokens_used ?? 0
+
+    consola.info(`[AIOrchestrator] Starting job ${job.id} for keyword: "${job.keyword}"`)
+    if (skipAgents.length > 0) {
+      consola.info(`[AIOrchestrator] Skipping agents: ${skipAgents.join(', ')}`)
+    }
+
+    try {
+      // Check for cancellation before starting
+      if (await this.checkCancelled(job.id)) {
+        return this.cancelledResult(job, currentIteration, totalTokens)
+      }
+
+      // Mark job as processing
+      await this.jobRepo.startProcessing(job.id)
+
+      // Stage 1: Research (only once, unless skipped)
+      let researchOutput: ResearchOutput | null = null
+      if (!skipAgents.includes('research')) {
+        if (await this.checkCancelled(job.id)) {
+          return this.cancelledResult(job, currentIteration, totalTokens)
+        }
+
+        const researchResult = await this.runAgentWithRetry('research', { keyword: job.keyword }, job, currentIteration)
+        if (!researchResult.success || !researchResult.output) {
+          return this.failJob(job, researchResult.error ?? 'Research failed', currentIteration, totalTokens)
+        }
+        totalTokens += researchResult.usage.totalTokens
+        researchOutput = researchResult.output as ResearchOutput
+      }
+
+      // Determine target word count
+      const targetWordCount = settings?.targetWordCount
+        || researchOutput?.recommendedWordCount
+        || 1500
+
+      // QA Feedback Loop: Writer → SEO → QA (repeat if QA fails, up to maxIterations)
+      let writerOutput: WriterOutput | null = null
+      let seoOutput: SEOOutput | null = null
+      let qaOutput: QAOutput | null = null
+      let qaFeedback: string | undefined
+
+      while (currentIteration <= maxIterations) {
+        consola.info(`[AIOrchestrator] Starting iteration ${currentIteration}/${maxIterations}`)
+        await this.jobRepo.updateProgress(job.id, { currentIteration })
+
+        // Check for cancellation before each agent
+        if (await this.checkCancelled(job.id)) {
+          return this.cancelledResult(job, currentIteration, totalTokens)
+        }
+
+        // Stage 2: Writer (unless skipped)
+        if (!skipAgents.includes('writer')) {
+          const writerInput: WriterAgentInput = {
+            keyword: job.keyword,
+            researchData: researchOutput ?? undefined,
+            targetWordCount,
+            qaFeedback,
+            previousArticle: writerOutput ?? undefined,
+            iteration: currentIteration,
+          }
+          const writerResult = await this.runAgentWithRetry('writer', writerInput, job, currentIteration)
+          if (!writerResult.success || !writerResult.output) {
+            return this.failJob(job, writerResult.error ?? 'Writer failed', currentIteration, totalTokens)
+          }
+          totalTokens += writerResult.usage.totalTokens
+          writerOutput = writerResult.output as WriterOutput
+        }
+
+        // Check for cancellation
+        if (await this.checkCancelled(job.id)) {
+          return this.cancelledResult(job, currentIteration, totalTokens)
+        }
+
+        // Stage 3: SEO (unless skipped)
+        if (!skipAgents.includes('seo') && writerOutput) {
+          const seoInput: SEOAgentInput = {
+            keyword: job.keyword,
+            article: writerOutput,
+            researchData: researchOutput ?? undefined,
+          }
+          const seoResult = await this.runAgentWithRetry('seo', seoInput, job, currentIteration)
+          if (!seoResult.success || !seoResult.output) {
+            return this.failJob(job, seoResult.error ?? 'SEO failed', currentIteration, totalTokens)
+          }
+          totalTokens += seoResult.usage.totalTokens
+          seoOutput = seoResult.output as SEOOutput
+        }
+
+        // Check for cancellation
+        if (await this.checkCancelled(job.id)) {
+          return this.cancelledResult(job, currentIteration, totalTokens)
+        }
+
+        // Stage 4: QA (unless skipped)
+        if (!skipAgents.includes('qa') && writerOutput) {
+          const qaInput: QAAgentInput = {
+            keyword: job.keyword,
+            article: writerOutput,
+            seoData: seoOutput ?? undefined,
+            iteration: currentIteration,
+          }
+          const qaResult = await this.runAgentWithRetry('qa', qaInput, job, currentIteration)
+          if (!qaResult.success || !qaResult.output) {
+            return this.failJob(job, qaResult.error ?? 'QA failed', currentIteration, totalTokens)
+          }
+          totalTokens += qaResult.usage.totalTokens
+          qaOutput = qaResult.output as QAOutput
+
+          // Check QA result
+          if (qaOutput.passed) {
+            consola.success(`[AIOrchestrator] QA passed on iteration ${currentIteration}`)
+            break
+          }
+
+          // QA failed - prepare for revision if iterations remain
+          if (currentIteration < maxIterations) {
+            consola.warn(`[AIOrchestrator] QA failed (score: ${qaOutput.overallScore}), preparing revision...`)
+            qaFeedback = qaResult.feedback ?? qaOutput.feedback
+            currentIteration++
+          } else {
+            consola.warn(`[AIOrchestrator] QA failed on final iteration, proceeding with best effort`)
+            break
+          }
+        } else {
+          // QA skipped, exit loop
+          break
+        }
+      }
+
+      // Stage 5: Project Manager (final assembly)
+      let pmOutput: ProjectManagerOutput | null = null
+
+      if (!skipAgents.includes('project_manager') && writerOutput) {
+        // Check for cancellation
+        if (await this.checkCancelled(job.id)) {
+          return this.cancelledResult(job, currentIteration, totalTokens)
+        }
+
+        const pmInput: ProjectManagerAgentInput = {
+          keyword: job.keyword,
+          article: writerOutput,
+          seoData: seoOutput ?? undefined,
+          qaData: qaOutput ?? undefined,
+          settings: settings ?? {},
+        }
+
+        const pmResult = await this.runAgentWithRetry('project_manager', pmInput, job, currentIteration)
+        if (!pmResult.success || !pmResult.output) {
+          return this.failJob(job, pmResult.error ?? 'Project Manager failed', currentIteration, totalTokens)
+        }
+        totalTokens += pmResult.usage.totalTokens
+        pmOutput = pmResult.output as ProjectManagerOutput
+
+        consola.info(`[AIOrchestrator] PM complete. Ready for publish: ${pmOutput.readyForPublish}`)
+      }
+
+      // Build final output with PM data if available
+      const finalOutput = pmOutput ?? {
+        readyForPublish: false,
+        validationErrors: ['Project Manager agent was skipped'],
+        finalArticle: {
+          title: writerOutput?.title ?? job.keyword,
+          slug: writerOutput?.slug ?? '',
+          content: writerOutput?.content ?? '',
+          excerpt: writerOutput?.excerpt ?? '',
+          metaTitle: seoOutput?.metaTitle ?? writerOutput?.title ?? '',
+          metaDescription: seoOutput?.metaDescription ?? '',
+          schemaMarkup: seoOutput?.schemaMarkup ?? {},
+          template: settings?.template ?? 'article',
+          status: 'draft' as const,
+          focusKeyword: job.keyword,
+          wordCount: writerOutput?.wordCount ?? 0,
+        },
+        summary: 'Article assembled without Project Manager validation',
+        recommendations: [],
+      }
+
+      await this.jobRepo.setFinalOutput(job.id, finalOutput)
+      await this.jobRepo.updateProgress(job.id, {
+        progressPercent: 100,
+        currentAgent: null,
+        totalTokensUsed: totalTokens,
+      })
+
+      consola.success(`[AIOrchestrator] Job ${job.id} completed in ${currentIteration} iteration(s)`)
+
+      const updatedJob = await this.jobRepo.findById(job.id)
+      return {
+        success: true,
+        job: updatedJob!,
+        iterations: currentIteration,
+        totalTokens,
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      consola.error(`[AIOrchestrator] Job ${job.id} failed: ${message}`)
+      return this.failJob(job, message, currentIteration, totalTokens)
+    }
+  }
+
+  /**
+   * Check if job has been cancelled
+   */
+  private async checkCancelled(jobId: string): Promise<boolean> {
+    const cancelled = await this.jobRepo.isCancelled(jobId)
+    if (cancelled) {
+      consola.info(`[AIOrchestrator] Job ${jobId} was cancelled`)
+      this.callbacks.onCancelled?.()
+    }
+    return cancelled
+  }
+
+  /**
+   * Return cancelled result
+   */
+  private async cancelledResult(
+    job: AIArticleJobRow,
+    iterations: number,
+    totalTokens: number
+  ): Promise<PipelineResult> {
+    await this.jobRepo.updateProgress(job.id, { currentAgent: null, totalTokensUsed: totalTokens })
+    const updatedJob = await this.jobRepo.findById(job.id)
+    return {
+      success: false,
+      job: updatedJob!,
+      iterations,
+      totalTokens,
+      cancelled: true,
+    }
+  }
+
+  /**
+   * Run a single agent with retry logic for transient failures
+   */
+  private async runAgentWithRetry(
+    agentType: AIAgentType,
+    input: unknown,
+    job: AIArticleJobRow,
+    iteration: number
+  ): Promise<AgentResult> {
+    return withRetry(
+      () => this.runAgent(agentType, input, job, iteration),
+      {
+        maxRetries: 2,
+        baseDelayMs: 2000,
+        isRetryable: (error) => {
+          // Retry on rate limits and network errors
+          if (!error || typeof error !== 'object') return false
+          const err = error as { status?: number; message?: string }
+          if (err.status === 429) return true
+          if (err.message?.toLowerCase().includes('rate limit')) return true
+          if (err.message?.toLowerCase().includes('network')) return true
+          if (err.message?.toLowerCase().includes('timeout')) return true
+          return false
+        },
+      }
+    )
+  }
+
+  /**
+   * Run a single agent with step recording
+   */
+  private async runAgent(
+    agentType: AIAgentType,
+    input: unknown,
+    job: AIArticleJobRow,
+    iteration: number
+  ): Promise<AgentResult> {
+    const agent = AgentRegistry.get(agentType)
+    if (!agent) {
+      return {
+        success: false,
+        output: null,
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        error: `Agent not found: ${agentType}`,
+        continueToNext: false,
+      }
+    }
+
+    // Get persona for this agent
+    const persona = await this.getPersonaForAgent(agentType, job)
+    if (!persona) {
+      return {
+        success: false,
+        output: null,
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        error: `No persona found for agent: ${agentType}`,
+        continueToNext: false,
+      }
+    }
+
+    // Create job step record
+    const step = await this.stepRepo.create({
+      jobId: job.id,
+      agentType,
+      personaId: persona.id,
+      iteration,
+      input,
+    })
+
+    // Update job progress
+    await this.jobRepo.updateProgress(job.id, { currentAgent: agentType })
+    this.callbacks.onAgentStart?.(agentType, iteration)
+
+    // Start step
+    await this.stepRepo.start(step.id)
+
+    // Build agent context with logging
+    const context = this.buildContext(job, persona, iteration, step.id)
+
+    try {
+      // Validate input
+      if (!agent.validateInput(input)) {
+        throw new Error(`Invalid input for ${agentType} agent`)
+      }
+
+      // Execute agent
+      const result = await agent.execute(input, context)
+
+      // Record step completion
+      if (result.success) {
+        await this.stepRepo.complete(step.id, {
+          output: result.output,
+          tokensUsed: result.usage.totalTokens,
+          promptTokens: result.usage.inputTokens,
+          completionTokens: result.usage.outputTokens,
+        })
+      } else {
+        await this.stepRepo.fail(step.id, result.error ?? 'Unknown error')
+      }
+
+      this.callbacks.onAgentComplete?.(agentType, iteration, result)
+      return result
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      await this.stepRepo.fail(step.id, message, error)
+      return {
+        success: false,
+        output: null,
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        error: message,
+        continueToNext: false,
+      }
+    }
+  }
+
+  /**
+   * Get persona for an agent type (with job setting overrides)
+   */
+  private async getPersonaForAgent(agentType: AIAgentType, job: AIArticleJobRow): Promise<AIPersonaRow | null> {
+    const settings = job.settings as { personaOverrides?: Record<string, string> } | null
+    const overrideId = settings?.personaOverrides?.[agentType]
+
+    if (overrideId) {
+      const persona = await this.personaRepo.findById(overrideId)
+      if (persona) return persona
+    }
+
+    return this.personaRepo.findDefault(agentType)
+  }
+
+  /**
+   * Build agent context with logging callbacks
+   */
+  private buildContext(
+    job: AIArticleJobRow,
+    persona: AIPersonaRow,
+    iteration: number,
+    stepId: string
+  ): AgentContext {
+    const log = async (
+      level: 'debug' | 'info' | 'warn' | 'error',
+      message: string,
+      data?: unknown
+    ) => {
+      const entry: StepLogEntry = {
+        timestamp: new Date().toISOString(),
+        level,
+        message,
+        data,
+      }
+
+      // Append to step logs (fire and forget)
+      this.stepRepo.appendLog(stepId, entry).catch(err => {
+        consola.warn('[AIOrchestrator] Failed to append log:', err)
+      })
+
+      // Also log to console in dev
+      if (import.meta.dev) {
+        const logFn = level === 'error' ? consola.error
+          : level === 'warn' ? consola.warn
+            : level === 'info' ? consola.info
+              : consola.debug
+        logFn(`[${persona.agent_type}] ${message}`, data)
+      }
+    }
+
+    const onProgress = (message: string, data?: unknown) => {
+      this.callbacks.onProgress?.(persona.agent_type as AIAgentType, message, data)
+    }
+
+    return {
+      client: this.client,
+      llmProvider: this.llmProvider,
+      job,
+      persona,
+      iteration,
+      stepId,
+      log,
+      onProgress,
+    }
+  }
+
+  /**
+   * Mark job as failed
+   */
+  private async failJob(
+    job: AIArticleJobRow,
+    error: string,
+    iterations: number,
+    totalTokens: number
+  ): Promise<PipelineResult> {
+    await this.jobRepo.setStatus(job.id, 'failed', { error, completedAt: true })
+    await this.jobRepo.updateProgress(job.id, { currentAgent: null, totalTokensUsed: totalTokens })
+
+    const updatedJob = await this.jobRepo.findById(job.id)
+    return {
+      success: false,
+      job: updatedJob!,
+      error,
+      iterations,
+      totalTokens,
+    }
+  }
+}
+
+// Re-export for backwards compatibility during migration
+export { AIOrchestrator as ArticlePipelineOrchestrator }
+

@@ -50,8 +50,9 @@ export { ResearchAgent, researchAgent } from './agents/ResearchAgent'
 export { WriterAgent, writerAgent } from './agents/WriterAgent'
 export { SEOAgent, seoAgent } from './agents/SEOAgent'
 export { QAAgent, qaAgent } from './agents/QAAgent'
+export { ProjectManagerAgent, projectManagerAgent } from './agents/ProjectManagerAgent'
 
-// Pipeline Orchestrator
-export { ArticlePipelineOrchestrator } from './ArticlePipelineOrchestrator'
-export type { PipelineResult, PipelineCallbacks } from './ArticlePipelineOrchestrator'
+// AI Orchestrator (Pipeline Supervisor)
+export { AIOrchestrator, ArticlePipelineOrchestrator } from './AIOrchestrator'
+export type { PipelineResult, PipelineCallbacks } from './AIOrchestrator'
 

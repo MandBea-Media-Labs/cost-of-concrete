@@ -307,5 +307,25 @@ export class AIArticleJobRepository {
     if (error) throw error
     return data
   }
+
+  /**
+   * Check if a job has been cancelled
+   * Used by orchestrator to check for cancellation between agent executions
+   */
+  async isCancelled(id: string): Promise<boolean> {
+    const { data, error } = await this.client
+      .from('ai_article_jobs')
+      .select('status')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      // If job not found, treat as not cancelled (will fail elsewhere)
+      if (error.code === 'PGRST116') return false
+      throw error
+    }
+
+    return data?.status === 'cancelled'
+  }
 }
 
