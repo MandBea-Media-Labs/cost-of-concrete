@@ -163,9 +163,12 @@ export class AnthropicProvider implements ILLMProvider {
       maxTokens: options.maxTokens,
     }
 
-    // Use streaming if callback provided, otherwise use regular completion
-    if (options.onStream) {
-      return this.stream(request, options.onStream)
+    // Always use streaming for large token requests (Anthropic requires it for >10min operations)
+    // Also use streaming if callback provided
+    const useStreaming = (options.maxTokens && options.maxTokens > 8000) || options.onStream
+
+    if (useStreaming) {
+      return this.stream(request, options.onStream || (() => {}))
     } else {
       return this.complete(request)
     }
