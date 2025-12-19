@@ -75,6 +75,66 @@ function fixCommonIssues(text: string): string {
 }
 
 /**
+ * Normalize SEO fields by truncating to valid lengths
+ * LLMs often ignore character limits, so this is a fallback
+ *
+ * Handles:
+ * - metaTitle: max 60 characters (truncates with ellipsis)
+ * - metaDescription: max 160 characters (truncates with ellipsis)
+ */
+function normalizeSEOFields(parsed: unknown): unknown {
+  if (!parsed || typeof parsed !== 'object') return parsed
+
+  const obj = parsed as Record<string, unknown>
+
+  // Truncate metaTitle to 60 chars if needed
+  if (typeof obj.metaTitle === 'string' && obj.metaTitle.length > 60) {
+    // Find a clean break point (space or pipe) near the limit
+    const title = obj.metaTitle
+    let truncated = title.substring(0, 57)
+
+    // Try to break at a pipe separator if present
+    const pipeIndex = truncated.lastIndexOf('|')
+    if (pipeIndex > 30) {
+      truncated = truncated.substring(0, pipeIndex).trim()
+    } else {
+      // Otherwise break at last space
+      const lastSpace = truncated.lastIndexOf(' ')
+      if (lastSpace > 40) {
+        truncated = truncated.substring(0, lastSpace)
+      }
+    }
+
+    obj.metaTitle = truncated.trim()
+    consola.warn(`Truncated metaTitle from ${title.length} to ${obj.metaTitle.length} chars`)
+  }
+
+  // Truncate metaDescription to 160 chars if needed
+  if (typeof obj.metaDescription === 'string' && obj.metaDescription.length > 160) {
+    const desc = obj.metaDescription
+    let truncated = desc.substring(0, 157)
+
+    // Break at last sentence end or space
+    const lastPeriod = truncated.lastIndexOf('.')
+    if (lastPeriod > 100) {
+      truncated = truncated.substring(0, lastPeriod + 1)
+    } else {
+      const lastSpace = truncated.lastIndexOf(' ')
+      if (lastSpace > 130) {
+        truncated = truncated.substring(0, lastSpace) + '...'
+      } else {
+        truncated = truncated + '...'
+      }
+    }
+
+    obj.metaDescription = truncated.trim()
+    consola.warn(`Truncated metaDescription from ${desc.length} to ${obj.metaDescription.length} chars`)
+  }
+
+  return obj
+}
+
+/**
  * Repair and validate JSON against a Zod schema
  *
  * Attempts multiple repair strategies in order:
@@ -82,13 +142,15 @@ function fixCommonIssues(text: string): string {
  * 2. Extract from markdown code blocks
  * 3. Fix common issues (trailing commas, etc.)
  * 4. Combination of extraction + fixes
+ * 5-8. All above with SEO field normalization (truncate metaTitle/metaDescription)
  *
  * @param text - Raw text that may contain JSON
  * @param schema - Zod schema to validate against
  * @returns Repair result with parsed data or error
  */
 export function repairJSON<T>(text: string, schema: z.ZodSchema<T>): JSONRepairResult<T> {
-  const strategies: Array<{ name: string; transform: (t: string) => string }> = [
+  // String-level transformations
+  const stringTransforms: Array<{ name: string; transform: (t: string) => string }> = [
     { name: 'as-is', transform: (t) => t },
     { name: 'extract-markdown', transform: extractFromMarkdown },
     { name: 'fix-common-issues', transform: fixCommonIssues },
@@ -97,23 +159,42 @@ export function repairJSON<T>(text: string, schema: z.ZodSchema<T>): JSONRepairR
 
   const errors: Array<{ strategy: string; error: string }> = []
 
-  for (const strategy of strategies) {
+  // Try each string transform with and without SEO normalization
+  for (const stringTransform of stringTransforms) {
+    // First, try without normalization
     try {
-      const transformed = strategy.transform(text)
+      const transformed = stringTransform.transform(text)
       const parsed = JSON.parse(transformed)
       const validated = schema.parse(parsed)
 
-      consola.debug(`JSON repair succeeded with strategy: ${strategy.name}`)
+      consola.debug(`JSON repair succeeded with strategy: ${stringTransform.name}`)
       return {
         success: true,
         data: validated,
-        strategy: strategy.name,
+        strategy: stringTransform.name,
       }
     } catch (error) {
-      // Capture the error for debugging
       const errorMsg = error instanceof Error ? error.message : String(error)
-      errors.push({ strategy: strategy.name, error: errorMsg })
-      continue
+      errors.push({ strategy: stringTransform.name, error: errorMsg })
+    }
+
+    // Then, try with SEO normalization (for cases where LLM ignored char limits)
+    try {
+      const transformed = stringTransform.transform(text)
+      const parsed = JSON.parse(transformed)
+      const normalized = normalizeSEOFields(parsed)
+      const validated = schema.parse(normalized)
+
+      const strategyName = `${stringTransform.name}+normalize-seo`
+      consola.debug(`JSON repair succeeded with strategy: ${strategyName}`)
+      return {
+        success: true,
+        data: validated,
+        strategy: strategyName,
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      errors.push({ strategy: `${stringTransform.name}+normalize-seo`, error: errorMsg })
     }
   }
 

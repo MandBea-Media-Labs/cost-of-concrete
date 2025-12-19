@@ -26,9 +26,15 @@ const SEO_SYSTEM_PROMPT = `You are an expert SEO analyst and optimizer. Your tas
 
 ## YOUR RESPONSIBILITIES
 
-### Meta Tags
-- Create an optimized meta title (MAXIMUM 60 characters, include primary keyword near the start)
-- Create a compelling meta description (MAXIMUM 160 characters, include keyword, add call-to-action)
+### Meta Tags - CRITICAL CHARACTER LIMITS
+⚠️ STRICT LIMIT: metaTitle MUST be 60 characters or FEWER - COUNT EVERY CHARACTER!
+⚠️ STRICT LIMIT: metaDescription MUST be 160 characters or FEWER
+
+When writing the metaTitle:
+- Include primary keyword near the start
+- Keep it SHORT and punchy - sacrifice detail for brevity
+- Example good title: "Concrete Driveway Costs 2025 | Pricing Guide" (44 chars)
+- Example BAD title: "Cost of Concrete Contractors Charleston SC 2025 | $4.50-$8/sq ft" (TOO LONG - 65 chars!)
 
 ### Content Analysis
 You will be provided with:
@@ -45,7 +51,7 @@ You will be provided with:
 ### Output Format
 You MUST respond with valid JSON matching this exact structure:
 {
-  "metaTitle": "SEO-optimized title under 60 characters",
+  "metaTitle": "Short SEO title ≤60 chars",
   "metaDescription": "Compelling description under 160 characters with CTA",
   "headingAnalysis": {
     "isValid": true,
@@ -68,8 +74,8 @@ You MUST respond with valid JSON matching this exact structure:
 }
 
 ## IMPORTANT RULES
-- Meta title MUST be 60 characters or less
-- Meta description MUST be 160 characters or less
+- metaTitle: HARD LIMIT of 60 characters - this is validated and will REJECT longer titles
+- metaDescription: HARD LIMIT of 160 characters
 - Include primary keyword naturally in both
 - Score should reflect overall SEO optimization (0-100)
 `
@@ -476,7 +482,10 @@ export class SEOAgent extends BaseAIAgent<SEOAgentInput, SEOOutput> {
     }
 
     sections.push('## Your Task')
-    sections.push('1. Create an optimized meta title (max 60 chars) with the keyword')
+    sections.push('⚠️ CRITICAL: metaTitle MUST be ≤60 characters - COUNT CAREFULLY!')
+    sections.push('1. Create an optimized meta title (HARD LIMIT: 60 chars max) with the keyword')
+    sections.push('   - Good example: "Concrete Costs Charleston 2025 | Pricing" (42 chars)')
+    sections.push('   - Bad example: "Cost of Concrete Contractors Charleston SC 2025 | Pricing Guide" (TOO LONG!)')
     sections.push('2. Create a compelling meta description (max 160 chars) with CTA')
     sections.push('3. Use the pre-computed heading analysis in your response')
     sections.push('4. Use the pre-computed keyword density in your response')
@@ -484,7 +493,7 @@ export class SEOAgent extends BaseAIAgent<SEOAgentInput, SEOOutput> {
     sections.push('6. Calculate an overall optimization score (0-100)')
     sections.push('')
     sections.push('## REQUIRED JSON FIELD NAMES (use camelCase exactly)')
-    sections.push('- "metaTitle" (NOT meta_title)')
+    sections.push('- "metaTitle" (NOT meta_title) - ⚠️ MUST BE ≤60 CHARACTERS')
     sections.push('- "metaDescription" (NOT meta_description)')
     sections.push('- "headingAnalysis" with "isValid", "issues", "suggestions"')
     sections.push('- "keywordDensity" with "percentage", "analysis"')
