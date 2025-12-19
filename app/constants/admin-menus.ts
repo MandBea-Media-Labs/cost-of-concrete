@@ -37,6 +37,27 @@ export const adminNavMenu: AdminNavMenu[] = [
     ],
   },
   {
+    heading: 'AI',
+    items: [
+      {
+        title: 'AI Overview',
+        icon: 'i-lucide-bot',
+        link: '/admin/ai',
+      },
+      {
+        title: 'Article Writing',
+        icon: 'i-lucide-pen-tool',
+        link: '/admin/ai/article-writing',
+        new: true,
+      },
+      {
+        title: 'Personas',
+        icon: 'i-lucide-users-round',
+        link: '/admin/ai/personas',
+      },
+    ],
+  },
+  {
     heading: 'Directory',
     items: [
       {
