@@ -156,6 +156,21 @@ export const seoOutputSchema = z.object({
 export type SEOOutput = z.infer<typeof seoOutputSchema>
 
 /**
+ * QA Issue with tracking ID
+ */
+export const qaIssueSchema = z.object({
+  /** Unique ID for tracking across iterations (category-hash) */
+  issueId: z.string().optional(),
+  category: z.string(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  description: z.string(),
+  suggestion: z.string(),
+  location: z.string().optional(),
+})
+
+export type QAIssue = z.infer<typeof qaIssueSchema>
+
+/**
  * QA Agent Output
  */
 export const qaOutputSchema = z.object({
@@ -168,14 +183,12 @@ export const qaOutputSchema = z.object({
     engagement: z.number().int().min(0).max(100),
     brandVoice: z.number().int().min(0).max(100),
   }),
-  issues: z.array(z.object({
-    category: z.string(),
-    severity: z.enum(['low', 'medium', 'high', 'critical']),
-    description: z.string(),
-    suggestion: z.string(),
-    location: z.string().optional(),
-  })),
+  issues: z.array(qaIssueSchema),
   feedback: z.string(),
+  /** Issues that were fixed from previous iteration */
+  fixedIssueIds: z.array(z.string()).optional(),
+  /** Issues that persist from previous iteration */
+  persistingIssueIds: z.array(z.string()).optional(),
 })
 
 export type QAOutput = z.infer<typeof qaOutputSchema>
@@ -392,8 +405,8 @@ export interface ListPersonasResponse {
 /** Maximum concurrent article jobs */
 export const MAX_CONCURRENT_JOBS = 5
 
-/** Default max QA iterations */
-export const DEFAULT_MAX_ITERATIONS = 3
+/** Default max QA iterations - increased to allow more revision cycles for issue resolution */
+export const DEFAULT_MAX_ITERATIONS = 5
 
 /** Minimum passing QA score */
 export const MIN_PASSING_SCORE = 70

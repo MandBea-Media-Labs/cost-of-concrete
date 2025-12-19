@@ -102,6 +102,24 @@ const canMarkGolden = computed(() =>
   (humanEval.value.overallScore ?? 0) >= 80
 )
 
+// Computed - categorize issues into blocking vs recommendations
+const automatedIssueStats = computed(() => {
+  const issues = automatedEval.value?.issues ?? []
+  const critical = issues.filter(i => i.severity === 'critical').length
+  const high = issues.filter(i => i.severity === 'high').length
+  const medium = issues.filter(i => i.severity === 'medium').length
+  const low = issues.filter(i => i.severity === 'low').length
+  return {
+    blocking: critical + high,
+    recommendations: medium + low,
+    critical,
+    high,
+    medium,
+    low,
+    total: issues.length,
+  }
+})
+
 const overallScore = computed(() => {
   const values = Object.values(ratings.value)
   if (values.every(v => v === 0)) return 0
@@ -233,10 +251,46 @@ async function markAsGolden() {
             >{{ automatedEval.overallScore ?? 'N/A' }}</span>
             <span class="text-sm text-muted-foreground">/100</span>
           </div>
-          <div v-if="automatedEval.issues && automatedEval.issues.length > 0" class="mt-1 text-xs text-muted-foreground">
-            {{ automatedEval.issues.length }} issue{{ automatedEval.issues.length > 1 ? 's' : '' }} found
-            ({{ automatedEval.issues.filter(i => i.severity === 'critical').length }} critical,
-            {{ automatedEval.issues.filter(i => i.severity === 'high').length }} high)
+          <!-- Issue/Recommendation Summary -->
+          <div v-if="automatedIssueStats.total > 0" class="mt-2 space-y-1">
+            <!-- Blocking issues (critical/high) - shown as problems -->
+            <div
+              v-if="automatedIssueStats.blocking > 0"
+              class="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400"
+            >
+              <Icon name="i-lucide-alert-circle" class="size-3.5" />
+              <span>{{ automatedIssueStats.blocking }} issue{{ automatedIssueStats.blocking > 1 ? 's' : '' }} to fix</span>
+              <span class="text-muted-foreground">
+                ({{ automatedIssueStats.critical }} critical, {{ automatedIssueStats.high }} high)
+              </span>
+            </div>
+            <!-- No blocking issues message -->
+            <div
+              v-else
+              class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400"
+            >
+              <Icon name="i-lucide-check-circle" class="size-3.5" />
+              <span>No blocking issues</span>
+            </div>
+            <!-- Recommendations (medium/low) - shown as suggestions -->
+            <div
+              v-if="automatedIssueStats.recommendations > 0"
+              class="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
+              <Icon name="i-lucide-lightbulb" class="size-3.5 text-yellow-500" />
+              <span>{{ automatedIssueStats.recommendations }} recommendation{{ automatedIssueStats.recommendations > 1 ? 's' : '' }}</span>
+              <span class="text-muted-foreground/70">
+                ({{ automatedIssueStats.medium }} medium, {{ automatedIssueStats.low }} low)
+              </span>
+            </div>
+          </div>
+          <!-- No issues at all -->
+          <div
+            v-else-if="automatedEval.issues !== undefined"
+            class="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400"
+          >
+            <Icon name="i-lucide-sparkles" class="size-3.5" />
+            <span>Perfect score - no issues or recommendations</span>
           </div>
           <div v-if="automatedEval.dimensionScores" class="mt-2 space-y-1 text-xs">
             <div class="mb-1 text-[10px] text-muted-foreground">Dimension Scores (weighted):</div>

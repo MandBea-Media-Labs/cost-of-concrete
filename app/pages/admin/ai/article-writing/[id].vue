@@ -36,6 +36,21 @@ const isTerminal = computed(() =>
 const articleContent = computed(() => job.value?.finalOutput?.finalArticle?.content ?? '')
 const { html: renderedArticleContent } = useMarkdown(articleContent)
 
+// Get QA recommendations (medium/low issues from latest automated eval)
+const qaRecommendations = computed(() => {
+  const automatedEvals = evals.value.filter((e: any) => e.evalType === 'automated')
+  if (automatedEvals.length === 0) return []
+
+  // Get the latest automated eval (highest iteration)
+  const latestEval = automatedEvals.sort((a: any, b: any) => (b.iteration ?? 1) - (a.iteration ?? 1))[0]
+
+  // Extract medium/low issues as recommendations
+  const issues = latestEval.issues ?? []
+  return issues
+    .filter((i: any) => i.severity === 'medium' || i.severity === 'low')
+    .map((i: any) => i.suggestion || i.description)
+})
+
 // =====================================================
 // SSE CONNECTION
 // =====================================================
@@ -426,14 +441,15 @@ function getStepStatusVariant(status: string) {
           </ul>
         </div>
 
-        <!-- Recommendations -->
-        <div v-if="job.finalOutput.recommendations?.length" class="mb-4 rounded-lg border border-blue-500/50 bg-blue-500/10 p-4">
+        <!-- QA Recommendations (medium/low issues from latest eval) -->
+        <div v-if="qaRecommendations.length" class="mb-4 rounded-lg border border-blue-500/50 bg-blue-500/10 p-4">
           <div class="mb-2 flex items-center gap-2 font-medium text-blue-700 dark:text-blue-400">
             <Icon name="i-lucide-lightbulb" class="size-4" />
             Recommendations
+            <span class="text-xs font-normal text-muted-foreground">(optional improvements from QA)</span>
           </div>
           <ul class="list-inside list-disc space-y-1 text-sm">
-            <li v-for="(rec, i) in job.finalOutput.recommendations" :key="i">{{ rec }}</li>
+            <li v-for="(rec, i) in qaRecommendations" :key="i">{{ rec }}</li>
           </ul>
         </div>
 

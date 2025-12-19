@@ -111,6 +111,20 @@ export interface ResearchAgentInput {
 }
 
 /**
+ * Structured issue for Writer revision
+ */
+export interface RevisionIssue {
+  issueId: string
+  category: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  description: string
+  suggestion: string
+  location?: string
+  /** Number of iterations this issue has persisted */
+  persistCount?: number
+}
+
+/**
  * Input for the Writer agent (receives Research output)
  */
 export interface WriterAgentInput {
@@ -119,6 +133,8 @@ export interface WriterAgentInput {
   targetWordCount: number
   /** QA feedback for revision cycles (optional, provided when iteration > 1) */
   qaFeedback?: string
+  /** Structured issues to fix (replaces generic feedback in revision mode) */
+  issuesToFix?: RevisionIssue[]
   /** Previous article content for revision reference (optional) */
   previousArticle?: unknown // WriterOutput type
   /** Current iteration number */
@@ -135,6 +151,18 @@ export interface SEOAgentInput {
 }
 
 /**
+ * Tracked issue from previous QA iteration
+ */
+export interface TrackedIssue {
+  issueId: string
+  category: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  description: string
+  suggestion: string
+  location?: string
+}
+
+/**
  * Input for the QA agent (receives SEO output)
  */
 export interface QAAgentInput {
@@ -142,6 +170,8 @@ export interface QAAgentInput {
   article: unknown // WriterOutput type
   seoData: unknown // SEOOutput type
   iteration: number
+  /** Issues from previous iteration for tracking fixes */
+  previousIssues?: TrackedIssue[]
 }
 
 /**

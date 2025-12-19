@@ -46,6 +46,8 @@ import type {
   SEOAgentInput,
   QAAgentInput,
   ProjectManagerAgentInput,
+  TrackedIssue,
+  RevisionIssue,
 } from './AIAgent'
 import type { ILLMProvider } from './LLMProvider'
 import type { TemplateSlug } from '../../../app/types/templates'
@@ -148,6 +150,10 @@ export class AIOrchestrator {
       let seoOutput: SEOOutput | null = null
       let qaOutput: QAOutput | null = null
       let qaFeedback: string | undefined
+      let previousIssues: TrackedIssue[] = []
+      let issuesToFix: RevisionIssue[] = []
+      /** Track how many times each issue has persisted across iterations */
+      const issuePersistCount: Map<string, number> = new Map()
 
       while (currentIteration <= maxIterations) {
         consola.info(`[AIOrchestrator] Starting iteration ${currentIteration}/${maxIterations}`)
@@ -165,6 +171,8 @@ export class AIOrchestrator {
             researchData: researchOutput ?? undefined,
             targetWordCount,
             qaFeedback,
+            // Pass structured issues for targeted revision (iteration > 1)
+            issuesToFix: issuesToFix.length > 0 ? issuesToFix : undefined,
             previousArticle: writerOutput ?? undefined,
             iteration: currentIteration,
           }
@@ -210,6 +218,8 @@ export class AIOrchestrator {
             article: writerOutput,
             seoData: seoOutput ?? undefined,
             iteration: currentIteration,
+            // Pass previous issues for tracking fixes
+            previousIssues: previousIssues.length > 0 ? previousIssues : undefined,
           }
           const qaResult = await this.runAgentWithRetry('qa', qaInput, job, currentIteration)
           if (!qaResult.success || !qaResult.output) {
@@ -218,6 +228,14 @@ export class AIOrchestrator {
           totalTokens += qaResult.usage.totalTokens
           totalCostUsd += qaResult.estimatedCostUsd ?? 0
           qaOutput = qaResult.output as QAOutput
+
+          // Log issue tracking results
+          if (qaOutput.fixedIssueIds?.length) {
+            consola.success(`[AIOrchestrator] Fixed ${qaOutput.fixedIssueIds.length} issue(s) from previous iteration`)
+          }
+          if (qaOutput.persistingIssueIds?.length) {
+            consola.warn(`[AIOrchestrator] ${qaOutput.persistingIssueIds.length} issue(s) still persist`)
+          }
 
           // Check QA result
           if (qaOutput.passed) {
@@ -229,6 +247,46 @@ export class AIOrchestrator {
           if (currentIteration < maxIterations) {
             consola.warn(`[AIOrchestrator] QA failed (score: ${qaOutput.overallScore}), preparing revision...`)
             qaFeedback = qaResult.feedback ?? qaOutput.feedback
+
+            // Build tracked issues for next QA iteration
+            previousIssues = qaOutput.issues
+              .filter(i => i.issueId) // Only track issues with IDs
+              .map(i => ({
+                issueId: i.issueId!,
+                category: i.category,
+                severity: i.severity,
+                description: i.description,
+                suggestion: i.suggestion,
+                location: i.location,
+              }))
+
+            // Build structured issues for Writer revision with persist counts
+            issuesToFix = qaOutput.issues.map(i => {
+              const issueId = i.issueId || `unknown-${Date.now()}`
+              // Increment persist count for this issue
+              const currentCount = issuePersistCount.get(issueId) || 0
+              issuePersistCount.set(issueId, currentCount + 1)
+
+              return {
+                issueId,
+                category: i.category,
+                severity: i.severity,
+                description: i.description,
+                suggestion: i.suggestion,
+                location: i.location,
+                persistCount: currentCount + 1,
+              }
+            })
+
+            // Sort by severity (critical first) then by persist count (most persistent first)
+            const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+            issuesToFix.sort((a, b) => {
+              const severityDiff = severityOrder[a.severity] - severityOrder[b.severity]
+              if (severityDiff !== 0) return severityDiff
+              return (b.persistCount || 0) - (a.persistCount || 0)
+            })
+
+            consola.info(`[AIOrchestrator] Prepared ${issuesToFix.length} issues for Writer revision`)
             currentIteration++
           } else {
             consola.warn(`[AIOrchestrator] QA failed on final iteration, proceeding with best effort`)

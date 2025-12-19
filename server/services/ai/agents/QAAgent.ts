@@ -96,6 +96,8 @@ Respond ONLY with valid JSON matching this structure:
 
 const PASS_THRESHOLD = 70
 const TARGET_READING_LEVEL = 7 // 7th grade
+const MAX_HIGH_ISSUES_TO_PASS = 0 // No high severity issues allowed to pass
+const MAX_CRITICAL_ISSUES_TO_PASS = 0 // No critical issues allowed to pass
 
 // Prohibited patterns
 const EMOJI_REGEX = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu
@@ -111,6 +113,7 @@ const SENSATIONAL_WORDS = [
 // =====================================================
 
 interface QAIssue {
+  issueId?: string
   category: string
   severity: 'low' | 'medium' | 'high' | 'critical'
   description: string
@@ -126,6 +129,38 @@ interface PreComputedMetrics {
   paragraphCount: number
   avgSentenceLength: number
   prohibitedPatterns: QAIssue[]
+}
+
+// =====================================================
+// ISSUE TRACKING HELPERS
+// =====================================================
+
+/**
+ * Generate a stable issue ID from category and description
+ * Uses a simple hash to create a short, stable identifier
+ */
+function generateIssueId(category: string, description: string): string {
+  const input = `${category.toLowerCase().trim()}:${description.toLowerCase().trim()}`
+  // Simple hash function for stable IDs
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  const hashStr = Math.abs(hash).toString(36).substring(0, 8)
+  const categorySlug = category.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 20)
+  return `${categorySlug}-${hashStr}`
+}
+
+/**
+ * Add issue IDs to all issues
+ */
+function assignIssueIds(issues: QAIssue[]): QAIssue[] {
+  return issues.map(issue => ({
+    ...issue,
+    issueId: issue.issueId || generateIssueId(issue.category, issue.description),
+  }))
 }
 
 // =====================================================
@@ -209,26 +244,65 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
 
       // Step 5: Merge pre-computed issues with LLM-detected issues
       const allIssues = [...metrics.prohibitedPatterns, ...qaOutput.issues]
-      qaOutput.issues = this.deduplicateIssues(allIssues)
+      const deduplicatedIssues = this.deduplicateIssues(allIssues)
+
+      // Step 5b: Assign issue IDs for tracking
+      qaOutput.issues = assignIssueIds(deduplicatedIssues)
+
+      // Step 5c: Track fixed vs persisting issues from previous iteration
+      const previousIssues = input.previousIssues || []
+      if (previousIssues.length > 0) {
+        const currentIssueIds = new Set(qaOutput.issues.map(i => i.issueId))
+
+        // Fixed issues: were in previous, not in current
+        qaOutput.fixedIssueIds = previousIssues
+          .filter(pi => !currentIssueIds.has(pi.issueId))
+          .map(pi => pi.issueId)
+
+        // Persisting issues: were in previous, still in current
+        qaOutput.persistingIssueIds = previousIssues
+          .filter(pi => currentIssueIds.has(pi.issueId))
+          .map(pi => pi.issueId)
+
+        log('info', `Issue tracking: ${qaOutput.fixedIssueIds.length} fixed, ${qaOutput.persistingIssueIds.length} persisting`)
+      }
 
       // Step 6: Recalculate overall score based on all issues
       const adjustedScore = this.calculateAdjustedScore(qaOutput, metrics)
       qaOutput.overallScore = adjustedScore
-      qaOutput.passed = adjustedScore >= PASS_THRESHOLD
+
+      // Step 6b: Determine pass/fail with strict criteria
+      // Must meet ALL conditions to pass:
+      // 1. Score >= threshold
+      // 2. No critical issues
+      // 3. No high severity issues
+      const criticalCount = qaOutput.issues.filter(i => i.severity === 'critical').length
+      const highCount = qaOutput.issues.filter(i => i.severity === 'high').length
+      const meetsScoreThreshold = adjustedScore >= PASS_THRESHOLD
+      const meetsCriticalLimit = criticalCount <= MAX_CRITICAL_ISSUES_TO_PASS
+      const meetsHighLimit = highCount <= MAX_HIGH_ISSUES_TO_PASS
+
+      qaOutput.passed = meetsScoreThreshold && meetsCriticalLimit && meetsHighLimit
 
       log('info', `QA analysis complete in ${duration}ms`)
       log('info', `Overall score: ${qaOutput.overallScore}/100 | Passed: ${qaOutput.passed}`)
-      log('info', `Issues found: ${qaOutput.issues.length}`)
+      log('info', `Issues found: ${qaOutput.issues.length} (${criticalCount} critical, ${highCount} high)`)
       log('debug', `Token usage: ${result.usage.totalTokens} total | Cost: $${result.estimatedCostUsd.toFixed(4)}`)
 
       // Log dimension scores
       const { dimensionScores } = qaOutput
       log('info', `Dimension scores: readability=${dimensionScores.readability}, seo=${dimensionScores.seo}, accuracy=${dimensionScores.accuracy}, engagement=${dimensionScores.engagement}, brandVoice=${dimensionScores.brandVoice}`)
 
+      // Log pass/fail reason
       if (qaOutput.passed) {
         onProgress?.(`QA PASSED with score ${qaOutput.overallScore}/100. Ready for next step.`)
       } else {
-        onProgress?.(`QA FAILED with score ${qaOutput.overallScore}/100. Revision needed.`)
+        const failReasons: string[] = []
+        if (!meetsScoreThreshold) failReasons.push(`score below ${PASS_THRESHOLD}`)
+        if (!meetsCriticalLimit) failReasons.push(`${criticalCount} critical issue(s)`)
+        if (!meetsHighLimit) failReasons.push(`${highCount} high severity issue(s)`)
+        log('warn', `QA FAILED: ${failReasons.join(', ')}`)
+        onProgress?.(`QA FAILED: ${failReasons.join(', ')}. Revision needed.`)
       }
 
       // Validate output

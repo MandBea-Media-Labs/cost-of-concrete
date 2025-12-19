@@ -9,7 +9,7 @@
  */
 
 import { zodToJsonSchema } from 'zod-to-json-schema'
-import { BaseAIAgent, type AgentContext, type AgentResult, type WriterAgentInput } from '../AIAgent'
+import { BaseAIAgent, type AgentContext, type AgentResult, type WriterAgentInput, type RevisionIssue } from '../AIAgent'
 import { AgentRegistry } from '../AgentRegistry'
 import { AIGoldenExampleRepository } from '../../../repositories/AIGoldenExampleRepository'
 import { AIEvalRepository } from '../../../repositories/AIEvalRepository'
@@ -115,14 +115,15 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
   // =====================================================
 
   async execute(input: WriterAgentInput, context: AgentContext): Promise<AgentResult<WriterOutput>> {
-    const { keyword, researchData, targetWordCount, qaFeedback, previousArticle, iteration } = input
+    const { keyword, researchData, targetWordCount, qaFeedback, issuesToFix, previousArticle, iteration } = input
     const { log, onProgress, llmProvider, persona, client } = context
     const startTime = Date.now()
-    const isRevision = Boolean(qaFeedback && previousArticle && (iteration ?? 1) > 1)
+    const isRevision = Boolean((qaFeedback || issuesToFix?.length) && previousArticle && (iteration ?? 1) > 1)
 
     if (isRevision) {
-      log('info', `Starting Writer Agent REVISION for keyword: "${keyword}" (iteration ${iteration})`)
-      onProgress?.(`Writer Agent revising article based on QA feedback (iteration ${iteration})...`)
+      const issueCount = issuesToFix?.length || 0
+      log('info', `Starting Writer Agent REVISION for keyword: "${keyword}" (iteration ${iteration}, ${issueCount} issues to fix)`)
+      onProgress?.(`Writer Agent revising article based on QA feedback (iteration ${iteration}, ${issueCount} issues)...`)
     } else {
       log('info', `Starting Writer Agent for keyword: "${keyword}"`)
       onProgress?.('Writer Agent starting article generation...')
@@ -165,7 +166,7 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
       log('debug', isRevision ? 'Building revision prompt with QA feedback...' : 'Building prompt with research context...')
       onProgress?.(isRevision ? 'Preparing revision based on QA feedback...' : 'Analyzing research data and preparing prompt...')
 
-      const userPrompt = this.buildUserPrompt(keyword, research, targetWordCount, qaFeedback, prevArticle, goldenExamples, commonIssues)
+      const userPrompt = this.buildUserPrompt(keyword, research, targetWordCount, qaFeedback, issuesToFix, prevArticle, goldenExamples, commonIssues)
 
       // Get system prompt from persona or use default
       const systemPrompt = persona.system_prompt || WRITER_SYSTEM_PROMPT
@@ -219,7 +220,7 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
 
   /**
    * Build the user prompt with research data context
-   * Supports revision mode with QA feedback
+   * Supports revision mode with QA feedback and structured issues
    * Includes golden examples for few-shot learning when available
    * Includes common issues from evals for continuous improvement
    */
@@ -228,12 +229,13 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
     research: ResearchOutput,
     targetWordCount: number,
     qaFeedback?: string,
+    issuesToFix?: RevisionIssue[],
     previousArticle?: WriterOutput,
     goldenExamples?: AIGoldenExampleRow[],
     commonIssues?: CommonIssue[]
   ): string {
     const sections: string[] = []
-    const isRevision = Boolean(qaFeedback && previousArticle)
+    const isRevision = Boolean((qaFeedback || issuesToFix?.length) && previousArticle)
 
     // Current date context - IMPORTANT for accurate/timely content
     const now = new Date()
@@ -252,11 +254,73 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
     if (isRevision) {
       sections.push(`## REVISION REQUEST`)
       sections.push(``)
-      sections.push(`Your previous article did not pass quality assurance. Please revise the article based on the feedback below.`)
+      sections.push(`Your previous article did not pass quality assurance. You MUST fix ALL issues listed below.`)
       sections.push(``)
-      sections.push(`### QA Feedback`)
-      sections.push(qaFeedback!)
-      sections.push(``)
+
+      // Structured issues take priority over generic feedback
+      if (issuesToFix && issuesToFix.length > 0) {
+        sections.push(`### ISSUES TO FIX (${issuesToFix.length} total)`)
+        sections.push(``)
+        sections.push(`You MUST address EVERY issue below. Issues are sorted by priority (critical/high first).`)
+        sections.push(``)
+
+        // Group by severity for clarity
+        const criticalIssues = issuesToFix.filter(i => i.severity === 'critical')
+        const highIssues = issuesToFix.filter(i => i.severity === 'high')
+        const mediumIssues = issuesToFix.filter(i => i.severity === 'medium')
+        const lowIssues = issuesToFix.filter(i => i.severity === 'low')
+
+        if (criticalIssues.length > 0) {
+          sections.push(`#### 🚨 CRITICAL ISSUES (Must fix immediately)`)
+          for (const issue of criticalIssues) {
+            const persistWarning = issue.persistCount && issue.persistCount > 1
+              ? ` [PERSISTED ${issue.persistCount} iterations - FIX NOW]`
+              : ''
+            sections.push(`- **[${issue.category}]** ${issue.description}${persistWarning}`)
+            sections.push(`  - How to fix: ${issue.suggestion}`)
+            if (issue.location) sections.push(`  - Location: ${issue.location}`)
+          }
+          sections.push(``)
+        }
+
+        if (highIssues.length > 0) {
+          sections.push(`#### ⚠️ HIGH PRIORITY ISSUES`)
+          for (const issue of highIssues) {
+            const persistWarning = issue.persistCount && issue.persistCount > 1
+              ? ` [PERSISTED ${issue.persistCount} iterations]`
+              : ''
+            sections.push(`- **[${issue.category}]** ${issue.description}${persistWarning}`)
+            sections.push(`  - How to fix: ${issue.suggestion}`)
+            if (issue.location) sections.push(`  - Location: ${issue.location}`)
+          }
+          sections.push(``)
+        }
+
+        if (mediumIssues.length > 0) {
+          sections.push(`#### 📋 MEDIUM PRIORITY ISSUES`)
+          for (const issue of mediumIssues) {
+            sections.push(`- **[${issue.category}]** ${issue.description}`)
+            sections.push(`  - How to fix: ${issue.suggestion}`)
+            if (issue.location) sections.push(`  - Location: ${issue.location}`)
+          }
+          sections.push(``)
+        }
+
+        if (lowIssues.length > 0) {
+          sections.push(`#### 📝 LOW PRIORITY ISSUES`)
+          for (const issue of lowIssues) {
+            sections.push(`- **[${issue.category}]** ${issue.description}`)
+            sections.push(`  - How to fix: ${issue.suggestion}`)
+          }
+          sections.push(``)
+        }
+      } else if (qaFeedback) {
+        // Fallback to generic feedback if no structured issues
+        sections.push(`### QA Feedback`)
+        sections.push(qaFeedback)
+        sections.push(``)
+      }
+
       sections.push(`### Previous Article to Revise`)
       sections.push(`Title: ${previousArticle!.title}`)
       sections.push(`Word Count: ${previousArticle!.wordCount}`)
@@ -266,7 +330,8 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
       sections.push(``)
       sections.push(`---`)
       sections.push(``)
-      sections.push(`Please revise the article above, addressing ALL feedback points while maintaining the overall structure and keyword focus.`)
+      sections.push(`IMPORTANT: Revise the article above, addressing EVERY issue listed. Do not skip any issues.`)
+      sections.push(`Maintain the overall structure and keyword focus while making necessary corrections.`)
     } else {
       sections.push(`Write a comprehensive, SEO-optimized article about: "${keyword}"`)
     }
