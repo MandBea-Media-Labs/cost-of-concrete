@@ -198,17 +198,18 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
         log('error', 'Output validation failed', parseResult.error)
         return this.failure(
           `Output validation failed: ${parseResult.error.message}`,
-          result.usage
+          result.usage,
+          result.estimatedCostUsd
         )
       }
 
       onProgress?.('Writer Agent complete. Passing to SEO Agent...')
 
-      return this.success(parseResult.data, result.usage, true)
+      return this.success(parseResult.data, result.usage, true, result.estimatedCostUsd)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log('error', `Writer Agent failed: ${message}`, error)
-      return this.failure(message, { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+      return this.failure(message, { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, 0)
     }
   }
 

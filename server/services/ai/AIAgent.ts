@@ -48,6 +48,8 @@ export interface AgentResult<TOutput = unknown> {
   output: TOutput | null
   /** Token usage statistics */
   usage: TokenUsage
+  /** Estimated cost in USD */
+  estimatedCostUsd?: number
   /** Error message if failed */
   error?: string
   /** Whether to continue to the next agent */
@@ -175,15 +177,15 @@ export abstract class BaseAIAgent<TInput = unknown, TOutput = unknown>
   /**
    * Helper to create a successful result
    */
-  protected success(output: TOutput, usage: TokenUsage, continueToNext = true): AgentResult<TOutput> {
-    return { success: true, output, usage, continueToNext }
+  protected success(output: TOutput, usage: TokenUsage, continueToNext = true, estimatedCostUsd?: number): AgentResult<TOutput> {
+    return { success: true, output, usage, estimatedCostUsd, continueToNext }
   }
 
   /**
    * Helper to create a failed result
    */
-  protected failure(error: string, usage: TokenUsage): AgentResult<TOutput> {
-    return { success: false, output: null, usage, error, continueToNext: false }
+  protected failure(error: string, usage: TokenUsage, estimatedCostUsd?: number): AgentResult<TOutput> {
+    return { success: false, output: null, usage, estimatedCostUsd, error, continueToNext: false }
   }
 }
 

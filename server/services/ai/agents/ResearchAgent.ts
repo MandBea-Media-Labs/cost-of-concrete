@@ -114,7 +114,8 @@ export class ResearchAgent extends BaseAIAgent<ResearchAgentInput, ResearchOutpu
         log('error', 'Output validation failed', parseResult.error)
         return this.failure(
           `Output validation failed: ${parseResult.error.message}`,
-          { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+          { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          0
         )
       }
 
@@ -122,15 +123,17 @@ export class ResearchAgent extends BaseAIAgent<ResearchAgentInput, ResearchOutpu
       log('info', `Research complete in ${duration}ms. Recommended word count: ${recommendedWordCount}`)
       onProgress?.(`Research complete. Found ${output.competitors.length} competitors, ${output.relatedKeywords.length} related keywords.`)
 
+      // No LLM tokens used - research uses external APIs
       return this.success(
         parseResult.data,
-        { inputTokens: 0, outputTokens: 0, totalTokens: 0 }, // No LLM tokens used
-        true
+        { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        true,
+        0
       )
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log('error', `Research failed: ${message}`, error)
-      return this.failure(message, { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+      return this.failure(message, { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, 0)
     }
   }
 

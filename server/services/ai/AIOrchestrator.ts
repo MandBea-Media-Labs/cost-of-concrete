@@ -106,6 +106,7 @@ export class AIOrchestrator {
     const skipAgents = settings?.skipAgents ?? []
     let currentIteration = job.current_iteration ?? 1
     let totalTokens = job.total_tokens_used ?? 0
+    let totalCostUsd = Number(job.estimated_cost_usd) || 0
 
     consola.info(`[AIOrchestrator] Starting job ${job.id} for keyword: "${job.keyword}"`)
     if (skipAgents.length > 0) {
@@ -115,7 +116,7 @@ export class AIOrchestrator {
     try {
       // Check for cancellation before starting
       if (await this.checkCancelled(job.id)) {
-        return this.cancelledResult(job, currentIteration, totalTokens)
+        return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
       }
 
       // Mark job as processing
@@ -125,14 +126,15 @@ export class AIOrchestrator {
       let researchOutput: ResearchOutput | null = null
       if (!skipAgents.includes('research')) {
         if (await this.checkCancelled(job.id)) {
-          return this.cancelledResult(job, currentIteration, totalTokens)
+          return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
         }
 
         const researchResult = await this.runAgentWithRetry('research', { keyword: job.keyword }, job, currentIteration)
         if (!researchResult.success || !researchResult.output) {
-          return this.failJob(job, researchResult.error ?? 'Research failed', currentIteration, totalTokens)
+          return this.failJob(job, researchResult.error ?? 'Research failed', currentIteration, totalTokens, totalCostUsd)
         }
         totalTokens += researchResult.usage.totalTokens
+        totalCostUsd += researchResult.estimatedCostUsd ?? 0
         researchOutput = researchResult.output as ResearchOutput
       }
 
@@ -153,7 +155,7 @@ export class AIOrchestrator {
 
         // Check for cancellation before each agent
         if (await this.checkCancelled(job.id)) {
-          return this.cancelledResult(job, currentIteration, totalTokens)
+          return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
         }
 
         // Stage 2: Writer (unless skipped)
@@ -168,15 +170,16 @@ export class AIOrchestrator {
           }
           const writerResult = await this.runAgentWithRetry('writer', writerInput, job, currentIteration)
           if (!writerResult.success || !writerResult.output) {
-            return this.failJob(job, writerResult.error ?? 'Writer failed', currentIteration, totalTokens)
+            return this.failJob(job, writerResult.error ?? 'Writer failed', currentIteration, totalTokens, totalCostUsd)
           }
           totalTokens += writerResult.usage.totalTokens
+          totalCostUsd += writerResult.estimatedCostUsd ?? 0
           writerOutput = writerResult.output as WriterOutput
         }
 
         // Check for cancellation
         if (await this.checkCancelled(job.id)) {
-          return this.cancelledResult(job, currentIteration, totalTokens)
+          return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
         }
 
         // Stage 3: SEO (unless skipped)
@@ -188,15 +191,16 @@ export class AIOrchestrator {
           }
           const seoResult = await this.runAgentWithRetry('seo', seoInput, job, currentIteration)
           if (!seoResult.success || !seoResult.output) {
-            return this.failJob(job, seoResult.error ?? 'SEO failed', currentIteration, totalTokens)
+            return this.failJob(job, seoResult.error ?? 'SEO failed', currentIteration, totalTokens, totalCostUsd)
           }
           totalTokens += seoResult.usage.totalTokens
+          totalCostUsd += seoResult.estimatedCostUsd ?? 0
           seoOutput = seoResult.output as SEOOutput
         }
 
         // Check for cancellation
         if (await this.checkCancelled(job.id)) {
-          return this.cancelledResult(job, currentIteration, totalTokens)
+          return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
         }
 
         // Stage 4: QA (unless skipped)
@@ -209,9 +213,10 @@ export class AIOrchestrator {
           }
           const qaResult = await this.runAgentWithRetry('qa', qaInput, job, currentIteration)
           if (!qaResult.success || !qaResult.output) {
-            return this.failJob(job, qaResult.error ?? 'QA failed', currentIteration, totalTokens)
+            return this.failJob(job, qaResult.error ?? 'QA failed', currentIteration, totalTokens, totalCostUsd)
           }
           totalTokens += qaResult.usage.totalTokens
+          totalCostUsd += qaResult.estimatedCostUsd ?? 0
           qaOutput = qaResult.output as QAOutput
 
           // Check QA result
@@ -241,7 +246,7 @@ export class AIOrchestrator {
       if (!skipAgents.includes('project_manager') && writerOutput) {
         // Check for cancellation
         if (await this.checkCancelled(job.id)) {
-          return this.cancelledResult(job, currentIteration, totalTokens)
+          return this.cancelledResult(job, currentIteration, totalTokens, totalCostUsd)
         }
 
         const pmInput: ProjectManagerAgentInput = {
@@ -254,9 +259,10 @@ export class AIOrchestrator {
 
         const pmResult = await this.runAgentWithRetry('project_manager', pmInput, job, currentIteration)
         if (!pmResult.success || !pmResult.output) {
-          return this.failJob(job, pmResult.error ?? 'Project Manager failed', currentIteration, totalTokens)
+          return this.failJob(job, pmResult.error ?? 'Project Manager failed', currentIteration, totalTokens, totalCostUsd)
         }
         totalTokens += pmResult.usage.totalTokens
+        totalCostUsd += pmResult.estimatedCostUsd ?? 0
         pmOutput = pmResult.output as ProjectManagerOutput
 
         consola.info(`[AIOrchestrator] PM complete. Ready for publish: ${pmOutput.readyForPublish}`)
@@ -310,9 +316,10 @@ export class AIOrchestrator {
         progressPercent: 100,
         currentAgent: null,
         totalTokensUsed: totalTokens,
+        estimatedCostUsd: totalCostUsd,
       })
 
-      consola.success(`[AIOrchestrator] Job ${job.id} completed in ${currentIteration} iteration(s)`)
+      consola.success(`[AIOrchestrator] Job ${job.id} completed in ${currentIteration} iteration(s). Cost: $${totalCostUsd.toFixed(4)}`)
 
       const updatedJob = await this.jobRepo.findById(job.id)
       return {
@@ -324,7 +331,7 @@ export class AIOrchestrator {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       consola.error(`[AIOrchestrator] Job ${job.id} failed: ${message}`)
-      return this.failJob(job, message, currentIteration, totalTokens)
+      return this.failJob(job, message, currentIteration, totalTokens, totalCostUsd)
     }
   }
 
@@ -346,9 +353,14 @@ export class AIOrchestrator {
   private async cancelledResult(
     job: AIArticleJobRow,
     iterations: number,
-    totalTokens: number
+    totalTokens: number,
+    totalCostUsd: number
   ): Promise<PipelineResult> {
-    await this.jobRepo.updateProgress(job.id, { currentAgent: null, totalTokensUsed: totalTokens })
+    await this.jobRepo.updateProgress(job.id, {
+      currentAgent: null,
+      totalTokensUsed: totalTokens,
+      estimatedCostUsd: totalCostUsd,
+    })
     const updatedJob = await this.jobRepo.findById(job.id)
     return {
       success: false,
@@ -635,10 +647,15 @@ export class AIOrchestrator {
     job: AIArticleJobRow,
     error: string,
     iterations: number,
-    totalTokens: number
+    totalTokens: number,
+    totalCostUsd: number
   ): Promise<PipelineResult> {
     await this.jobRepo.setStatus(job.id, 'failed', { error, completedAt: true })
-    await this.jobRepo.updateProgress(job.id, { currentAgent: null, totalTokensUsed: totalTokens })
+    await this.jobRepo.updateProgress(job.id, {
+      currentAgent: null,
+      totalTokensUsed: totalTokens,
+      estimatedCostUsd: totalCostUsd,
+    })
 
     const updatedJob = await this.jobRepo.findById(job.id)
     return {

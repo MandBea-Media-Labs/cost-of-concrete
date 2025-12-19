@@ -183,7 +183,8 @@ export class ProjectManagerAgent extends BaseAIAgent<ProjectManagerAgentInput, P
         log('error', 'Output validation failed', parseResult.error)
         return this.failure(
           `Output validation failed: ${parseResult.error.message}`,
-          { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+          { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          0
         )
       }
 
@@ -195,11 +196,11 @@ export class ProjectManagerAgent extends BaseAIAgent<ProjectManagerAgentInput, P
       onProgress?.(`Project Manager complete. ${readyForPublish ? 'Article ready for publication.' : 'Article requires attention.'}`)
 
       // No tokens used - deterministic assembly
-      return this.success(parseResult.data, { inputTokens: 0, outputTokens: 0, totalTokens: 0 }, true)
+      return this.success(parseResult.data, { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, true, 0)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log('error', `Project Manager Agent failed: ${message}`, error)
-      return this.failure(message, { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+      return this.failure(message, { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, 0)
     }
   }
 

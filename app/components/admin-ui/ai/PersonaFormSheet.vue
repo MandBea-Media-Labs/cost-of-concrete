@@ -152,8 +152,8 @@ const agentTypeLabels: Record<string, string> = {
 const modelSuggestions = computed(() => {
   if (provider.value === 'anthropic') {
     return [
+      'claude-opus-4-5',
       'claude-sonnet-4-20250514',
-      'claude-opus-4-20250514',
       'claude-3-5-haiku-20241022',
     ]
   }
@@ -265,10 +265,16 @@ const onSubmit = handleSubmit(async (values: PersonaFormData) => {
               </div>
               <div>
                 <label class="mb-1.5 block text-sm font-medium">Model</label>
-                <UiInput v-model="model" placeholder="Model name" list="model-suggestions" />
-                <datalist id="model-suggestions">
-                  <option v-for="m in modelSuggestions" :key="m" :value="m" />
-                </datalist>
+                <UiSelect v-model="model">
+                  <UiSelectTrigger class="w-full">
+                    <UiSelectValue placeholder="Select model" />
+                  </UiSelectTrigger>
+                  <UiSelectContent>
+                    <UiSelectItem v-for="m in modelSuggestions" :key="m" :value="m">
+                      {{ m }}
+                    </UiSelectItem>
+                  </UiSelectContent>
+                </UiSelect>
               </div>
             </div>
 

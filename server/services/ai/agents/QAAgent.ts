@@ -237,7 +237,8 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
         log('error', 'Output validation failed', parseResult.error)
         return this.failure(
           `Output validation failed: ${parseResult.error.message}`,
-          result.usage
+          result.usage,
+          result.estimatedCostUsd
         )
       }
 
@@ -248,7 +249,7 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
       log('info', 'Automated eval recorded successfully')
 
       // Return with feedback for Writer revision if failed
-      const agentResult = this.success(parseResult.data, result.usage, qaOutput.passed)
+      const agentResult = this.success(parseResult.data, result.usage, qaOutput.passed, result.estimatedCostUsd)
       if (!qaOutput.passed) {
         agentResult.feedback = qaOutput.feedback
         agentResult.continueToNext = false
@@ -258,7 +259,7 @@ export class QAAgent extends BaseAIAgent<QAAgentInput, QAOutput> {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       log('error', `QA Agent failed: ${message}`, error)
-      return this.failure(message, { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+      return this.failure(message, { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, 0)
     }
   }
 
