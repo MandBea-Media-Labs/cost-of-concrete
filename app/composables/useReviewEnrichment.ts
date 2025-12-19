@@ -9,6 +9,7 @@
  */
 
 import type { Database } from '~/types/supabase'
+import type { ActiveJob } from '~/types/jobs'
 
 type Contractor = Database['public']['Tables']['contractors']['Row'] & {
   city?: {
@@ -36,14 +37,6 @@ export interface ReviewEnrichmentStats {
   noReviews: number
   noCid: number
   failed: number
-}
-
-export interface ActiveJob {
-  id: string
-  status: string
-  processedItems: number
-  totalItems: number | null
-  failedItems: number
 }
 
 export function useReviewEnrichment() {
