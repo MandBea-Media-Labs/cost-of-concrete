@@ -383,6 +383,7 @@ export class WriterAgent extends BaseAIAgent<WriterAgentInput, WriterOutput> {
     sections.push('Use this exact syntax on its own line (no surrounding markdown):')
     sections.push('')
     sections.push('`searchBox:{"headline":"Your Headline","subtext":"Your subtext here.","buttonText":"Search","placeholder":"Your Zip Code"}`')
+    sections.push('IMPORTANT: you MUST include the backticks around the searchBox as shown in the example above (``)')
     sections.push('')
     sections.push('### Placement Rules:')
     sections.push('- For articles UNDER 1200 words: Insert 1 search box in the MIDDLE of the article (after ~50% of content)')
