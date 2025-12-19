@@ -5,6 +5,7 @@
  * List, create, edit, and delete AI agent personas.
  */
 import { toast } from 'vue-sonner'
+import PersonaFormSheet from '~/components/admin-ui/ai/PersonaFormSheet.vue'
 
 definePageMeta({
   layout: 'admin'
@@ -209,7 +210,7 @@ function getAgentIcon(type: string) {
           <UiCardTitle class="flex items-center gap-2 text-base">
             <Icon :name="getAgentIcon(agentType as string)" class="size-5" />
             {{ getAgentLabel(agentType as string) }} Agent
-            <Badge variant="secondary" class="ml-2">{{ typePersonas.length }}</Badge>
+            <UiBadge variant="secondary" class="ml-2">{{ typePersonas.length }}</UiBadge>
           </UiCardTitle>
         </UiCardHeader>
         <UiCardContent class="p-0">
@@ -228,7 +229,7 @@ function getAgentIcon(type: string) {
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <span class="font-medium">{{ persona.name }}</span>
-                    <Badge v-if="persona.isDefault" variant="default" class="text-xs">Default</Badge>
+                    <UiBadge v-if="persona.isDefault" variant="default" class="text-xs">Default</UiBadge>
                   </div>
                   <p v-if="persona.description" class="mt-0.5 text-xs text-muted-foreground line-clamp-1">
                     {{ persona.description }}
@@ -239,9 +240,9 @@ function getAgentIcon(type: string) {
                 </td>
                 <td class="px-4 py-3 text-muted-foreground">{{ persona.temperature }}</td>
                 <td class="px-4 py-3">
-                  <Badge :variant="persona.isEnabled ? 'success' : 'secondary'">
+                  <UiBadge :variant="persona.isEnabled ? 'success' : 'secondary'">
                     {{ persona.isEnabled ? 'Enabled' : 'Disabled' }}
-                  </Badge>
+                  </UiBadge>
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">

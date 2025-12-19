@@ -85,10 +85,25 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Fire off execution asynchronously (don't await - let it run in background)
+    // In production, this would be triggered by pg_cron instead
+    const baseUrl = getRequestURL(event).origin
+    $fetch(`${baseUrl}/api/ai/articles/${job.id}/execute`, {
+      method: 'POST',
+      headers: {
+        // Forward auth cookie for the execute request
+        cookie: getHeader(event, 'cookie') || '',
+      },
+    }).catch((err) => {
+      consola.error(`POST /api/ai/articles - Failed to trigger execution for job ${job.id}:`, err)
+    })
+
+    consola.info(`POST /api/ai/articles - Triggered async execution for job ${job.id}`)
+
     return {
       success: true,
       job: toArticleJobResponse(job),
-      message: 'Article job queued successfully',
+      message: 'Article job queued and execution started',
     }
   } catch (error) {
     if (import.meta.dev) {

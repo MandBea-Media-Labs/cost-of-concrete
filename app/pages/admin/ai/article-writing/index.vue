@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
+import NumberFlow from '@number-flow/vue'
 
 definePageMeta({
   layout: 'admin'
@@ -17,10 +18,12 @@ definePageMeta({
 // FORM SCHEMA
 // =====================================================
 
+// Note: Avoid using .default() as it causes issues with @vee-validate/zod and Zod 4
+// Use initialValues in useForm instead
 const createJobSchema = z.object({
   keyword: z.string().min(2, 'Keyword must be at least 2 characters').max(200),
-  autoPost: z.boolean().default(false),
-  targetWordCount: z.coerce.number().int().min(0).max(10000).default(0),
+  autoPost: z.boolean(),
+  targetWordCount: z.coerce.number().int().min(0).max(10000),
 })
 
 type CreateJobInput = z.infer<typeof createJobSchema>
@@ -292,7 +295,7 @@ function formatDate(dateString: string | null) {
               <tr v-for="job in jobs" :key="job.id" class="border-b last:border-0">
                 <td class="px-4 py-3 font-medium">{{ job.keyword }}</td>
                 <td class="px-4 py-3">
-                  <Badge :variant="getStatusVariant(job.status)">{{ job.status }}</Badge>
+                  <UiBadge :variant="getStatusVariant(job.status)">{{ job.status }}</UiBadge>
                 </td>
                 <td class="px-4 py-3 text-muted-foreground">{{ getAgentLabel(job.currentAgent) }}</td>
                 <td class="px-4 py-3">

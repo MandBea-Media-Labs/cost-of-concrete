@@ -6,6 +6,7 @@
  * Uses SSE (Server-Sent Events) for live updates.
  */
 import { toast } from 'vue-sonner'
+import ArticleRatingPanel from '~/components/admin-ui/ai/ArticleRatingPanel.vue'
 
 definePageMeta({
   layout: 'admin'
@@ -199,7 +200,7 @@ function getStepStatusVariant(status: string) {
           <div>
             <h1 class="text-2xl font-bold">{{ job.keyword }}</h1>
             <div class="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <Badge :variant="getStepStatusVariant(job.status)">{{ job.status }}</Badge>
+              <UiBadge :variant="getStepStatusVariant(job.status)">{{ job.status }}</UiBadge>
               <span v-if="job.currentAgent">
                 Agent: <strong>{{ AGENT_INFO[job.currentAgent]?.label || job.currentAgent }}</strong>
               </span>
@@ -316,9 +317,9 @@ function getStepStatusVariant(status: string) {
             class="rounded-md border bg-muted/30 p-2 text-xs"
           >
             <div class="flex items-center justify-between">
-              <Badge :variant="getStepStatusVariant(step.status)" class="text-[10px]">
+              <UiBadge :variant="getStepStatusVariant(step.status)" class="text-[10px]">
                 {{ step.status }}
-              </Badge>
+              </UiBadge>
               <span class="text-muted-foreground">
                 {{ step.tokensUsed.toLocaleString() }} tokens
               </span>
