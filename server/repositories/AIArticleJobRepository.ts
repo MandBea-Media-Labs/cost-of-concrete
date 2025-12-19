@@ -8,13 +8,14 @@
 import { consola } from 'consola'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/supabase'
-import type {
-  AIArticleJobRow,
-  AIArticleJobInsert,
-  AIArticleJobUpdate,
-  AIJobStatus,
-  AIAgentType,
-  AIArticleJobSettings,
+import {
+  DEFAULT_MAX_ITERATIONS,
+  type AIArticleJobRow,
+  type AIArticleJobInsert,
+  type AIArticleJobUpdate,
+  type AIJobStatus,
+  type AIAgentType,
+  type AIArticleJobSettings,
 } from '../schemas/ai.schemas'
 
 export interface ArticleJobListOptions {
@@ -59,7 +60,7 @@ export class AIArticleJobRepository {
       status: 'pending',
       progress_percent: 0,
       current_iteration: 1,
-      max_iterations: data.settings?.maxIterations ?? 3,
+      max_iterations: data.settings?.maxIterations ?? DEFAULT_MAX_ITERATIONS,
     }
 
     const { data: job, error } = await this.client

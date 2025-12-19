@@ -67,8 +67,8 @@ export const aiArticleJobSettingsSchema = z.object({
   autoPost: z.boolean().default(false),
   /** Target word count (0 = auto from research) */
   targetWordCount: z.number().int().min(0).max(10000).default(0),
-  /** Maximum QA feedback iterations */
-  maxIterations: z.number().int().min(1).max(10).default(3),
+  /** Maximum QA feedback iterations (default: 5, see DEFAULT_MAX_ITERATIONS) */
+  maxIterations: z.number().int().min(1).max(10).default(5),
   /** Template to use for the page */
   template: z.string().default('article'),
   /** Parent page ID for hierarchy */
