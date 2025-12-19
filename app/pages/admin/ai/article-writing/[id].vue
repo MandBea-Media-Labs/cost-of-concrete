@@ -26,6 +26,7 @@ const { data: jobData, pending, error, refresh } = await useFetch(
 
 const job = computed(() => jobData.value?.job ?? null)
 const steps = computed(() => job.value?.steps ?? [])
+const evals = computed(() => job.value?.evals ?? [])
 const isTerminal = computed(() =>
   ['completed', 'failed', 'cancelled'].includes(job.value?.status ?? '')
 )
@@ -340,6 +341,18 @@ function getStepStatusVariant(status: string) {
       <UiButton variant="link" size="sm" class="h-auto p-0" @click="connectSSE">
         Reconnect
       </UiButton>
+    </div>
+
+    <!-- Human Evaluation Panel -->
+    <div v-if="job" class="mt-6">
+      <ArticleRatingPanel
+        :job-id="jobId"
+        :job-status="job.status"
+        :keyword="job.keyword"
+        :existing-evals="evals"
+        @eval-created="refresh"
+        @golden-created="refresh"
+      />
     </div>
   </div>
 </template>
