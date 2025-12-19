@@ -12,6 +12,7 @@
  * - Skip agents via job settings
  * - Job step recording with timing
  * - Progress tracking for SSE streaming
+ * - Auto-post page creation when enabled
  *
  * @see BAM-314 Phase 5: Orchestrator & Page Creation
  */
@@ -34,6 +35,7 @@ import { DEFAULT_MAX_ITERATIONS } from '../../schemas/ai.schemas'
 import { AIArticleJobRepository } from '../../repositories/AIArticleJobRepository'
 import { AIJobStepRepository, type StepLogEntry } from '../../repositories/AIJobStepRepository'
 import { AIPersonaRepository } from '../../repositories/AIPersonaRepository'
+import { PageService, type CreatePageData } from '../PageService'
 import { AgentRegistry } from './AgentRegistry'
 import { withRetry } from '../../utils/retry'
 import type {
@@ -45,6 +47,7 @@ import type {
   ProjectManagerAgentInput,
 } from './AIAgent'
 import type { ILLMProvider } from './LLMProvider'
+import type { TemplateSlug } from '../../../app/types/templates'
 
 // =====================================================
 // TYPES
@@ -76,6 +79,7 @@ export class AIOrchestrator {
   private jobRepo: AIArticleJobRepository
   private stepRepo: AIJobStepRepository
   private personaRepo: AIPersonaRepository
+  private pageService: PageService
   private callbacks: PipelineCallbacks
 
   constructor(
@@ -88,6 +92,7 @@ export class AIOrchestrator {
     this.jobRepo = new AIArticleJobRepository(client)
     this.stepRepo = new AIJobStepRepository(client)
     this.personaRepo = new AIPersonaRepository(client)
+    this.pageService = new PageService(client)
     this.callbacks = callbacks
   }
 
@@ -277,7 +282,29 @@ export class AIOrchestrator {
         recommendations: [],
       }
 
-      await this.jobRepo.setFinalOutput(job.id, finalOutput)
+      // Stage 6: Auto-Post (if enabled)
+      let pageId: string | undefined
+
+      if (settings?.autoPost && finalOutput.readyForPublish) {
+        consola.info(`[AIOrchestrator] Auto-post enabled, creating page...`)
+        this.callbacks.onProgress?.('project_manager', 'Creating CMS page...')
+
+        const pageResult = await this.createPageFromArticle(finalOutput, settings)
+        if (pageResult.success && pageResult.pageId) {
+          pageId = pageResult.pageId
+          consola.success(`[AIOrchestrator] Page created: ${pageId}`)
+          this.callbacks.onProgress?.('project_manager', 'Page created successfully', { pageId })
+        } else {
+          // Log error but don't fail the job - page creation is optional
+          consola.warn(`[AIOrchestrator] Auto-post failed: ${pageResult.error}`)
+          this.callbacks.onProgress?.('project_manager', `Auto-post failed: ${pageResult.error}`)
+        }
+      } else if (settings?.autoPost && !finalOutput.readyForPublish) {
+        consola.info(`[AIOrchestrator] Auto-post skipped: article not ready for publish`)
+        this.callbacks.onProgress?.('project_manager', 'Auto-post skipped: article has validation errors')
+      }
+
+      await this.jobRepo.setFinalOutput(job.id, finalOutput, pageId)
       await this.jobRepo.updateProgress(job.id, {
         progressPercent: 100,
         currentAgent: null,
@@ -510,6 +537,56 @@ export class AIOrchestrator {
       stepId,
       log,
       onProgress,
+    }
+  }
+
+  /**
+   * Create a CMS page from the final article output
+   *
+   * @param output - ProjectManagerOutput containing the final article data
+   * @param settings - Job settings (for parentPageId and other options)
+   * @returns Object with success status, pageId (if created), and error message (if failed)
+   */
+  private async createPageFromArticle(
+    output: ProjectManagerOutput,
+    settings: AIArticleJobSettings
+  ): Promise<{ success: boolean; pageId?: string; error?: string }> {
+    try {
+      const { finalArticle } = output
+
+      // Map ProjectManagerOutput.finalArticle to CreatePageData
+      const pageData: CreatePageData = {
+        title: finalArticle.title,
+        slug: finalArticle.slug,
+        content: finalArticle.content,
+        description: finalArticle.excerpt,
+        template: finalArticle.template as TemplateSlug,
+        status: finalArticle.status,
+        metaTitle: finalArticle.metaTitle,
+        metaDescription: finalArticle.metaDescription,
+        focusKeyword: finalArticle.focusKeyword,
+        parentId: settings.parentPageId ?? null,
+        // Store schema markup in metadata.seo
+        metadata: {
+          seo: {
+            schemaMarkup: finalArticle.schemaMarkup,
+          },
+        },
+      }
+
+      const page = await this.pageService.createPage(pageData)
+
+      return {
+        success: true,
+        pageId: page.id,
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error creating page'
+      consola.error(`[AIOrchestrator] Failed to create page: ${message}`)
+      return {
+        success: false,
+        error: message,
+      }
     }
   }
 

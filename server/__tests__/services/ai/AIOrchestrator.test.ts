@@ -452,4 +452,161 @@ describe('AIOrchestrator', () => {
       expect(result.error).toContain('persona')
     })
   })
+
+  // =====================================================
+  // AUTO-POST INTEGRATION TESTS
+  // =====================================================
+
+  describe('auto-post integration', () => {
+    beforeEach(() => {
+      vi.spyOn(AIArticleJobRepository.prototype, 'isCancelled').mockResolvedValue(false)
+      vi.spyOn(AIOrchestrator.prototype as unknown as { getPersonaForAgent: () => Promise<AIPersonaRow | null> }, 'getPersonaForAgent' as keyof AIOrchestrator)
+        .mockResolvedValue(mockPersona)
+    })
+
+    it('should create page when autoPost is enabled and article is ready for publish', async () => {
+      const jobWithAutoPost: AIArticleJobRow = {
+        ...mockJob,
+        settings: { autoPost: true },
+      }
+
+      // Mock PM output with readyForPublish: true
+      vi.spyOn(AgentRegistry, 'get').mockImplementation((agentType) => {
+        switch (agentType) {
+          case 'research':
+            return createMockAgent('research', mockResearchOutput)
+          case 'writer':
+            return createMockAgent('writer', mockWriterOutput)
+          case 'seo':
+            return createMockAgent('seo', mockSEOOutput)
+          case 'qa':
+            return createMockAgent('qa', mockQAPassOutput)
+          case 'project_manager':
+            return createMockAgent('project_manager', { ...mockPMOutput, readyForPublish: true })
+          default:
+            return undefined
+        }
+      })
+
+      // Mock createPageFromArticle to return success
+      const createPageSpy = vi.spyOn(AIOrchestrator.prototype as unknown as { createPageFromArticle: () => Promise<{ success: boolean; pageId?: string }> }, 'createPageFromArticle' as keyof AIOrchestrator)
+        .mockResolvedValue({ success: true, pageId: 'page-123' })
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithAutoPost)
+
+      expect(result.success).toBe(true)
+      expect(createPageSpy).toHaveBeenCalled()
+      expect(callbacks.onProgress).toHaveBeenCalledWith('project_manager', 'Creating CMS page...')
+      expect(callbacks.onProgress).toHaveBeenCalledWith('project_manager', 'Page created successfully', { pageId: 'page-123' })
+    })
+
+    it('should skip page creation when autoPost is disabled', async () => {
+      const jobWithoutAutoPost: AIArticleJobRow = {
+        ...mockJob,
+        settings: { autoPost: false },
+      }
+
+      const createPageSpy = vi.spyOn(AIOrchestrator.prototype as unknown as { createPageFromArticle: () => Promise<{ success: boolean; pageId?: string }> }, 'createPageFromArticle' as keyof AIOrchestrator)
+        .mockResolvedValue({ success: true, pageId: 'page-123' })
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithoutAutoPost)
+
+      expect(result.success).toBe(true)
+      expect(createPageSpy).not.toHaveBeenCalled()
+    })
+
+    it('should skip page creation when autoPost is enabled but article is not ready for publish', async () => {
+      const jobWithAutoPost: AIArticleJobRow = {
+        ...mockJob,
+        settings: { autoPost: true },
+      }
+
+      // Mock PM output with readyForPublish: false
+      vi.spyOn(AgentRegistry, 'get').mockImplementation((agentType) => {
+        switch (agentType) {
+          case 'research':
+            return createMockAgent('research', mockResearchOutput)
+          case 'writer':
+            return createMockAgent('writer', mockWriterOutput)
+          case 'seo':
+            return createMockAgent('seo', mockSEOOutput)
+          case 'qa':
+            return createMockAgent('qa', mockQAPassOutput)
+          case 'project_manager':
+            return createMockAgent('project_manager', {
+              ...mockPMOutput,
+              readyForPublish: false,
+              validationErrors: ['Title is too short'],
+            })
+          default:
+            return undefined
+        }
+      })
+
+      const createPageSpy = vi.spyOn(AIOrchestrator.prototype as unknown as { createPageFromArticle: () => Promise<{ success: boolean; pageId?: string }> }, 'createPageFromArticle' as keyof AIOrchestrator)
+        .mockResolvedValue({ success: true, pageId: 'page-123' })
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithAutoPost)
+
+      expect(result.success).toBe(true)
+      expect(createPageSpy).not.toHaveBeenCalled()
+      expect(callbacks.onProgress).toHaveBeenCalledWith('project_manager', 'Auto-post skipped: article has validation errors')
+    })
+
+    it('should complete job successfully even when page creation fails', async () => {
+      const jobWithAutoPost: AIArticleJobRow = {
+        ...mockJob,
+        settings: { autoPost: true },
+      }
+
+      // Mock PM output with readyForPublish: true
+      vi.spyOn(AgentRegistry, 'get').mockImplementation((agentType) => {
+        switch (agentType) {
+          case 'research':
+            return createMockAgent('research', mockResearchOutput)
+          case 'writer':
+            return createMockAgent('writer', mockWriterOutput)
+          case 'seo':
+            return createMockAgent('seo', mockSEOOutput)
+          case 'qa':
+            return createMockAgent('qa', mockQAPassOutput)
+          case 'project_manager':
+            return createMockAgent('project_manager', { ...mockPMOutput, readyForPublish: true })
+          default:
+            return undefined
+        }
+      })
+
+      // Mock createPageFromArticle to return failure
+      const createPageSpy = vi.spyOn(AIOrchestrator.prototype as unknown as { createPageFromArticle: () => Promise<{ success: boolean; error?: string }> }, 'createPageFromArticle' as keyof AIOrchestrator)
+        .mockResolvedValue({ success: false, error: 'Slug already exists' })
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithAutoPost)
+
+      // Job should still succeed even though page creation failed
+      expect(result.success).toBe(true)
+      expect(createPageSpy).toHaveBeenCalled()
+      expect(callbacks.onProgress).toHaveBeenCalledWith('project_manager', 'Auto-post failed: Slug already exists')
+    })
+
+    it('should not set settings to null when autoPost is undefined', async () => {
+      const jobWithNoSettings: AIArticleJobRow = {
+        ...mockJob,
+        settings: null,
+      }
+
+      const createPageSpy = vi.spyOn(AIOrchestrator.prototype as unknown as { createPageFromArticle: () => Promise<{ success: boolean; pageId?: string }> }, 'createPageFromArticle' as keyof AIOrchestrator)
+        .mockResolvedValue({ success: true, pageId: 'page-123' })
+
+      const orchestrator = new AIOrchestrator(mockClient, mockLLMProvider, callbacks)
+      const result = await orchestrator.execute(jobWithNoSettings)
+
+      expect(result.success).toBe(true)
+      expect(createPageSpy).not.toHaveBeenCalled()
+    })
+  })
 })
