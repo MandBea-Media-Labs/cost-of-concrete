@@ -127,10 +127,15 @@ export default defineEventHandler(async (event) => {
     response.steps = steps.map(toStepResponse)
     response.evals = evals.map(toEvalResponse)
 
-    // Extract final output from project_manager step if completed
-    const pmStep = steps.find(s => s.agent_type === 'project_manager' && s.status === 'completed')
-    if (pmStep?.output) {
-      response.finalOutput = pmStep.output as ArticleJobDetailResponse['finalOutput']
+    // Use final_output from job if available, otherwise fall back to PM step output
+    if (job.final_output) {
+      response.finalOutput = job.final_output as ArticleJobDetailResponse['finalOutput']
+    } else {
+      // Legacy fallback: Extract from project_manager step if completed
+      const pmStep = steps.find(s => s.agent_type === 'project_manager' && s.status === 'completed')
+      if (pmStep?.output) {
+        response.finalOutput = pmStep.output as ArticleJobDetailResponse['finalOutput']
+      }
     }
 
     return { success: true, job: response }

@@ -95,6 +95,8 @@ export function repairJSON<T>(text: string, schema: z.ZodSchema<T>): JSONRepairR
     { name: 'extract-and-fix', transform: (t) => fixCommonIssues(extractFromMarkdown(t)) },
   ]
 
+  const errors: Array<{ strategy: string; error: string }> = []
+
   for (const strategy of strategies) {
     try {
       const transformed = strategy.transform(text)
@@ -108,14 +110,20 @@ export function repairJSON<T>(text: string, schema: z.ZodSchema<T>): JSONRepairR
         strategy: strategy.name,
       }
     } catch (error) {
-      // Try next strategy
+      // Capture the error for debugging
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      errors.push({ strategy: strategy.name, error: errorMsg })
       continue
     }
   }
 
-  // All strategies failed
+  // All strategies failed - log detailed errors
   const errorMsg = 'Failed to repair JSON after trying all strategies'
   consola.error(errorMsg, { textPreview: text.substring(0, 200) })
+  consola.info('JSON repair errors by strategy:', errors)
+
+  // Log the end of the text to see if it's truncated
+  consola.info('JSON text ending (last 500 chars):', text.substring(text.length - 500))
 
   return {
     success: false,

@@ -32,6 +32,10 @@ const isTerminal = computed(() =>
   ['completed', 'failed', 'cancelled'].includes(job.value?.status ?? '')
 )
 
+// Render article markdown content
+const articleContent = computed(() => job.value?.finalOutput?.finalArticle?.content ?? '')
+const { html: renderedArticleContent } = useMarkdown(articleContent)
+
 // =====================================================
 // SSE CONNECTION
 // =====================================================
@@ -123,6 +127,8 @@ watch(isTerminal, (terminal) => {
 // =====================================================
 
 const cancelling = ref(false)
+const articleExpanded = ref(false)
+const publishing = ref(false)
 
 async function cancelJob() {
   try {
@@ -134,6 +140,26 @@ async function cancelJob() {
     toast.error('Failed to cancel', { description: err?.data?.message || err?.message })
   } finally {
     cancelling.value = false
+  }
+}
+
+async function publishArticle() {
+  try {
+    publishing.value = true
+    const response = await $fetch(`/api/ai/articles/${jobId.value}/publish`, {
+      method: 'POST',
+      body: { status: 'draft' },
+    })
+    toast.success('Article published to CMS', { description: 'Page created as draft' })
+    refresh()
+    // Navigate to the edit page
+    if (response.pageId) {
+      navigateTo(`/admin/pages/${response.pageId}/edit`)
+    }
+  } catch (err: any) {
+    toast.error('Failed to publish', { description: err?.data?.message || err?.message })
+  } finally {
+    publishing.value = false
   }
 }
 
@@ -343,6 +369,81 @@ function getStepStatusVariant(status: string) {
         Reconnect
       </UiButton>
     </div>
+
+    <!-- Article Preview (when completed) -->
+    <UiCard v-if="job && job.status === 'completed' && job.finalOutput?.finalArticle" class="mt-6">
+      <UiCardHeader>
+        <div class="flex items-center justify-between">
+          <div>
+            <UiCardTitle class="flex items-center gap-2">
+              <Icon name="i-lucide-file-text" class="size-5 text-primary" />
+              Generated Article
+            </UiCardTitle>
+            <UiCardDescription>
+              {{ job.finalOutput.finalArticle.wordCount?.toLocaleString() || 0 }} words
+              <span v-if="job.finalOutput.readyForPublish" class="ml-2 text-green-600">✓ Ready for publish</span>
+              <span v-else class="ml-2 text-yellow-600">⚠ Needs review</span>
+            </UiCardDescription>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Publish Button (only if no page created yet) -->
+            <UiButton
+              v-if="!job.pageId"
+              variant="default"
+              size="sm"
+              :disabled="publishing"
+              @click="publishArticle"
+            >
+              <Icon :name="publishing ? 'i-lucide-loader-2' : 'i-lucide-upload'" :class="['mr-1 size-4', { 'animate-spin': publishing }]" />
+              Publish to CMS
+            </UiButton>
+            <UiButton variant="outline" size="sm" @click="articleExpanded = !articleExpanded">
+              <Icon :name="articleExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="mr-1 size-4" />
+              {{ articleExpanded ? 'Collapse' : 'Expand' }}
+            </UiButton>
+          </div>
+        </div>
+      </UiCardHeader>
+
+      <UiCardContent v-if="articleExpanded">
+        <!-- Meta Info -->
+        <div class="mb-4 space-y-2 rounded-lg bg-muted/50 p-4">
+          <div><strong>Title:</strong> {{ job.finalOutput.finalArticle.title }}</div>
+          <div><strong>Slug:</strong> {{ job.finalOutput.finalArticle.slug }}</div>
+          <div><strong>Meta Title:</strong> {{ job.finalOutput.finalArticle.metaTitle }}</div>
+          <div><strong>Meta Description:</strong> {{ job.finalOutput.finalArticle.metaDescription }}</div>
+          <div><strong>Excerpt:</strong> {{ job.finalOutput.finalArticle.excerpt }}</div>
+        </div>
+
+        <!-- Validation Errors -->
+        <div v-if="job.finalOutput.validationErrors?.length" class="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4">
+          <div class="mb-2 flex items-center gap-2 font-medium text-yellow-700 dark:text-yellow-400">
+            <Icon name="i-lucide-alert-triangle" class="size-4" />
+            Validation Issues
+          </div>
+          <ul class="list-inside list-disc space-y-1 text-sm">
+            <li v-for="(err, i) in job.finalOutput.validationErrors" :key="i">{{ err }}</li>
+          </ul>
+        </div>
+
+        <!-- Recommendations -->
+        <div v-if="job.finalOutput.recommendations?.length" class="mb-4 rounded-lg border border-blue-500/50 bg-blue-500/10 p-4">
+          <div class="mb-2 flex items-center gap-2 font-medium text-blue-700 dark:text-blue-400">
+            <Icon name="i-lucide-lightbulb" class="size-4" />
+            Recommendations
+          </div>
+          <ul class="list-inside list-disc space-y-1 text-sm">
+            <li v-for="(rec, i) in job.finalOutput.recommendations" :key="i">{{ rec }}</li>
+          </ul>
+        </div>
+
+        <!-- Article Content -->
+        <div
+          class="prose prose-sm dark:prose-invert max-w-none rounded-lg border p-4"
+          v-html="renderedArticleContent"
+        />
+      </UiCardContent>
+    </UiCard>
 
     <!-- Human Evaluation Panel -->
     <div v-if="job" class="mt-6">

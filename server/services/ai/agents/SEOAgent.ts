@@ -483,7 +483,15 @@ export class SEOAgent extends BaseAIAgent<SEOAgentInput, SEOOutput> {
     sections.push('5. Suggest 2-5 internal links from the existing pages list')
     sections.push('6. Calculate an overall optimization score (0-100)')
     sections.push('')
-    sections.push('Respond ONLY with valid JSON matching the required schema.')
+    sections.push('## REQUIRED JSON FIELD NAMES (use camelCase exactly)')
+    sections.push('- "metaTitle" (NOT meta_title)')
+    sections.push('- "metaDescription" (NOT meta_description)')
+    sections.push('- "headingAnalysis" with "isValid", "issues", "suggestions"')
+    sections.push('- "keywordDensity" with "percentage", "analysis"')
+    sections.push('- "internalLinks" array with "anchorText", "suggestedPath", "reason"')
+    sections.push('- "optimizationScore" (integer 0-100)')
+    sections.push('')
+    sections.push('Respond ONLY with valid JSON. Do NOT wrap in markdown code blocks.')
 
     return sections.join('\n')
   }

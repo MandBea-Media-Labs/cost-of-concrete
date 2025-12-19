@@ -161,5 +161,111 @@ export class AIEvalRepository {
     if (error) throw error
     return evalRecord
   }
+
+  /**
+   * Get aggregated issue statistics for continuous improvement
+   * Returns top issues by frequency from recent evals
+   */
+  async getCommonIssues(options: {
+    limit?: number
+    daysBack?: number
+    minSeverity?: 'low' | 'medium' | 'high' | 'critical'
+  } = {}): Promise<{ category: string; description: string; count: number; avgSeverity: string }[]> {
+    const { limit = 10, daysBack = 30 } = options
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack)
+
+    // Fetch recent evals with issues
+    const { data, error } = await this.client
+      .from('ai_article_evals')
+      .select('issues')
+      .gte('created_at', cutoffDate.toISOString())
+      .not('issues', 'eq', '[]')
+
+    if (error) throw error
+    if (!data || data.length === 0) return []
+
+    // Aggregate issues by description pattern
+    const issueMap = new Map<string, { category: string; count: number; severities: string[] }>()
+
+    for (const row of data) {
+      const issues = row.issues as EvalIssue[] | null
+      if (!issues) continue
+
+      for (const issue of issues) {
+        // Normalize description for grouping (lowercase, trim whitespace)
+        const key = `${issue.category}:${issue.description.toLowerCase().slice(0, 100)}`
+
+        if (issueMap.has(key)) {
+          const entry = issueMap.get(key)!
+          entry.count++
+          entry.severities.push(issue.severity)
+        } else {
+          issueMap.set(key, {
+            category: issue.category,
+            count: 1,
+            severities: [issue.severity],
+          })
+        }
+      }
+    }
+
+    // Convert to array and sort by frequency
+    const severityRank = { critical: 4, high: 3, medium: 2, low: 1 }
+    const result = Array.from(issueMap.entries())
+      .map(([key, value]) => {
+        const description = key.split(':').slice(1).join(':')
+        const avgSeverityNum = value.severities.reduce((sum, s) => sum + (severityRank[s as keyof typeof severityRank] || 1), 0) / value.severities.length
+        const avgSeverity = avgSeverityNum >= 3.5 ? 'critical' : avgSeverityNum >= 2.5 ? 'high' : avgSeverityNum >= 1.5 ? 'medium' : 'low'
+        return {
+          category: value.category,
+          description,
+          count: value.count,
+          avgSeverity,
+        }
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+
+    return result
+  }
+
+  /**
+   * Get average dimension scores over time for trend analysis
+   */
+  async getAverageScores(daysBack = 30): Promise<{
+    overall: number
+    readability: number
+    seo: number
+    accuracy: number
+    engagement: number
+    brandVoice: number
+    sampleCount: number
+  } | null> {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack)
+
+    const { data, error } = await this.client
+      .from('ai_article_evals')
+      .select('overall_score, readability_score, seo_score, accuracy_score, engagement_score, brand_voice_score')
+      .gte('created_at', cutoffDate.toISOString())
+      .not('overall_score', 'is', null)
+
+    if (error) throw error
+    if (!data || data.length === 0) return null
+
+    const sum = (key: keyof typeof data[0]) =>
+      data.reduce((acc, row) => acc + ((row[key] as number) || 0), 0) / data.length
+
+    return {
+      overall: Math.round(sum('overall_score')),
+      readability: Math.round(sum('readability_score')),
+      seo: Math.round(sum('seo_score')),
+      accuracy: Math.round(sum('accuracy_score')),
+      engagement: Math.round(sum('engagement_score')),
+      brandVoice: Math.round(sum('brand_voice_score')),
+      sampleCount: data.length,
+    }
+  }
 }
 

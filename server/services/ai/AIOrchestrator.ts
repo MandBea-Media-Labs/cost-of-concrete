@@ -18,6 +18,7 @@
  */
 
 import { consola } from 'consola'
+import { marked } from 'marked'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../app/types/supabase'
 import type {
@@ -289,7 +290,7 @@ export class AIOrchestrator {
         consola.info(`[AIOrchestrator] Auto-post enabled, creating page...`)
         this.callbacks.onProgress?.('project_manager', 'Creating CMS page...')
 
-        const pageResult = await this.createPageFromArticle(finalOutput, settings)
+        const pageResult = await this.createPageFromArticle(finalOutput, settings, job.id, job.keyword)
         if (pageResult.success && pageResult.pageId) {
           pageId = pageResult.pageId
           consola.success(`[AIOrchestrator] Page created: ${pageId}`)
@@ -541,36 +542,73 @@ export class AIOrchestrator {
   }
 
   /**
+   * Convert markdown content to HTML for TipTap editor
+   */
+  private markdownToHtml(markdown: string): string {
+    if (!markdown) return ''
+
+    // Configure marked for clean HTML output
+    marked.setOptions({
+      gfm: true,
+      breaks: false,
+      pedantic: false,
+    })
+
+    return marked.parse(markdown, { async: false }) as string
+  }
+
+  /**
    * Create a CMS page from the final article output
    *
    * @param output - ProjectManagerOutput containing the final article data
    * @param settings - Job settings (for parentPageId and other options)
+   * @param jobId - The job ID for metadata tracking
+   * @param keyword - The target keyword for fallback values
    * @returns Object with success status, pageId (if created), and error message (if failed)
    */
   private async createPageFromArticle(
     output: ProjectManagerOutput,
-    settings: AIArticleJobSettings
+    settings: AIArticleJobSettings,
+    jobId: string,
+    keyword: string
   ): Promise<{ success: boolean; pageId?: string; error?: string }> {
     try {
       const { finalArticle } = output
+
+      // Convert markdown content to HTML for TipTap editor
+      const htmlContent = this.markdownToHtml(finalArticle.content)
+
+      // Build meta keywords from focus keyword
+      const metaKeywords: string[] = []
+      if (finalArticle.focusKeyword) {
+        metaKeywords.push(finalArticle.focusKeyword)
+      }
 
       // Map ProjectManagerOutput.finalArticle to CreatePageData
       const pageData: CreatePageData = {
         title: finalArticle.title,
         slug: finalArticle.slug,
-        content: finalArticle.content,
+        content: htmlContent,
         description: finalArticle.excerpt,
         template: finalArticle.template as TemplateSlug,
         status: finalArticle.status,
         metaTitle: finalArticle.metaTitle,
         metaDescription: finalArticle.metaDescription,
-        focusKeyword: finalArticle.focusKeyword,
+        metaKeywords: metaKeywords.length > 0 ? metaKeywords : [keyword],
+        focusKeyword: finalArticle.focusKeyword || keyword,
         parentId: settings.parentPageId ?? null,
-        // Store schema markup in metadata.seo
+        // Schema.org type - Article for AI-generated content
+        schemaType: 'Article',
+        // Sitemap defaults for articles
+        sitemapChangefreq: 'monthly',
+        sitemapPriority: 0.7,
+        // Store schema markup and AI metadata
         metadata: {
           seo: {
             schemaMarkup: finalArticle.schemaMarkup,
           },
+          aiGenerated: true,
+          aiJobId: jobId,
         },
       }
 

@@ -136,6 +136,22 @@ export class AnthropicProvider implements ILLMProvider {
     }
     stopReason = finalMessage.stop_reason
 
+    // Log completion details for debugging
+    consola.info(`[AnthropicProvider] Stream completed`, {
+      stopReason,
+      contentLength: fullContent.length,
+      outputTokens: usage.completionTokens,
+      maxTokensRequested: request.maxTokens,
+    })
+
+    // Warn if stopped due to max_tokens (truncated response)
+    if (stopReason === 'max_tokens') {
+      consola.warn(`[AnthropicProvider] Response truncated - hit max_tokens limit`, {
+        outputTokens: usage.completionTokens,
+        maxTokensRequested: request.maxTokens,
+      })
+    }
+
     onChunk({ delta: '', isComplete: true, usage })
 
     return {
