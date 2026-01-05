@@ -78,18 +78,18 @@ watch(() => props.menuItems, (newItems) => {
   localItems.value = [...newItems]
 }, { deep: true })
 
-const { sortable } = useSortable(el, localItems, {
+useSortable(el, localItems, {
   handle: '.drag-handle',
   animation: 150,
   ghostClass: 'bg-blue-50',
   dragClass: 'opacity-50',
-  onMove: (evt) => {
+  onMove: (evt: { dragged: HTMLElement; related: HTMLElement }) => {
     // Only allow dragging within same parent
     const draggedParentId = evt.dragged.dataset.parentId || ''
     const targetParentId = evt.related.dataset.parentId || ''
     return draggedParentId === targetParentId
   },
-  onEnd: async (evt) => {
+  onEnd: async (evt: { oldIndex: number; newIndex: number }) => {
     const { oldIndex, newIndex } = evt
     console.log('[AdminMenuItemList] Drag ended:', { oldIndex, newIndex })
 
@@ -104,6 +104,10 @@ const { sortable } = useSortable(el, localItems, {
       // We need to manually reorder the localItems array
       const items = [...localItems.value]
       const [movedItem] = items.splice(oldIndex, 1)
+      if (!movedItem) {
+        console.error('[AdminMenuItemList] No item at oldIndex:', oldIndex)
+        return
+      }
       items.splice(newIndex, 0, movedItem)
       localItems.value = items
 

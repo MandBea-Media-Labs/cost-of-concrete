@@ -13,7 +13,7 @@
 import { z } from 'zod'
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/app/types/supabase'
+import type { Database } from '~/types/supabase'
 
 const checkEmailSchema = z.object({
   email: z.string().email('Invalid email address'),

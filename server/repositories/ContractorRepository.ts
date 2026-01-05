@@ -419,8 +419,8 @@ export class ContractorRepository {
     const { data, error } = await this.client.rpc('search_contractors_by_radius', {
       p_city_slug: citySlug,
       p_radius_meters: radiusMeters,
-      p_category: category || null,
-      p_state_code: stateCode || null,
+      p_category: category || undefined,
+      p_state_code: stateCode || undefined,
       p_limit: limit,
       p_offset: offset,
       p_order_by: orderBy,
@@ -437,8 +437,8 @@ export class ContractorRepository {
     const { data: countData, error: countError } = await this.client.rpc('count_contractors_by_radius', {
       p_city_slug: citySlug,
       p_radius_meters: radiusMeters,
-      p_category: category || null,
-      p_state_code: stateCode || null
+      p_category: category || undefined,
+      p_state_code: stateCode || undefined
     })
 
     const total = countError ? (data?.length || 0) : (countData || 0)
@@ -664,8 +664,8 @@ export class ContractorRepository {
       p_lat: lat,
       p_lng: lng,
       p_radius_meters: radiusMeters,
-      p_category: category || null,
-      p_min_rating: minRating || null,
+      p_category: category || undefined,
+      p_min_rating: minRating || undefined,
       p_limit: limit,
       p_offset: offset,
       p_order_by: orderBy,
@@ -682,8 +682,8 @@ export class ContractorRepository {
       p_lat: lat,
       p_lng: lng,
       p_radius_meters: radiusMeters,
-      p_category: category || null,
-      p_min_rating: minRating || null
+      p_category: category || undefined,
+      p_min_rating: minRating || undefined
     })
 
     const total = countError ? (data?.length || 0) : (countData || 0)

@@ -42,7 +42,7 @@ interface Props {
   /**
    * The current selected value (use with v-model)
    */
-  modelValue: string | number | null
+  modelValue: string | number | null | undefined
 
   /**
    * Array of options to display in the dropdown

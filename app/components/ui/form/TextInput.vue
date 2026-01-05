@@ -5,7 +5,7 @@ interface Props {
   /**
    * The current value (use with v-model)
    */
-  modelValue: string | null
+  modelValue: string | null | undefined
 
   /**
    * Placeholder text for the input

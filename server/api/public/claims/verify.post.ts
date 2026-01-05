@@ -14,7 +14,7 @@
 import { z } from 'zod'
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/app/types/supabase'
+import type { Database } from '~/types/supabase'
 
 const verifyRequestSchema = z.object({
   token: z.string().uuid('Invalid verification token'),

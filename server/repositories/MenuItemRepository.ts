@@ -159,6 +159,7 @@ export class MenuItemRepository {
     console.log('[MenuItemRepository] Phase 1: Setting temporary negative values')
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
+      if (!item) continue
       const tempOrder = -(i + 1) // -1, -2, -3, etc.
 
       console.log(`[MenuItemRepository] Phase 1: Updating item ${item.id} to temporary display_order ${tempOrder}`)
@@ -178,7 +179,7 @@ export class MenuItemRepository {
     // If Phase 1 had errors, abort
     if (errors.length > 0) {
       console.error('[MenuItemRepository] Phase 1 failed, aborting. Errors:', errors)
-      throw errors[0].error
+      throw errors[0]!.error
     }
 
     // Phase 2: Set to final positive values
@@ -204,8 +205,8 @@ export class MenuItemRepository {
     console.log(`[MenuItemRepository] Reorder complete. Successes: ${successes.length}, Errors: ${errors.length}`)
 
     if (errors.length > 0) {
-      console.error('[MenuItemRepository] Throwing first error:', errors[0].error)
-      throw errors[0].error
+      console.error('[MenuItemRepository] Throwing first error:', errors[0]!.error)
+      throw errors[0]!.error
     }
 
     return true
