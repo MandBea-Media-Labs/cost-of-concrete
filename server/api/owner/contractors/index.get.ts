@@ -38,6 +38,7 @@ export default defineEventHandler(async (event) => {
       metadata,
       is_claimed,
       claimed_at,
+      embed_token,
       created_at,
       updated_at,
       city:cities!contractors_city_id_fkey (
@@ -82,6 +83,7 @@ export default defineEventHandler(async (event) => {
       status: c.status,
       metadata: c.metadata,
       claimedAt: c.claimed_at,
+      embedToken: c.embed_token,
       createdAt: c.created_at,
       updatedAt: c.updated_at,
       city: c.city ? {
