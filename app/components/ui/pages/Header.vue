@@ -52,8 +52,8 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const router = useRouter()
 
-// Access global isAdmin state set by admin-auth middleware
-const isAdminState = useState<boolean | undefined>('admin-auth:isAdmin', () => undefined)
+// Use useAuthUser composable to get admin status (works on all pages, not just /admin)
+const { isAdmin, ensureProfile } = useAuthUser()
 
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
@@ -73,7 +73,8 @@ const authButtonText = computed(() => user.value ? 'Dashboard' : 'Login')
 const authButtonLocation = computed(() => {
   if (!user.value) return '/login'
   // Redirect admins to /admin, business users to /owner
-  return isAdminState.value === true ? '/admin' : '/owner'
+  // isAdmin is loaded via ensureProfile() - undefined means not yet loaded, treat as non-admin
+  return isAdmin.value === true ? '/admin' : '/owner'
 })
 const secondaryButtonText = computed(() => user.value ? 'Logout' : 'Sign Up')
 
@@ -132,9 +133,20 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 // Add/remove keyboard event listener
-onMounted(() => {
+onMounted(async () => {
   isMounted.value = true
   window.addEventListener('keydown', handleKeydown)
+  // Load profile data (including isAdmin) if user is logged in
+  if (user.value) {
+    await ensureProfile()
+  }
+})
+
+// Watch for user login to load profile
+watch(user, async (newUser) => {
+  if (newUser) {
+    await ensureProfile()
+  }
 })
 
 onUnmounted(() => {
