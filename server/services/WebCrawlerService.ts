@@ -9,6 +9,10 @@
 import { chromium, type Browser, type Page } from 'playwright-core'
 import { consola } from 'consola'
 
+// Type declarations for browser globals used in page.evaluate() callbacks
+declare const document: Document
+declare const window: Window & typeof globalThis
+
 // Enable verbose logging via environment variable
 const VERBOSE = process.env.CRAWLER_VERBOSE === 'true'
 
@@ -346,7 +350,7 @@ export class WebCrawlerService {
       ]
 
       selectorsToRemove.forEach(selector => {
-        document.querySelectorAll(selector).forEach(el => el.remove())
+        document.querySelectorAll(selector).forEach((el: Element) => el.remove())
       })
 
       // Get clean text
@@ -370,7 +374,7 @@ export class WebCrawlerService {
       const links: Array<{ href: string; text: string }> = []
 
       // Get all anchor tags
-      document.querySelectorAll('a[href]').forEach(a => {
+      document.querySelectorAll('a[href]').forEach((a: Element) => {
         const href = a.getAttribute('href')
         const text = a.textContent?.trim() || ''
         if (href && text) {

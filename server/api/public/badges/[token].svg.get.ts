@@ -14,7 +14,7 @@
 
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/app/types/supabase'
+import type { Database } from '~/types/supabase'
 import { getClientIP } from '../../../utils/clientIP'
 import { generateBadgeSVG, generatePlaceholderBadgeSVG } from '../../../utils/badge'
 

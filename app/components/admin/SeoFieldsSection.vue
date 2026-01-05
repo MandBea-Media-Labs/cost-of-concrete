@@ -25,6 +25,9 @@ const emit = defineEmits<{
   'update:field': [name: keyof PageFormData, value: any]
 }>()
 
+// Type definitions
+type MetaRobotValue = 'index' | 'noindex' | 'follow' | 'nofollow' | 'noarchive' | 'nosnippet' | 'noimageindex' | 'notranslate' | 'none' | 'all'
+
 // Expandable sections state
 const expandedSections = ref({
   basic: true,
@@ -44,7 +47,7 @@ function updateField(name: keyof PageFormData, value: any) {
 }
 
 // Meta Robots options
-const metaRobotsOptions = [
+const metaRobotsOptions: Array<{ label: string; value: MetaRobotValue }> = [
   { label: 'Index', value: 'index' },
   { label: 'No Index', value: 'noindex' },
   { label: 'Follow', value: 'follow' },
@@ -110,7 +113,7 @@ watch(() => props.values.metaKeywords, (newValue) => {
 })
 
 // Handle meta robots checkboxes
-function toggleMetaRobot(value: string) {
+function toggleMetaRobot(value: MetaRobotValue) {
   const currentRobots = props.values.metaRobots || []
   const index = currentRobots.indexOf(value)
 
@@ -123,7 +126,7 @@ function toggleMetaRobot(value: string) {
   }
 }
 
-function isMetaRobotSelected(value: string): boolean {
+function isMetaRobotSelected(value: MetaRobotValue): boolean {
   return props.values.metaRobots?.includes(value) || false
 }
 </script>

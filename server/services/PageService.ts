@@ -73,33 +73,33 @@ export interface CreatePageData {
 export interface UpdatePageData {
   slug?: string
   title?: string
-  description?: string
+  description?: string | null
   content?: string
   template?: TemplateSlug
   status?: 'draft' | 'published' | 'archived'
-  metaTitle?: string
-  metaKeywords?: string[]
-  ogImage?: string
-  focusKeyword?: string
-  metaRobots?: string[]
-  sitemapPriority?: number
-  sitemapChangefreq?: string
-  canonicalUrl?: string | null  // null = clear the field
-  redirectUrl?: string
-  redirectType?: number
-  metadata?: any
+  metaTitle?: string | null
+  metaKeywords?: string[] | null
+  ogImage?: string | null
+  focusKeyword?: string | null
+  metaRobots?: string[] | null
+  sitemapPriority?: number | null
+  sitemapChangefreq?: string | null
+  canonicalUrl?: string | null
+  redirectUrl?: string | null
+  redirectType?: number | null
+  metadata?: any | null
   publishedAt?: string | null
 
   // SEO metadata fields (stored in metadata.seo)
-  metaDescription?: string
-  ogTitle?: string
-  ogDescription?: string
-  ogType?: string
-  twitterCard?: string
-  twitterTitle?: string
-  twitterDescription?: string
-  twitterImage?: string
-  schemaType?: string
+  metaDescription?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  ogType?: string | null
+  twitterCard?: string | null
+  twitterTitle?: string | null
+  twitterDescription?: string | null
+  twitterImage?: string | null
+  schemaType?: string | null
 }
 
 export class PageService {
