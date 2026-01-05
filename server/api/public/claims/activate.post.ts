@@ -223,13 +223,14 @@ export default defineEventHandler(async (event) => {
 
     consola.info('[activate] Account profile created for:', createdUserId)
 
-    // ===== STEP 6: Update contractor (mark as claimed) =====
+    // ===== STEP 6: Update contractor (mark as claimed, generate embed token) =====
     const { error: contractorError } = await adminClient
       .from('contractors')
       .update({
         is_claimed: true,
         claimed_by: createdUserId,
         claimed_at: new Date().toISOString(),
+        embed_token: crypto.randomUUID(),
       })
       .eq('id', claim.contractor_id)
 
