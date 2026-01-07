@@ -28,7 +28,6 @@ WITH CHECK (
   )
 );
 
--- Add comment
-COMMENT ON POLICY "Allow contractor image uploads" ON storage.objects IS 
-'Allows service role and authenticated admins to upload images to contractors bucket';
+-- Note: Policy comment removed as storage.objects is owned by supabase_storage_admin
+-- Policy: "Allow contractor image uploads" - Allows service role and authenticated admins to upload images to contractors bucket
 

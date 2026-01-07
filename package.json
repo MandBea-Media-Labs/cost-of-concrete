@@ -8,6 +8,7 @@
     "generate": "nuxt generate --dotenv .env.production",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare --dotenv .env.local",
+    "db:push": "npx supabase db push --local --include-all",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@formkit/auto-animate": "^0.9.0",
     "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/lucide": "^1.2.82",
     "@nuxt/eslint": "^1.10.0",
     "@nuxt/hints": "1.0.0-alpha.1",
     "@nuxt/icon": "^2.1.0",

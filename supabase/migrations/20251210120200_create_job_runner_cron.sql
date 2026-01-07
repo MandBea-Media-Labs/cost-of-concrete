@@ -4,6 +4,12 @@
 -- Runs every 15 seconds, respects concurrency limits
 -- =====================================================
 
+-- Ensure pg_cron extension is enabled
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+
+-- Grant usage to postgres role
+GRANT USAGE ON SCHEMA cron TO postgres;
+
 -- =====================================================
 -- Job Runner Function
 -- =====================================================
