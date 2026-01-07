@@ -107,13 +107,14 @@ export default defineEventHandler(async (event) => {
         // Authenticated user - mark as completed immediately
         updatePayload.status = 'completed'
 
-        // Update contractor to mark as claimed
+        // Update contractor to mark as claimed and generate embed token
         const { error: contractorError } = await client
           .from('contractors')
           .update({
             is_claimed: true,
             claimed_by: existingClaim.claimant_user_id,
             claimed_at: now.toISOString(),
+            embed_token: crypto.randomUUID(),
           })
           .eq('id', existingClaim.contractor_id)
 

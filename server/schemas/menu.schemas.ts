@@ -36,7 +36,7 @@ export const createMenuSchema = z.object({
 
   display_order: z.number().int().min(0).default(0),
 
-  metadata: z.record(z.any()).optional().nullable()
+  metadata: z.record(z.string(), z.any()).optional().nullable()
 }).refine(
   data => !(data.show_in_header && data.show_in_footer),
   {
@@ -66,7 +66,7 @@ export const updateMenuSchema = z.object({
 
   display_order: z.number().int().min(0).optional(),
 
-  metadata: z.record(z.any()).optional().nullable()
+  metadata: z.record(z.string(), z.any()).optional().nullable()
 })
 
 // =====================================================
@@ -106,7 +106,7 @@ export const createMenuItemSchema = z.object({
 
   display_order: z.number().int().min(0).nullable().optional(),
 
-  metadata: z.record(z.any()).optional().nullable()
+  metadata: z.record(z.string(), z.any()).optional().nullable()
 }).refine(
   data => {
     // Dropdown: no link data, no parent
@@ -152,7 +152,7 @@ export const updateMenuItemSchema = z.object({
 
   display_order: z.number().int().min(0).optional(),
 
-  metadata: z.record(z.any()).optional().nullable()
+  metadata: z.record(z.string(), z.any()).optional().nullable()
 })
 
 // Reorder menu items schema

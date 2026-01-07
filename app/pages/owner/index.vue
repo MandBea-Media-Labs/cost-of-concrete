@@ -14,6 +14,7 @@ useSeoMeta({
   robots: 'noindex, nofollow'
 })
 
+import { useClipboard } from '@vueuse/core'
 import { getStateByCode } from '~/utils/usStates'
 
 interface Contractor {
@@ -27,6 +28,7 @@ interface Contractor {
   reviewCount: number | null
   status: string
   claimedAt: string | null
+  embedToken: string | null
   city: {
     name: string
     slug: string
@@ -51,6 +53,39 @@ function getProfileUrl(contractor: Contractor): string {
   const state = getStateByCode(contractor.city.stateCode)
   if (!state) return '#'
   return `/${state.slug}/${contractor.city.slug}/concrete-contractors/${contractor.slug}`
+}
+
+// Badge embed functionality
+const { copy } = useClipboard()
+const copiedContractorId = ref<string | null>(null)
+
+function getBadgeUrl(embedToken: string): string {
+  return `https://costofconcrete.com/api/public/badges/${embedToken}.svg`
+}
+
+function getBadgeHtml(embedToken: string): string {
+  return `<img src="${getBadgeUrl(embedToken)}" alt="Verified Contractor on Cost of Concrete" width="200" height="40" />`
+}
+
+async function copyBadgeUrl(contractorId: string, embedToken: string) {
+  await copy(getBadgeUrl(embedToken))
+  copiedContractorId.value = contractorId
+  setTimeout(() => {
+    if (copiedContractorId.value === contractorId) {
+      copiedContractorId.value = null
+    }
+  }, 2000)
+}
+
+// Track expanded badge sections
+const expandedBadgeSections = ref<Set<string>>(new Set())
+
+function toggleBadgeSection(contractorId: string) {
+  if (expandedBadgeSections.value.has(contractorId)) {
+    expandedBadgeSections.value.delete(contractorId)
+  } else {
+    expandedBadgeSections.value.add(contractorId)
+  }
 }
 </script>
 
@@ -134,6 +169,95 @@ function getProfileUrl(contractor: Contractor): string {
               size="sm"
               :location="`/owner/contractors/${contractor.id}/edit`"
             />
+          </div>
+        </div>
+
+        <!-- Badge Embed Section -->
+        <div class="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between text-left"
+            @click="toggleBadgeSection(contractor.id)"
+          >
+            <div class="flex items-center gap-2">
+              <Icon name="heroicons:code-bracket" class="h-5 w-5 text-orange-500" />
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Badge Embed</span>
+            </div>
+            <Icon
+              :name="expandedBadgeSections.has(contractor.id) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+              class="h-4 w-4 text-neutral-400"
+            />
+          </button>
+
+          <!-- Expanded Badge Section -->
+          <div v-if="expandedBadgeSections.has(contractor.id)" class="mt-4 space-y-4">
+            <!-- Show message if no embed token -->
+            <div v-if="!contractor.embedToken" class="rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
+              <p class="text-xs text-yellow-700 dark:text-yellow-400">
+                Badge embed is not yet available for this business. Please contact support if you need assistance.
+              </p>
+            </div>
+
+            <!-- Badge content when token is available -->
+            <template v-else>
+              <!-- Badge Preview -->
+              <div class="flex items-center gap-4">
+                <img
+                  :src="getBadgeUrl(contractor.embedToken)"
+                  alt="Verified Contractor Badge"
+                  class="h-10"
+                />
+                <span class="text-xs text-neutral-500 dark:text-neutral-400">Badge preview</span>
+              </div>
+
+              <!-- Copy URL Section -->
+              <div>
+                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                  Image URL
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    readonly
+                    :value="getBadgeUrl(contractor.embedToken)"
+                    class="flex-1 rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-xs font-mono text-neutral-700 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-300"
+                  />
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-md bg-orange-500 px-3 py-2 text-xs font-medium text-white hover:bg-orange-600 transition-colors"
+                    @click="copyBadgeUrl(contractor.id, contractor.embedToken!)"
+                  >
+                    <Icon
+                      :name="copiedContractorId === contractor.id ? 'heroicons:check' : 'heroicons:clipboard'"
+                      class="h-4 w-4"
+                    />
+                    {{ copiedContractorId === contractor.id ? 'Copied!' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- HTML Embed Code -->
+              <div>
+                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                  HTML Embed Code
+                </label>
+                <code class="block rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-xs font-mono text-neutral-700 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-300 break-all">
+                  {{ getBadgeHtml(contractor.embedToken) }}
+                </code>
+              </div>
+
+              <!-- Instructions -->
+              <div class="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                <h4 class="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                  Add this badge to your website
+                </h4>
+                <ul class="space-y-1 text-xs text-blue-700 dark:text-blue-400">
+                  <li>1. Copy the image URL or HTML embed code above</li>
+                  <li>2. Paste it into your website's HTML</li>
+                  <li>3. Each view helps track your listing performance</li>
+                </ul>
+              </div>
+            </template>
           </div>
         </div>
       </div>

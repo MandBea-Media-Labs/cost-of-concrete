@@ -16,7 +16,7 @@ import { z } from 'zod'
 import { consola } from 'consola'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { EmailService } from '../../../services/EmailService'
-import type { Database } from '~/app/types/supabase'
+import type { Database } from '~/types/supabase'
 
 const resendRequestSchema = z.object({
   // Can resend by claimId (from expired token page)

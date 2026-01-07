@@ -15,7 +15,7 @@ import { z } from 'zod'
 import { consola } from 'consola'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 import { EmailService } from '../../../services/EmailService'
-import type { Database } from '~/app/types/supabase'
+import type { Database } from '~/types/supabase'
 
 const claimRequestSchema = z.object({
   contractorId: z.string().uuid('Invalid contractor ID'),

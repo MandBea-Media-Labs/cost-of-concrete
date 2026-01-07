@@ -13,7 +13,22 @@
  * - Drag-and-drop zone visual feedback
  */
 
-import type { ImageUploadResponse, ImageUploadData } from '~/server/schemas/image-upload.schema'
+// Types mirrored from server/schemas/image-upload.schema.ts
+interface ImageUploadData {
+  url: string
+  storagePath: string
+  filename: string
+  size: number
+  mimeType: string
+  alt?: string
+  title?: string
+}
+
+interface ImageUploadResponse {
+  success: boolean
+  data?: ImageUploadData
+  error?: string
+}
 
 // =====================================================
 // CONSTANTS (mirror server-side for client validation)

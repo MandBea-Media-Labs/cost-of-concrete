@@ -137,7 +137,7 @@ const hasServiceDropdown = computed(() =>
 
 // Initialize selected service to first option (usually "All Services")
 watch(() => props.serviceDropdownValues, (newValue) => {
-  if (newValue && newValue.length > 0) {
+  if (newValue && newValue.length > 0 && newValue[0]) {
     selectedService.value = String(newValue[0].id ?? '0')
   }
 }, { immediate: true })
@@ -422,7 +422,7 @@ const handleButtonClick = async () => {
       query: { q: searchQuery.value.trim(), limit: 1 }
     })
 
-    if (results && results.length > 0) {
+    if (results && results.length > 0 && results[0]) {
       navigateToLocation(results[0])
     } else {
       // No results found - stay on page but show message
@@ -496,7 +496,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 // Click outside to close autocomplete dropdown
-onClickOutside(containerRef, () => {
+onClickOutside(containerRef as any, () => {
   isOpen.value = false
   selectedIndex.value = -1
 })

@@ -220,9 +220,9 @@ watch(() => filters.serviceType, (newValue) => {
         :state-abbreviation="stateData?.abbreviation"
         :service-options="serviceOptions"
         :service-type-filter-options="serviceTypeOptions"
-        :distance-filter-options="distanceOptions"
+        :distance-filter-options="distanceFilter.distanceOptions"
         :rating-filter-options="ratingOptions"
-        :availability-filter-options="availabilityOptions"
+        :availability-filter-options="[]"
         :sort-by-filter-options="sortByOptions"
         v-model:service-type-filter="filters.serviceType"
         v-model:distance-filter="filters.distance"
@@ -259,7 +259,7 @@ watch(() => filters.serviceType, (newValue) => {
         <ContractorCard
           v-for="contractor in contractors"
           :key="contractor.id"
-          :image="buildImageUrl(contractor.metadata?.primary_image || contractor.metadata?.images?.[0])"
+          :image="buildImageUrl((contractor.metadata as any)?.primary_image || (contractor.metadata as any)?.images?.[0])"
           :company-name="contractor.companyName"
           :location="`${contractor.cityName}, ${contractor.stateCode}`"
           :rating="contractor.rating || 0"
@@ -269,7 +269,7 @@ watch(() => filters.serviceType, (newValue) => {
           :city-slug="contractor.citySlug || 'unknown'"
           :state-code="stateSlug"
         >
-          {{ contractor.description || contractor.metadata?.categories?.join(', ') || '' }}
+          {{ contractor.description || (contractor.metadata as any)?.categories?.join(', ') || '' }}
         </ContractorCard>
       </div>
 
